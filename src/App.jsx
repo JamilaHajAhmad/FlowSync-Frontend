@@ -4,6 +4,8 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Landing from './components/Landing/Landing';
 import Register from './components/Register/Register';
+import Login from './components/Login/Login';
+import ForgetPassword from './components/ForgetPassword/ForgetPassword';
 
 const App = () => {
     return (
@@ -11,6 +13,8 @@ const App = () => {
             <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/forgot-password" element={<ForgetPassword />} />
             </Routes>
             <ToastContainer />
         </BrowserRouter>
