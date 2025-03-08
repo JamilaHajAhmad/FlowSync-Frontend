@@ -1,0 +1,150 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.login-container {
+    display: flex;
+    height: 100vh;
+}
+
+.login-left {
+    width: 40%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: white;
+    color: #102027;
+    padding: 2.5rem;
+}
+
+.login-logo {
+    width: 15rem;
+    margin-bottom: 1.5rem;
+}
+
+.login-title {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.login-subtitle {
+    margin-top: 1rem;
+    font-size: 1.25rem;
+    text-align: center;
+}
+
+.required {
+    text-align: center;
+    color: red;
+    font-family: "Zilla Slab", serif;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.login-right {
+    width: 60%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2.5rem;
+    background: linear-gradient(135deg, #064e3b, #16a34a, #10b981)
+}
+
+.login-form {
+    background-color: white;
+    padding: 2rem 3rem;
+    border-radius: 0.5rem;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    height: max-content;
+    max-width: 28rem;
+}
+
+.form-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 1rem;
+    font-family: "Oswald", sans-serif;
+}
+
+.login-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 0.375rem;
+    -webkit-border-radius: 0.375rem;
+    -moz-border-radius: 0.375rem;
+    -ms-border-radius: 0.375rem;
+    -o-border-radius: 0.375rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    font-family: "Oswald", sans-serif;
+    opacity: 0.6;
+}
+
+.login-input:focus {
+    outline: none;
+    border-color: #004d40;
+    caret-color: #004d40;
+}
+
+.login-button {
+    width: fit-content;
+    background-color: #00897b;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    margin-left: 36%;
+    border-radius: 0.375rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    -webkit-transition: background 0.3s ease;
+    -moz-transition: background 0.3s ease;
+    -ms-transition: background 0.3s ease;
+    -o-transition: background 0.3s ease;
+    font-family: "Oswald", sans-serif;
+}
+
+.login-button:hover {
+    background-color: #00695c;
+}
+
+.signup-option {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: .9rem;
+    color: #102027;
+    font-family: "Inter", sans-serif;
+}
+
+.signup-option .link {
+    color: #00897b;
+    text-decoration: none;
+    font-weight: 400;
+}
+
+.signup-option .link:hover {
+    text-decoration: underline;
+}
+
+.forgot-password-link {
+    display: block;
+    text-align: right;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: #00897b;
+    text-decoration: none;
+    font-weight: 600;
+    font-family: "Oswald", sans-serif;
+}
+
+.forgot-password-link:hover {
+    text-decoration: underline;
+}
