@@ -1,10 +1,10 @@
 import React from 'react';
-import Home from '../Home/Home';
-import Features from '../Features/Features';
-import HowItWorks from '../HowItWorks/HowItWorks';
-import About from '../About/About';
-import Footer from '../Footer/Footer';
-import Quote from '../Quote/Quote';
+import Home from './components/Home/Home';
+import Features from './components/Features/Features';
+import HowItWorks from './components/HowItWorks/HowItWorks';
+import About from './components/About/About';
+import Footer from './components/Footer/Footer';
+import Quote from './components/Quote/Quote';
 
 const Landing = () => {
     return (
