@@ -84,18 +84,19 @@ export const backgroundMotion = {
     visible: { opacity: 1, transition: { duration: 2, ease: "easeInOut" } }
 };
 
-export const registerVariants = {
-    hidden: {
-        opacity: 0,
-        x: -100,
-    },
-    visible: {
-        opacity: 1,
-        x: 0,
-        transition: {
-            duration: 2,
-        },
-    },
+export const registerMotion = {
+    hidden: { opacity: 0, x: -100 },
+    visible: { opacity: 1, x: 0, transition: { duration: 2 } }
+};
+
+export const loginMotion = {
+    hidden: { opacity: 0, y: -100 },
+    visible: { opacity: 1, y: 0, transition: { duration: 2 } }
+};
+
+export const forgetPasswordMotion = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: { opacity: 1, scale: 1, transition: { duration: 2 } }
 };
 
 
