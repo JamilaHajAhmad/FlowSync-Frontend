@@ -5,9 +5,11 @@ import "./Register.css";
 import logo from '../../assets/images/logo.png';
 import { Link } from "react-router-dom";
 import { motion as Motion } from "framer-motion";
-import { registerVariants } from "../../variants";
+import { registerMotion } from "../../variants";
+import { useNavigate } from "react-router-dom";
 
 const Register = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -42,7 +44,7 @@ const Register = () => {
     }
 
     console.log("Form Submitted", formData);
-    toast.success("Registration successful!");
+    navigate('/dashboard')
   };
 
   return (
@@ -50,7 +52,7 @@ const Register = () => {
       className="register-container"
       initial="hidden"
       animate="visible"
-      variants={registerVariants}
+      variants={registerMotion}
     >
       <div className="register-left">
         <img src={logo} alt="FlowSync" className="register-logo" />
