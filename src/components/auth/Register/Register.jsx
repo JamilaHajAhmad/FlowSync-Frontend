@@ -44,7 +44,7 @@ const Register = () => {
     }
 
     console.log("Form Submitted", formData);
-    navigate('/dashboard')
+    navigate('/leader-dashboard')
   };
 
   return (
