@@ -3,11 +3,12 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./Login.css"; 
 import logo from '../../../assets/images/logo.png';
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion as Motion } from "framer-motion";
 import { loginMotion } from "../../../variants";
 
 const Login = () => {
+    const navigate = useNavigate();
     const [ formData, setFormData ] = useState({
         email: "",
         password: "",
@@ -36,6 +37,7 @@ const Login = () => {
 
         console.log("Login Successful", formData);
         toast.success("Login successful!");
+        navigate('/member-dashboard');
     };
 
     return (
