@@ -5,7 +5,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Topbar from '../../../common/Topbar';
 import Sidebar from './Sidebar';
 import getDesignTokens from '../../../../theme';
-
+import Members from '../data/Members';
+import PageHeading from '../../../common/PageHeading';
 
 const DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
@@ -29,7 +30,7 @@ export default function MiniDrawer() {
     };
 
     const [ mode, setMode ] = React.useState(
-        localStorage.getItem("currentMode") ? 
+        localStorage.getItem("currentMode") ?
         localStorage.getItem("currentMode") :
         "light");
     const theme = React.useMemo(() => createTheme(getDesignTokens(mode)), [ mode ]);
@@ -42,7 +43,8 @@ export default function MiniDrawer() {
                 <Sidebar open={open} handleDrawerClose={handleDrawerClose} />
                 <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
                     <DrawerHeader />
-                    Members
+                    <PageHeading title="Team Members" subtitle="Manage and oversee your team with ease!"/>
+                    <Members />
                 </Box>
             </Box>
         </ThemeProvider>
