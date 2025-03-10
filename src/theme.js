@@ -22,7 +22,7 @@ const getDesignTokens = (mode) => ({
             : {
                 // Dark mode colors
                 primary: {
-                    main: "#064e3b", // Deep green for contrast
+                    main: "#ffffff",
                 },
                 divider: "#10b981",
                 background: {
