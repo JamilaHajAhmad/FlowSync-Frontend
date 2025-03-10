@@ -5,7 +5,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Topbar from '../../../common/Topbar';
 import MSidebar from './MSidebar';
 import getDesignTokens from '../../../../theme';
-
+import Colleagues from '../data/Colleagues';
+import PageHeading from '../../../common/PageHeading';
 
 const DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
@@ -42,7 +43,8 @@ export default function MiniDrawer() {
                 <MSidebar open={open} handleDrawerClose={handleDrawerClose} />
                 <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
                     <DrawerHeader />
-                    Members
+                    <PageHeading title="Your Colleagues" subtitle="Collaborate and grow together!" />
+                    <Colleagues />
                 </Box>
             </Box>
         </ThemeProvider>
