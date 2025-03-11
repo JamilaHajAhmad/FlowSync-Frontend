@@ -19,6 +19,7 @@ import MBoard from './components/teamMember/dashboard/components/MBoard';
 import MProfile from './components/teamMember/dashboard/components/MProfile';
 import MCalendar from './components/teamMember/dashboard/components/MCalendar';
 import Colleagues from './components/teamMember/dashboard/components/Colleagues';
+import FreezeTask from './components/teamMember/dashboard/components/FreezeTask';
 
 const App = () => {
     return (
@@ -41,6 +42,7 @@ const App = () => {
                 <Route path="/member-profile" element={<MProfile />} />
                 <Route path="/member-calendar" element={<MCalendar />} />
                 <Route path="/colleagues" element={<Colleagues />} />
+                <Route path="/freeze-task" element={<FreezeTask />} />
             </Routes>
             <ToastContainer />
         </BrowserRouter>
