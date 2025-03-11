@@ -5,7 +5,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Topbar from '../../../common/Topbar';
 import Sidebar from './Sidebar';
 import getDesignTokens from '../../../../theme';
-
+import CreateTaskForm from '../data/CreateTaskForm';
+import PageHeading from '../../../common/PageHeading';
 
 const DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
@@ -42,7 +43,9 @@ export default function MiniDrawer() {
                 <Sidebar open={open} handleDrawerClose={handleDrawerClose} />
                 <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
                     <DrawerHeader />
-                    Create Task
+                    <PageHeading title="Create New Task"
+                    subtitle="Your Next Operation Starts Here: Create a Task for the Team" />
+                    <CreateTaskForm />
                 </Box>
             </Box>
         </ThemeProvider>
