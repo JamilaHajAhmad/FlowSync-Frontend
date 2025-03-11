@@ -1,0 +1,205 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.calendar-page {
+    display: flex;
+    min-height: 100%;
+    font-family: "Inter", Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    background-color: #f5f7f9;
+}
+
+.calendar-page .calendar-sidebar {
+    width: 280px;
+    background: #004d40;
+    color: white;
+    border-right: 2px solid #00695c;
+    padding: 2em;
+}
+
+.calendar-page .calendar-sidebar h2 {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 1em;
+}
+
+.calendar-page .calendar-main {
+    flex-grow: 1;
+    padding: 3em;
+    background-color: #ffffff;
+}
+
+.calendar-page .calendar-main h2 {
+    font-size: 20px;
+    font-weight: bold;
+    color: #004d40;
+}
+
+.calendar-page .fc {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 1em;
+}
+
+.calendar-page .fc-event {
+    background-color: #10b981;
+    border: none;
+    color: white;
+    padding: 5px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.calendar-page .fc-event:hover {
+    background-color: #16a34a;
+    cursor: pointer;
+}
+
+.calendar-page .calendar-sidebar-section {
+    background: #00695c;
+    color: white;
+    padding: 1.5em;
+    border-radius: 8px;
+    margin-bottom: 1.5em;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-page .calendar-sidebar-section h2 {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 1em;
+    color: #ffffff;
+}
+
+.calendar-page .calendar-sidebar-section ul {
+    padding-left: 1.2em;
+    list-style: none;
+}
+
+.calendar-page .calendar-sidebar-section li {
+    margin: 0.8em 0;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+
+.calendar-page .calendar-sidebar-section li::before {
+    content: "✔";
+    color: #10b981;
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+.calendar-page .calendar-sidebar-section label {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.calendar-page .calendar-sidebar-section ul {
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.calendar-page .calendar-sidebar-section ul::-webkit-scrollbar {
+    width: 6px;
+}
+
+.calendar-page .calendar-sidebar-section ul::-webkit-scrollbar-thumb {
+    background: #16a34a;
+    border-radius: 5px;
+}
+
+.current-day {
+    background-color: #b2d3b2 !important;
+}
+
+.modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    margin-right: -50%;
+    transform: translate(-50%, -50%);
+    -webkit-transform: translate(-50%, -50%);
+    -moz-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    -o-transform: translate(-50%, -50%);
+    background: white;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 500px;
+    max-width: 80%;
+    font-family: 'Poppins', sans-serif;
+    outline: none;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 1000;
+}
+
+.modal h2 {
+    margin-bottom: 15px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.modal input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: 'Poppins', sans-serif;
+    outline: none;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: space-between;
+}
+
+.modal-buttons button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    background-color: #10b981;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+    font-family: 'Poppins', sans-serif;
+    margin-top: 10px;
+}
+
+.modal-buttons button:hover {
+    background-color: #16a34a;
+}
+
+.modal-buttons button:last-child {
+    background-color: #f44336;
+}
+
+.modal-buttons button:last-child:hover {
+    background-color: #d32f2f;
+}
+
+html, body, #root {
+    height: 100%;
+}
