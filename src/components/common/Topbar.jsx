@@ -7,7 +7,6 @@ import { styled, alpha } from '@mui/material/styles';
 import SearchIcon from '@mui/icons-material/Search';
 import InputBase from '@mui/material/InputBase';
 import { Stack, useTheme } from '@mui/material';
-import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
 import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined';
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
 import DarkModeOutlinedIcon from '@mui/icons-material/NightlightOutlined';
@@ -133,9 +132,6 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                     </IconButton>
                     <IconButton color='inherit'>
                         <SettingsOutlinedIcon />
-                    </IconButton>
-                    <IconButton color='inherit'>
-                        <PersonOutlineOutlinedIcon />
                     </IconButton>
                 </Stack>
             </Toolbar>
