@@ -1,0 +1,129 @@
+import React, { useState } from "react";
+import {
+  Box,
+  TextField,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Select,
+  MenuItem,
+  Button,
+  Typography,
+  FormControl,
+  InputLabel
+} from "@mui/material";
+import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
+import { useTheme } from '@mui/material/styles';
+
+const CreateTaskForm = () => {
+  const [ formData, setFormData ] = useState({
+    frnNumber: "",
+    ossNumber: "",
+    priority: "Regular",
+    employee: "",
+    caseType: "",
+    caseSource: "",
+  });
+
+  const theme = useTheme();
+
+  const employees = [
+    { id: 1, name: "John Doe", ongoingTasks: 3 },
+    { id: 2, name: "Jane Smith", ongoingTasks: 1 },
+    { id: 3, name: "Michael Brown", ongoingTasks: 5 },
+  ];
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [ e.target.name ]: e.target.value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Validation: Ensure required fields are filled
+    if (!formData.frnNumber || !formData.ossNumber || !formData.employee || !formData.caseType || !formData.caseSource) {
+      toast.error("All fields are required!");
+      return;
+    }
+    console.log("Task Created:", formData);
+    toast.success("Task created successfully");
+  };
+
+  return (
+    <Box sx={{
+      maxWidth: 500, mx: "auto", p: 3, boxShadow: 3, borderRadius: 2,
+      backgroundColor: theme.palette.mode === 'dark' ? "#263238" : "white"
+    }}>
+      <form onSubmit={handleSubmit}>
+        <TextField
+          label="FRN Number"
+          name="frnNumber"
+          variant="filled"
+          fullWidth
+          required
+          value={formData.frnNumber}
+          onChange={handleChange}
+          sx={{ mb: 2 }}
+        />
+        <TextField
+          label="OSS Number"
+          name="ossNumber"
+          variant="filled"
+          fullWidth
+          required
+          value={formData.ossNumber}
+          onChange={handleChange}
+          sx={{ mb: 2 }}
+        />
+
+        <Typography variant="body1" fontWeight="bold">Task Priority</Typography>
+        <RadioGroup row name="priority" value={formData.priority} onChange={handleChange} sx={{ mb: 2 }}>
+          <FormControlLabel value="Urgent" control={<Radio />} label="Urgent" />
+          <FormControlLabel value="Important" control={<Radio />} label="Important" />
+          <FormControlLabel value="Regular" control={<Radio />} label="Regular" />
+        </RadioGroup>
+
+        <FormControl fullWidth variant="filled" sx={{ mb: 2 }}>
+          <InputLabel>Select Employee</InputLabel>
+          <Select name="employee" value={formData.employee} onChange={handleChange} required>
+            {employees.map((emp) => (
+              <MenuItem key={emp.id} value={emp.name}>
+                {emp.name} (Ongoing: {emp.ongoingTasks})
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        
+        <TextField
+          label="Case Type"
+          name="caseType"
+          variant="filled"
+          fullWidth
+          required
+          value={formData.caseType}
+          onChange={handleChange}
+          sx={{ mb: 2 }}
+        />
+
+        <TextField
+          label="Case Source"
+          name="caseSource"
+          variant="filled"
+          fullWidth
+          required
+          value={formData.caseSource}
+          onChange={handleChange}
+          sx={{ mb: 3 }}
+        />
+
+        <Box sx={{ textAlign: "center" }}>
+          <Button type="submit" variant="contained" color="primary">
+            Submit
+          </Button>
+        </Box>
+      </form>
+    </Box>
+  );
+};
+
+export default CreateTaskForm;
