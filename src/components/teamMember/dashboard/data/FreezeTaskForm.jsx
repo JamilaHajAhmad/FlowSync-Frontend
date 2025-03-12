@@ -5,7 +5,7 @@ import { useTheme } from "@mui/material";
 
 const FreezeTaskForm = () => {
     const [ formData, setFormData ] = useState({
-        taskId: "",
+        frnNumber: "",
         freezeReason: "",
     });
 
@@ -17,7 +17,7 @@ const FreezeTaskForm = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!formData.taskId || !formData.freezeReason) {
+        if (!formData.frnNumber || !formData.freezeReason) {
             toast.error("All fields are required!");
             return;
         }
@@ -33,12 +33,12 @@ const FreezeTaskForm = () => {
             </Typography>
             <form onSubmit={handleSubmit}>
                 <TextField
-                    label="Task ID"
-                    name="taskId"
+                    label="FRN Number"
+                    name="frnNumber"
                     variant="filled"
                     fullWidth
                     required
-                    value={formData.taskId}
+                    value={formData.frnNumber}
                     onChange={handleChange}
                     sx={{ mb: 2 }}
                 />
