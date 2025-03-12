@@ -5,6 +5,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Topbar from '../../../common/Topbar';
 import Sidebar from './Sidebar';
 import getDesignTokens from '../../../../theme';
+import PageHeading from '../../../common/PageHeading';
+import Tasks from '../data/Tasks';
 
 
 const DrawerHeader = styled('div')(({ theme }) => ({
@@ -42,7 +44,8 @@ export default function MiniDrawer() {
                 <Sidebar open={open} handleDrawerClose={handleDrawerClose} />
                 <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
                     <DrawerHeader />
-                    Tasks
+                    <PageHeading title="Team Tasks Overview" subtitle="Manage and monitor the progress of your team's tasks efficiently" />
+                    <Tasks />
                 </Box>
             </Box>
         </ThemeProvider>
