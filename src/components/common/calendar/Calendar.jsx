@@ -180,7 +180,7 @@ function Sidebar({ weekendsVisible, handleWeekendsToggle, currentEvents }) {
     return (
         <div className='calendar-sidebar'>
             <div className='calendar-sidebar-section'>
-                <h2>Instructions</h2>
+                <h2>ⓘ &nbsp; Instructions</h2>
                 <ul>
                     <li>Select dates and you will be prompted to create a new event</li>
                     <li>Drag, drop, and resize events</li>
