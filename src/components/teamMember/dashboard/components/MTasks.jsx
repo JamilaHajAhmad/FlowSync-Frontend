@@ -5,7 +5,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Topbar from '../../../common/Topbar';
 import MSidebar from './MSidebar';
 import getDesignTokens from '../../../../theme';
-
+import PageHeading from '../../../common/PageHeading';
+import Tasks from '../data/Tasks';
 
 const DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
@@ -42,7 +43,8 @@ export default function MiniDrawer() {
                 <MSidebar open={open} handleDrawerClose={handleDrawerClose} />
                 <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
                     <DrawerHeader />
-                    Member Tasks
+                    <PageHeading title="Your Tasks" subtitle="Track your ongoing, delayed, and frozen tasks in one place" />
+                    <Tasks />
                 </Box>
             </Box>
         </ThemeProvider>
