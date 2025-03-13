@@ -11,7 +11,9 @@ import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNone
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
 import DarkModeOutlinedIcon from '@mui/icons-material/NightlightOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import ExitToAppOutlinedIcon from '@mui/icons-material/ExitToAppOutlined';
 import { Box } from '@mui/material';
+import { Link } from 'react-router-dom';
 
 const drawerWidth = 240;
 
@@ -130,9 +132,16 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                     <IconButton color='inherit'>
                         <NotificationsNoneOutlinedIcon />
                     </IconButton>
-                    <IconButton color='inherit'>
-                        <SettingsOutlinedIcon />
-                    </IconButton>
+                    <Box sx={{color: "white", mt: 1}}>
+                        <IconButton color='inherit'>
+                            <Link to="/settings" style={{ color: 'white' }}> <SettingsOutlinedIcon /> </Link>
+                        </IconButton>
+                    </Box>
+                    <Box sx={{color: "white", mt: 1}}>
+                        <IconButton color='inherit'>
+                            <Link to="/" style={{ color: 'white' }}> <ExitToAppOutlinedIcon /> </Link>
+                        </IconButton>
+                    </Box>
                 </Stack>
             </Toolbar>
         </AppBar>
