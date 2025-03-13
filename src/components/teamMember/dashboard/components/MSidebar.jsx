@@ -16,11 +16,11 @@ import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
 import GridViewOutlinedIcon from '@mui/icons-material/GridViewOutlined';
-import ExitToAppOutlinedIcon from '@mui/icons-material/ExitToAppOutlined';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Avatar, Typography } from '@mui/material';
+import { Avatar, Typography, Box } from '@mui/material';
 import defaultImg from '../../../../assets/images/default.jpg';
+import logo from '../../../../assets/images/logo.png';
 import { grey } from "@mui/material/colors";
 
 const drawerWidth = 240;
@@ -90,8 +90,7 @@ const array1 = [
 const array2 = [
     { "text": "Board", "icon": <GridViewOutlinedIcon />, "path": "/member-board" },
     { "text": "Calendar", "icon": <CalendarMonthOutlinedIcon />, "path": "/member-calendar" },
-    { "text": "Profile", "icon": <AccountCircleOutlinedIcon />, "path": "/member-profile" },
-    { "text": "Sign Out", "icon": <ExitToAppOutlinedIcon />, "path": "/login" }
+    { "text": "Profile", "icon": <AccountCircleOutlinedIcon />, "path": "/member-profile" }
 ];
 
 
@@ -107,16 +106,35 @@ export default function MSidebar({ open, handleDrawerClose }) {
                     {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
                 </IconButton>
             </DrawerHeader>
+            {open && (
+                <Box display="flex" alignItems="center" sx={{ mt: -2.5, mx: 5 }}>
+                    <img src={logo} alt="FlowSync Logo" style={{ height: 40, marginRight: 10 }} />
+                    <Typography variant="h6" noWrap component="div"
+                        sx={{
+                            background: "linear-gradient(135deg, #064e3b, #16a34a, #10b981)",
+                            WebkitBackgroundClip: "text",
+                            WebkitTextFillColor: "transparent",
+                            display: "inline-block",
+                        }}>
+                        FlowSync
+                    </Typography>
+                </Box>
+            )}
             <Avatar sx={{
                 mx: "auto",
-                my: 1,
-                width: open ? 88 : 44,
-                height: open ? 88 : 44,
+                my: 3,
+                width: open ? 65 : 44,
+                height: open ? 65 : 44,
                 border: "2px solid grey",
                 transition: "0.3s"
             }} alt="avatar" src={defaultImg} />
-            <Typography align='center' sx={{ fontSize: open ? 17 : 0, mb: 1 }}>Huthaifa HajAhmad</Typography>
-            <Typography align='center' sx={{ fontSize: open ? 15 : 0, mb: 1 }}>Team Leader</Typography>
+            <Typography align='center' sx={{ fontSize: open ? 17 : 0, mb: 1 }}>John Doe</Typography>
+            <Typography align='center' sx={{
+                fontSize: open ? 15 : 0, mb: 1, background: "linear-gradient(135deg, #064e3b, #16a34a, #10b981)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                display: "inline-block",
+            }}>Team Member</Typography>
             <List>
                 {array1.map((item) => (
                     <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
