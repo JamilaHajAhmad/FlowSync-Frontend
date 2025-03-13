@@ -3,6 +3,7 @@ import { ExpandMore, AccountCircle, Lock, Delete, ExitToApp } from "@mui/icons-m
 import { useNavigate } from "react-router-dom";
 import logo from "../../assets/images/logo.png"; 
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 const Settings = () => {
     const navigate = useNavigate();
@@ -11,7 +12,7 @@ const Settings = () => {
     const handleDeleteAccount = () => {
         // Implement account deletion logic here
         setIsDeleteModalOpen(false);
-        alert("Account deleted successfully!");
+        toast.success("Account deleted successfully!");
     };
 
     return (
