@@ -18,7 +18,7 @@ export default function Calendar() {
     const [ isConfirmModalOpen, setIsConfirmModalOpen ] = useState(false);
     const [ selectedEvent, setSelectedEvent ] = useState(null);
     const [ newEventTitle, setNewEventTitle ] = useState('');
-    
+
     useEffect(() => {
         if (currentEvents.length > 0) {
             const simplifiedEvents = currentEvents.map(({ id, title, start, end, allDay }) => ({
@@ -30,8 +30,7 @@ export default function Calendar() {
             }));
             localStorage.setItem("events", JSON.stringify(simplifiedEvents));
         }
-    }, [currentEvents]);
-    
+    }, [ currentEvents ]);
 
     useEffect(() => {
         const savedEvents = localStorage.getItem("events");
@@ -47,7 +46,6 @@ export default function Calendar() {
             }
         }
     }, []);
-    
 
     function handleWeekendsToggle() {
         setWeekendsVisible(!weekendsVisible);
@@ -70,7 +68,7 @@ export default function Calendar() {
                 end: selectedEvent.endStr,
                 allDay: selectedEvent.allDay,
             };
-            setCurrentEvents((prevEvents) => [...prevEvents, newEvent]);
+            setCurrentEvents((prevEvents) => [ ...prevEvents, newEvent ]);
         }
         setIsAddEventModalOpen(false);
         setNewEventTitle('');
@@ -83,11 +81,69 @@ export default function Calendar() {
 
     function handleConfirmDelete() {
         selectedEvent.remove();
-        setCurrentEvents(currentEvents.filter(event => event.id !== selectedEvent.id));
+
+        // Update currentEvents state
+        const updatedEvents = currentEvents.filter(event => event.id !== selectedEvent.id);
+        setCurrentEvents(updatedEvents);
+
+        // Update localStorage
+        localStorage.setItem("events", JSON.stringify(updatedEvents));
+
         setIsConfirmModalOpen(false);
     }
 
-    
+    function handleEventDrop(dropInfo) {
+        const { event } = dropInfo;
+        setCurrentEvents((prevEvents) =>
+            prevEvents.map((evt) =>
+                evt.id === event.id
+                    ? {
+                        ...evt,
+                        start: event.startStr,
+                        end: event.endStr,
+                        allDay: event.allDay,
+                    }
+                    : evt
+            )
+        );
+    }
+
+    function handleEventResize(resizeInfo) {
+        const { event } = resizeInfo;
+
+        // Get the start and end dates
+        const startDate = new Date(event.start);
+        const endDate = new Date(event.end);
+        endDate.setDate(endDate.getDate() - 1); // Adjust end date
+
+        // Check if the event is a single day event
+        const isSingleDay = startDate.toDateString() === endDate.toDateString();
+
+        // Create a formatted end date only if it spans multiple days
+        const formattedEndDate = !isSingleDay && event.end ?
+            ` - ${formatDate(endDate, { year: 'numeric', month: 'short', day: 'numeric' })}` : '';
+
+        const updatedEvents = currentEvents.map((evt) =>
+            evt.id === event.id
+                ? {
+                    id: evt.id,
+                    title: evt.title,
+                    start: event.startStr,
+                    end: event.endStr,
+                    allDay: event.allDay,
+                    dateDisplay: isSingleDay 
+                        ? formatDate(event.start, { year: 'numeric', month: 'short', day: 'numeric' })
+                        : `${formatDate(event.start, { year: 'numeric', month: 'short', day: 'numeric' })}${formattedEndDate}`
+                }
+                : evt
+        );
+
+        // Update state
+        setCurrentEvents(updatedEvents);
+
+        // Update localStorage
+        localStorage.setItem(localStorage.getItem("events"), JSON.stringify(updatedEvents));
+    }
 
     function dayCellClassNames(info) {
         const today = new Date().getDate();
@@ -119,7 +175,9 @@ export default function Calendar() {
                     select={handleDateSelect}
                     eventContent={renderEventContent} // custom render function
                     eventClick={handleEventClick}
-                    
+                    eventDrop={handleEventDrop} // handle event drop
+                    eventResize={handleEventResize} // handle event resize
+                    eventResizableFromStart={true}
                     eventClassNames='fc-event'
                     dayCellClassNames={dayCellClassNames} // Add custom class name for current day
                     height="100%"
@@ -211,9 +269,11 @@ function Sidebar({ weekendsVisible, handleWeekendsToggle, currentEvents }) {
 
 function SidebarEvent({ event }) {
     return (
-        <li key={event.id} className="sidebar-event" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <b>{formatDate(event.start, { year: 'numeric', month: 'short', day: 'numeric' })}</b>
-            <i>{event.title}</i>
+        <li key={event.id} className="sidebar-event" >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <b>{event.dateDisplay || formatDate(event.start, { year: 'numeric', month: 'short', day: 'numeric' })}</b>
+                <i>{event.title}</i>
+            </div>
         </li>
     );
 }
