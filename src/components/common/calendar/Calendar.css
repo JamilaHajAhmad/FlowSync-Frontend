@@ -14,9 +14,8 @@
 
 .calendar-page .calendar-sidebar {
     width: 280px;
-    background: #004d40;
+    background: white !important;
     color: white;
-    border-right: 2px solid #00695c;
     padding: 2em;
 }
 
@@ -62,7 +61,7 @@
 }
 
 .calendar-page .calendar-sidebar-section {
-    background: #00695c;
+    background: #b2d3b2;
     color: white;
     padding: 1.5em;
     border-radius: 8px;
