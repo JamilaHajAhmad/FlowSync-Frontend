@@ -61,13 +61,12 @@ const Register = () => {
       </div>
       <div className="register-right">
         <form onSubmit={handleSubmit} className="register-form">
-          <h2 className="form-title">Register Now!</h2>
-          <small className="required">* = required field</small>
-          <input type="text" name="firstName" placeholder="* Enter Your First Name" value={formData.firstName} onChange={handleChange} className="form-input" />
-          <input type="text" name="lastName" placeholder="* Enter Your Last Name" value={formData.lastName} onChange={handleChange} className="form-input" />
-          <input type="email" name="email" placeholder="* Enter Your Email" value={formData.email} onChange={handleChange} className="form-input" />
-          <input type="password" name="password" placeholder="* Enter Your Password" value={formData.password} onChange={handleChange} className="form-input" />
-          <input type="password" name="confirmPassword" placeholder="* Confirm Your Password" value={formData.confirmPassword} onChange={handleChange} className="form-input" />
+          <h2 className="form-title">Register Now</h2>
+          <input type="text" name="firstName" placeholder="First Name" value={formData.firstName} onChange={handleChange} className="form-input" required />
+          <input type="text" name="lastName" placeholder="Last Name" value={formData.lastName} onChange={handleChange} className="form-input" required/>
+          <input type="email" name="email" placeholder="E-mail" value={formData.email} onChange={handleChange} className="form-input" required />
+          <input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} className="form-input" required />
+          <input type="password" name="confirmPassword" placeholder="Confirm Password" value={formData.confirmPassword} onChange={handleChange} className="form-input" required />
           <div className="form-radio-group">
             <label>
               <input type="radio" name="role" value="teamLeader" checked={formData.role === "teamLeader"} onChange={handleChange} />

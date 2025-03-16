@@ -36,14 +36,6 @@
     text-align: center;
 }
 
-.required {
-    text-align: center;
-    color: red;
-    font-family: "Zilla Slab", serif;
-    display: block;
-    margin-bottom: 1rem;
-}
-
 .register-right {
     width: 60%;
     display: flex;
@@ -51,13 +43,11 @@
     align-items: center;
     padding: 2.5rem;
     background: linear-gradient(135deg, #064e3b, #16a34a, #10b981);
+    color: white;
 }
 
 .register-form {
-    background-color: white;
     padding: 2rem 3rem;
-    border-radius: 0.5rem;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
     width: 100%;
     height: max-content;
     max-width: 28rem;
@@ -83,7 +73,6 @@
     margin-bottom: 1rem;
     font-size: 0.9rem;
     font-family: "Oswald", sans-serif;
-    opacity: 0.6;
 }
 
 .form-input:focus {
@@ -103,7 +92,7 @@
     align-items: center;
     font-size: 1rem;
     font-family: "Inter", sans-serif;
-    color: #102027;
+    color: white;
 }
 
 .form-radio-group input[type="radio"] {
@@ -137,12 +126,12 @@
     text-align: center;
     margin-top: 1rem;
     font-size: .9rem;
-    color: #102027;
+    color: white;
     font-family: "Inter", sans-serif;
 }
 
 .login-option .link {
-    color: #00897b;
+    color: white;
     text-decoration: none;
     font-weight: 400;
 }
