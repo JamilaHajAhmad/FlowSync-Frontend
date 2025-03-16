@@ -44,10 +44,9 @@ const ForgetPassword = () => {
             </div>
             <div className="forget-password-right">
                 <form onSubmit={handleSubmit} className="forget-password-form">
-                    <h2 className="form-title">Forgot Password</h2>
-                    <small className="required">* = required field</small>
-                    <input type="email" name="email" placeholder="* Enter Your Email" value={email} onChange={handleChange} className="forget-password-input" />
-                    <input type="submit" value="Send Reset Link" className="forget-password-button"/>
+                    <h2 className="form-title">Forgot Password ?</h2>
+                    <input type="email" name="email" placeholder="E-mail" value={email} onChange={handleChange} className="forget-password-input" required />
+                    <input type="submit" value="Send" className="forget-password-button"/>
                     <p className="login-option">Remembered your password? <Link to="/login" className="link">Log in</Link></p>
                 </form>
             </div>
