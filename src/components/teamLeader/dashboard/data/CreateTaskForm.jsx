@@ -16,6 +16,24 @@ import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
 import { useTheme } from '@mui/material/styles';
 
+const caseSources = [
+  "Email Inquiry",
+  "Phone Call",
+  "Walk-in Client",
+  "Online Portal",
+  "Internal Request",
+  "Partner Referral",
+  "Social Media",
+  "Website Form",
+  "Client Meeting",
+  "Branch Office",
+  "Corporate HQ",
+  "Field Agent",
+  "Support Ticket",
+  "Customer Service",
+  "External Audit"
+];
+
 const CreateTaskForm = () => {
   const [ formData, setFormData ] = useState({
     frnNumber: "",
@@ -51,8 +69,7 @@ const CreateTaskForm = () => {
 
   return (
     <Box sx={{
-      maxWidth: 500, mx: "auto", p: 3, boxShadow: 3, borderRadius: 2,
-      backgroundColor: theme.palette.mode === 'dark' ? "#263238" : "white"
+      maxWidth: 500, mx: "auto", p: 3
     }}>
       <form onSubmit={handleSubmit}>
         <TextField
@@ -78,9 +95,9 @@ const CreateTaskForm = () => {
 
         <Typography variant="body1" fontWeight="bold">Task Priority</Typography>
         <RadioGroup row name="priority" value={formData.priority} onChange={handleChange} sx={{ mb: 2 }}>
-          <FormControlLabel value="Urgent" control={<Radio />} label="Urgent" />
-          <FormControlLabel value="Important" control={<Radio />} label="Important" />
           <FormControlLabel value="Regular" control={<Radio />} label="Regular" />
+          <FormControlLabel value="Important" control={<Radio />} label="Important" />
+          <FormControlLabel value="Urgent" control={<Radio />} label="Urgent" />
         </RadioGroup>
 
         <FormControl fullWidth variant="filled" sx={{ mb: 2 }}>
@@ -93,7 +110,7 @@ const CreateTaskForm = () => {
             ))}
           </Select>
         </FormControl>
-        
+
         <TextField
           label="Case Type"
           name="caseType"
@@ -105,16 +122,36 @@ const CreateTaskForm = () => {
           sx={{ mb: 2 }}
         />
 
-        <TextField
-          label="Case Source"
-          name="caseSource"
-          variant="filled"
-          fullWidth
-          required
-          value={formData.caseSource}
-          onChange={handleChange}
-          sx={{ mb: 3 }}
-        />
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="body1" fontWeight="bold" sx={{ mb: 1 }}>Case Source</Typography>
+          <input
+            type="text"
+            name="caseSource"
+            value={formData.caseSource}
+            onChange={handleChange}
+            list="caseSourceOptions"
+            placeholder="Select or type case source"
+            required
+            style={{
+              width: '100%',
+              padding: '12px',
+              fontSize: '16px',
+              borderRadius: '4px',
+              border: '1px solid #ccc',
+              backgroundColor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#f5f5f5',
+              color: theme.palette.text.primary,
+              '&:focus': {
+                outline: 'none',
+                borderColor: theme.palette.primary.main,
+              }
+            }}
+          />
+          <datalist id="caseSourceOptions">
+            {caseSources.map((source, index) => (
+              <option key={index} value={source} />
+            ))}
+          </datalist>
+        </Box>
 
         <Box sx={{ textAlign: "center" }}>
           <Button type="submit" variant="contained" color="primary">
