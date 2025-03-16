@@ -99,4 +99,72 @@ export const forgetPasswordMotion = {
     visible: { opacity: 1, scale: 1, transition: { duration: 2 } }
 };
 
+export const logoMotion = {
+    hidden: {
+        scale: 0,
+        opacity: 0,
+        rotate: -180
+    },
+    visible: {
+        scale: 1,
+        opacity: 1,
+        rotate: 0,
+        transition: {
+            duration: 1.5,
+            ease: "easeOut",
+            delay: 0.3
+        }
+    }
+};
+
+export const contentMotion = {
+    hidden: {
+        opacity: 0,
+        scale: 0.8,
+        y: 50
+    },
+    visible: {
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        transition: {
+            duration: 2,
+            ease: "easeOut"
+        }
+    }
+};
+
+export const quoteMotion = {
+    hidden: {
+        opacity: 0,
+        y: 100,
+    },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 2,
+            bounce: 0.7,
+            type: "spring",
+        }
+    }
+};
+
+export const authorMotion = {
+    hidden: {
+        opacity: 0,
+        y: 50,
+    },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 1,
+            bounce: 0.5,
+            type: "spring",
+            delay: 0.2
+        }
+    }
+};
+
 
