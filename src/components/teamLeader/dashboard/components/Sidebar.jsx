@@ -1,6 +1,5 @@
 import React from 'react';
 import List from '@mui/material/List';
-import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -20,11 +19,11 @@ import GridViewOutlinedIcon from '@mui/icons-material/GridViewOutlined';
 import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
 import PieChartOutlineOutlinedIcon from '@mui/icons-material/PieChartOutlineOutlined';
 import TimelineOutlinedIcon from '@mui/icons-material/TimelineOutlined';
-import { useLocation, useNavigate } from 'react-router-dom';
+import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
+import { useNavigate } from 'react-router-dom';
 import { Avatar, Typography, Box } from '@mui/material';
 import defaultImg from '../../../../assets/images/default.jpg';
 import logo from '../../../../assets/images/logo.png';
-import { grey } from "@mui/material/colors";
 
 const drawerWidth = 240;
 
@@ -33,8 +32,6 @@ const DrawerHeader = styled('div')(({ theme }) => ({
     alignItems: 'center',
     justifyContent: 'flex-end',
     padding: theme.spacing(0, 1),
-    // necessary for content to be below app bar
-    ...theme.mixins.toolbar,
 }));
 
 const openedMixin = (theme) => ({
@@ -64,68 +61,79 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
         flexShrink: 0,
         whiteSpace: 'nowrap',
         boxSizing: 'border-box',
+        '& .MuiDrawer-paper': {
+            background: 'linear-gradient(135deg, #064E3B, #0F766E)',
+            color: '#fff',
+            border: 'none',
+            marginTop: '64px', // Add top margin to account for Topbar height
+            height: `calc(100% - 64px)`, // Adjust height to account for Topbar
+            '& .MuiListItemIcon-root': {
+                color: '#fff',
+            },
+            '& .MuiIconButton-root': {
+                color: '#fff',
+            },
+        },
         variants: [
             {
                 props: ({ open }) => open,
                 style: {
                     ...openedMixin(theme),
-                    '& .MuiDrawer-paper': openedMixin(theme),
+                    '& .MuiDrawer-paper': {
+                        ...openedMixin(theme),
+                        marginTop: '64px',
+                        height: `calc(100% - 64px)`,
+                    },
                 },
             },
             {
                 props: ({ open }) => !open,
                 style: {
                     ...closedMixin(theme),
-                    '& .MuiDrawer-paper': closedMixin(theme),
+                    '& .MuiDrawer-paper': {
+                        ...closedMixin(theme),
+                        marginTop: '64px',
+                        height: `calc(100% - 64px)`,
+                    },
                 },
             },
         ],
     }),
 );
 
-const array1 = [
-    { "text": "Create New Task", "icon": <ControlPointOutlinedIcon />, "path": "/create-new-task" },
+const links = [
     { "text": "Dashboard", "icon": <HomeOutlinedIcon />, "path": "/leader-dashboard" },
+    { "text": "Account Requests", "icon": <PersonAddAltIcon />, "path": "/requests" },
+    { "text": "Create New Task", "icon": <ControlPointOutlinedIcon />, "path": "/create-new-task" },
     { "text": "Tasks", "icon": <AssignmentOutlinedIcon />, "path": "/tasks" },
-    { "text": "Team Members", "icon": <GroupOutlinedIcon />, "path": "/members" }
-];
-
-const array2 = [
+    { "text": "Team Members", "icon": <GroupOutlinedIcon />, "path": "/members" },
     { "text": "Board", "icon": <GridViewOutlinedIcon />, "path": "/leader-board" },
     { "text": "Calendar", "icon": <CalendarMonthOutlinedIcon />, "path": "/calendar" },
-    { "text": "Profile", "icon": <AccountCircleOutlinedIcon />, "path": "/profile" }
-];
-
-
-const array3 = [
+    { "text": "Profile", "icon": <AccountCircleOutlinedIcon />, "path": "/profile" },
     { "text": "Bar Chart", "icon": <BarChartOutlinedIcon />, "path": "/bar-chart" },
     { "text": "Pie Chart", "icon": <PieChartOutlineOutlinedIcon />, "path": "/pie-chart" },
     { "text": "Line Chart", "icon": <TimelineOutlinedIcon />, "path": "/line-chart" }
 ];
 
-
-
 export default function Sidebar({ open, handleDrawerClose }) {
     const theme = useTheme();
     const navigate = useNavigate();
-    const location = useLocation();
 
     return (
         <Drawer variant="permanent" open={open} className='sidebar'>
-            <DrawerHeader>
-                <IconButton onClick={handleDrawerClose}>
-                    {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-                </IconButton>
-            </DrawerHeader>
+            {open && (  // Only render DrawerHeader when sidebar is open
+                <DrawerHeader>
+                    <IconButton onClick={handleDrawerClose}>
+                        {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+                    </IconButton>
+                </DrawerHeader>
+            )}
             {open && (
                 <Box display="flex" alignItems="center" sx={{ mt: -2.5, mx: 5 }}>
-                    <img src={logo} alt="Platform Logo" style={{ height: 40, marginRight: 10 }} />
+                    <img src={logo} alt="Platform Logo" style={{ height: 40, marginRight: 10, filter: "brightness(160%)" }} />
                     <Typography variant="h6" noWrap component="div"
                         sx={{
-                            background: "linear-gradient(135deg, #064e3b, #16a34a, #10b981)",
-                            WebkitBackgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
-                            display: "inline-block",
+                            color: "whitesmoke"
                         }}>
                         FlowSync
                     </Typography>
@@ -141,13 +149,10 @@ export default function Sidebar({ open, handleDrawerClose }) {
             }} alt="avatar" src={defaultImg} />
             <Typography align='center' sx={{ fontSize: open ? 17 : 0, mb: 1 }}>John Doe</Typography>
             <Typography align='center' sx={{
-                fontSize: open ? 15 : 0, mb: 1, background: "linear-gradient(135deg, #064e3b, #16a34a, #10b981)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                display: "inline-block",
+                fontSize: open ? 15 : 0, mb: 1, color: "whitesmoke"
             }}>Team Leader</Typography>
             <List>
-                {array1.map((item) => (
+                {links.map((item) => (
                     <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
                         <ListItemButton onClick={() => {
                             navigate(item.path);
@@ -164,137 +169,6 @@ export default function Sidebar({ open, handleDrawerClose }) {
                                     : {
                                         justifyContent: 'center',
                                     },
-                                {
-                                    bgcolor: location.pathname === item.path ?
-                                        theme.palette.mode === 'dark' ?
-                                            grey[ 700 ] :
-                                            grey[ 300 ] :
-                                        null
-                                }
-                            ]}
-                        >
-                            <ListItemIcon
-                                sx={[
-                                    {
-                                        minWidth: 0,
-                                        justifyContent: 'center',
-                                    },
-                                    open
-                                        ? {
-                                            mr: 3,
-                                        }
-                                        : {
-                                            mr: 'auto',
-                                        },
-                                ]}
-                            >
-                                {item.icon}
-                            </ListItemIcon>
-                            <ListItemText
-                                primary={item.text}
-                                sx={[
-                                    open
-                                        ? {
-                                            opacity: 1,
-                                        }
-                                        : {
-                                            opacity: 0,
-                                        },
-                                ]}
-                            />
-                        </ListItemButton>
-                    </ListItem>
-                ))}
-            </List>
-            <Divider />
-            <List>
-                {array2.map((item) => (
-                    <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
-                        <ListItemButton onClick={() => {
-                            navigate(item.path);
-                        }}
-                            sx={[
-                                {
-                                    minHeight: 48,
-                                    px: 2.5,
-                                },
-                                open
-                                    ? {
-                                        justifyContent: 'initial',
-                                    }
-                                    : {
-                                        justifyContent: 'center',
-                                    },
-                                {
-                                    bgcolor: location.pathname === item.path ?
-                                        theme.palette.mode === 'dark' ?
-                                            grey[ 700 ] :
-                                            grey[ 300 ] :
-                                        null
-                                }
-                            ]}
-                        >
-                            <ListItemIcon
-                                sx={[
-                                    {
-                                        minWidth: 0,
-                                        justifyContent: 'center',
-                                    },
-                                    open
-                                        ? {
-                                            mr: 3,
-                                        }
-                                        : {
-                                            mr: 'auto',
-                                        },
-                                ]}
-                            >
-                                {item.icon}
-                            </ListItemIcon>
-                            <ListItemText
-                                primary={item.text}
-                                sx={[
-                                    open
-                                        ? {
-                                            opacity: 1,
-                                        }
-                                        : {
-                                            opacity: 0,
-                                        },
-                                ]}
-                            />
-                        </ListItemButton>
-                    </ListItem>
-                ))}
-            </List>
-            <Divider />
-            <List>
-                {array3.map((item) => (
-                    <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
-                        <ListItemButton
-                            onClick={() => {
-                                localStorage.clear()
-                                navigate(item.path)
-                            }}
-                            sx={[
-                                {
-                                    minHeight: 48,
-                                    px: 2.5,
-                                },
-                                open
-                                    ? {
-                                        justifyContent: 'initial',
-                                    }
-                                    : {
-                                        justifyContent: 'center',
-                                    },
-                                {
-                                    bgcolor: location.pathname === item.path ?
-                                        theme.palette.mode === 'dark' ?
-                                            grey[ 700 ] :
-                                            grey[ 300 ] :
-                                        null
-                                }
                             ]}
                         >
                             <ListItemIcon

@@ -15,29 +15,27 @@ import ExitToAppOutlinedIcon from '@mui/icons-material/ExitToAppOutlined';
 import { Box } from '@mui/material';
 import { Link } from 'react-router-dom';
 
-const drawerWidth = 240;
+//const drawerWidth = 240;
 
 const AppBar = styled(MuiAppBar, {
     shouldForwardProp: (prop) => prop !== 'open',
 })(({ theme }) => ({
     zIndex: theme.zIndex.drawer + 1,
-    transition: theme.transitions.create([ 'width', 'margin' ], {
+    background: 'linear-gradient(135deg, #064E3B, #0F766E)',
+    width: '100%', // Always keep full width
+    transition: theme.transitions.create(['margin'], {
         easing: theme.transitions.easing.sharp,
         duration: theme.transitions.duration.leavingScreen,
     }),
-    variants: [
-        {
-            props: ({ open }) => open,
-            style: {
-                marginLeft: drawerWidth,
-                width: `calc(100% - ${drawerWidth}px)`,
-                transition: theme.transitions.create([ 'width', 'margin' ], {
-                    easing: theme.transitions.easing.sharp,
-                    duration: theme.transitions.duration.enteringScreen,
-                }),
-            },
-        },
-    ],
+    '& .MuiToolbar-root': {
+        color: '#fff',
+    },
+    '& .MuiIconButton-root': {
+        color: '#fff',
+    },
+    '& .MuiInputBase-root': {
+        color: '#fff',
+    },
 }));
 
 const Search = styled('div')(({ theme }) => ({
@@ -115,16 +113,16 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                     {theme.palette.mode === 'light' ? (
                         <IconButton color='inherit' onClick={() => {
                             localStorage.setItem("currentMode", theme.palette.mode === 'dark' ? 'light' : 'dark');
-                            setMode((prevMode) => 
-                            prevMode === 'light' ? 'dark' : 'light')
+                            setMode((prevMode) =>
+                                prevMode === 'light' ? 'dark' : 'light')
                         }}>
                             <LightModeOutlinedIcon />
                         </IconButton>
                     ) : (
                         <IconButton color='inherit' onClick={() => {
                             localStorage.setItem("currentMode", theme.palette.mode === 'dark' ? 'light' : 'dark');
-                            setMode((prevMode) => 
-                            prevMode === 'light' ? 'dark' : 'light');
+                            setMode((prevMode) =>
+                                prevMode === 'light' ? 'dark' : 'light');
                         }}>
                             <DarkModeOutlinedIcon />
                         </IconButton>
@@ -132,12 +130,12 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                     <IconButton color='inherit'>
                         <NotificationsNoneOutlinedIcon />
                     </IconButton>
-                    <Box sx={{color: "white", mt: 1}}>
+                    <Box sx={{ color: "white", mt: 1 }}>
                         <IconButton color='inherit'>
                             <Link to="/settings" style={{ color: 'white' }}> <SettingsOutlinedIcon /> </Link>
                         </IconButton>
                     </Box>
-                    <Box sx={{color: "white", mt: 1}}>
+                    <Box sx={{ color: "white", mt: 1 }}>
                         <IconButton color='inherit'>
                             <Link to="/" style={{ color: 'white' }}> <ExitToAppOutlinedIcon /> </Link>
                         </IconButton>
