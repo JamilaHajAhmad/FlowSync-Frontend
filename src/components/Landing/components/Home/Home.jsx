@@ -2,7 +2,7 @@ import React from 'react';
 import Header from '../Header/Header';
 import Logo from '../../../../assets/images/logo.png';
 import './Home.css';
-import { backgroundMotion, imageMotion, heroTitleMotion } from '../../../../variants';
+import { backgroundMotion, logoMotion, contentMotion } from '../../../../variants';
 import { motion as Motion } from 'framer-motion';
 
 const Home = () => {
@@ -14,16 +14,25 @@ const Home = () => {
             animate="visible">
             <Header />
             <div className="hero">
-                <div className="content">
+                <Motion.div 
+                    className="content"
+                    variants={contentMotion}
+                    initial="hidden"
+                    animate="visible"
+                >
                     <h1>100<small>%</small></h1>
-                    <Motion.h2 variants={heroTitleMotion}>
+                    <h2>
                         <span>Streamline</span>
                         <span>Sync</span>
                         <span>Achieve</span>
-                    </Motion.h2>
-                </div>
-                <Motion.div className="image"
-                variants={imageMotion}>
+                    </h2>
+                </Motion.div>
+                <Motion.div 
+                    className="image"
+                    variants={logoMotion}
+                    initial="hidden"
+                    animate="visible"
+                >
                     <img src={Logo} alt="Logo" />
                 </Motion.div>
             </div>

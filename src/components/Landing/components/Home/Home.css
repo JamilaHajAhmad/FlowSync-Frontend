@@ -21,13 +21,13 @@ html {
 
 .hero .content {
     position: absolute;
-    top: 35%;
-    left: 10%;
-    transform: translate(-10%,35%);
-    -webkit-transform: translate(-10%,35%);
-    -moz-transform: translate(-10%,35%);
-    -ms-transform: translate(-10%,35%);
-    -o-transform: translate(-10%,35%);
+    top: 60%;
+    left: 5%;
+    transform: translate(-5%,60%);
+    -webkit-transform: translate(-5%,60%);
+    -moz-transform: translate(-5%,60%);
+    -ms-transform: translate(-5%,60%);
+    -o-transform: translate(-5%,60%);
 }
 
 .hero .content h2 {
