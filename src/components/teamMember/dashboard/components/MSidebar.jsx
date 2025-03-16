@@ -1,6 +1,5 @@
 import React from 'react';
 import List from '@mui/material/List';
-import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -17,11 +16,10 @@ import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
 import GridViewOutlinedIcon from '@mui/icons-material/GridViewOutlined';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Avatar, Typography, Box } from '@mui/material';
 import defaultImg from '../../../../assets/images/default.jpg';
 import logo from '../../../../assets/images/logo.png';
-import { grey } from "@mui/material/colors";
 
 const drawerWidth = 240;
 
@@ -30,8 +28,7 @@ const DrawerHeader = styled('div')(({ theme }) => ({
     alignItems: 'center',
     justifyContent: 'flex-end',
     padding: theme.spacing(0, 1),
-    // necessary for content to be below app bar
-    ...theme.mixins.toolbar,
+    // Remove the toolbar mixin since we don't need the extra space
 }));
 
 const openedMixin = (theme) => ({
@@ -61,33 +58,51 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
         flexShrink: 0,
         whiteSpace: 'nowrap',
         boxSizing: 'border-box',
+        '& .MuiDrawer-paper': {
+            background: 'linear-gradient(135deg, #064E3B, #0F766E)',
+            color: '#fff',
+            border: 'none',
+            marginTop: '64px', // Add top margin to account for Topbar height
+            height: `calc(100% - 64px)`, // Adjust height to account for Topbar
+            '& .MuiListItemIcon-root': {
+                color: '#fff',
+            },
+            '& .MuiIconButton-root': {
+                color: '#fff',
+            },
+        },
         variants: [
             {
                 props: ({ open }) => open,
                 style: {
                     ...openedMixin(theme),
-                    '& .MuiDrawer-paper': openedMixin(theme),
+                    '& .MuiDrawer-paper': {
+                        ...openedMixin(theme),
+                        marginTop: '64px',
+                        height: `calc(100% - 64px)`,
+                    },
                 },
             },
             {
                 props: ({ open }) => !open,
                 style: {
                     ...closedMixin(theme),
-                    '& .MuiDrawer-paper': closedMixin(theme),
+                    '& .MuiDrawer-paper': {
+                        ...closedMixin(theme),
+                        marginTop: '64px',
+                        height: `calc(100% - 64px)`,
+                    },
                 },
             },
         ],
     }),
 );
 
-const array1 = [
+const links = [
     { "text": "Dashboard", "icon": <HomeOutlinedIcon />, "path": "/member-dashboard" },
-    { "text": "Tasks", "icon": <AssignmentOutlinedIcon />, "path": "/member-tasks" },
     { "text": "Freeze Task", "icon": <AcUnitIcon />, "path": "/freeze-task" },
-    { "text": "Team Members", "icon": <GroupOutlinedIcon />, "path": "/colleagues" }
-];
-
-const array2 = [
+    { "text": "Tasks", "icon": <AssignmentOutlinedIcon />, "path": "/member-tasks" },
+    { "text": "Team Members", "icon": <GroupOutlinedIcon />, "path": "/colleagues" },
     { "text": "Board", "icon": <GridViewOutlinedIcon />, "path": "/member-board" },
     { "text": "Calendar", "icon": <CalendarMonthOutlinedIcon />, "path": "/member-calendar" },
     { "text": "Profile", "icon": <AccountCircleOutlinedIcon />, "path": "/member-profile" }
@@ -97,23 +112,22 @@ const array2 = [
 export default function MSidebar({ open, handleDrawerClose }) {
     const theme = useTheme();
     const navigate = useNavigate();
-    const location = useLocation();
 
     return (
         <Drawer variant="permanent" open={open} className='sidebar'>
-            <DrawerHeader>
-                <IconButton onClick={handleDrawerClose}>
-                    {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-                </IconButton>
-            </DrawerHeader>
+            {open && (  // Only render DrawerHeader when sidebar is open
+                <DrawerHeader>
+                    <IconButton onClick={handleDrawerClose}>
+                        {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+                    </IconButton>
+                </DrawerHeader>
+            )}
             {open && (
                 <Box display="flex" alignItems="center" sx={{ mt: -2.5, mx: 5 }}>
-                    <img src={logo} alt="FlowSync Logo" style={{ height: 40, marginRight: 10 }} />
+                    <img src={logo} alt="FlowSync Logo" style={{ height: 40, marginRight: 10, filter: "brightness(160%)" }} />
                     <Typography variant="h6" noWrap component="div"
                         sx={{
-                            background: "linear-gradient(135deg, #064e3b, #16a34a, #10b981)",
-                            WebkitBackgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
+                            color: "whitesmoke",
                             display: "inline-block",
                         }}>
                         FlowSync
@@ -130,13 +144,11 @@ export default function MSidebar({ open, handleDrawerClose }) {
             }} alt="avatar" src={defaultImg} />
             <Typography align='center' sx={{ fontSize: open ? 17 : 0, mb: 1 }}>John Doe</Typography>
             <Typography align='center' sx={{
-                fontSize: open ? 15 : 0, mb: 1, background: "linear-gradient(135deg, #064e3b, #16a34a, #10b981)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
+                fontSize: open ? 15 : 0, mb: 1, color: "whitesmoke",
                 display: "inline-block",
             }}>Team Member</Typography>
             <List>
-                {array1.map((item) => (
+                {links.map((item) => (
                     <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
                         <ListItemButton onClick={() => {
                             navigate(item.path);
@@ -152,75 +164,7 @@ export default function MSidebar({ open, handleDrawerClose }) {
                                     }
                                     : {
                                         justifyContent: 'center',
-                                    },
-                                {
-                                    bgcolor: location.pathname === item.path ?
-                                        theme.palette.mode === 'dark' ?
-                                            grey[ 700 ] :
-                                            grey[ 300 ] :
-                                        null
-                                }
-                            ]}
-                        >
-                            <ListItemIcon
-                                sx={[
-                                    {
-                                        minWidth: 0,
-                                        justifyContent: 'center',
-                                    },
-                                    open
-                                        ? {
-                                            mr: 3,
-                                        }
-                                        : {
-                                            mr: 'auto',
-                                        },
-                                ]}
-                            >
-                                {item.icon}
-                            </ListItemIcon>
-                            <ListItemText
-                                primary={item.text}
-                                sx={[
-                                    open
-                                        ? {
-                                            opacity: 1,
-                                        }
-                                        : {
-                                            opacity: 0,
-                                        },
-                                ]}
-                            />
-                        </ListItemButton>
-                    </ListItem>
-                ))}
-            </List>
-            <Divider />
-            <List>
-                {array2.map((item) => (
-                    <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
-                        <ListItemButton onClick={() => {
-                            navigate(item.path);
-                        }}
-                            sx={[
-                                {
-                                    minHeight: 48,
-                                    px: 2.5,
-                                },
-                                open
-                                    ? {
-                                        justifyContent: 'initial',
                                     }
-                                    : {
-                                        justifyContent: 'center',
-                                    },
-                                {
-                                    bgcolor: location.pathname === item.path ?
-                                        theme.palette.mode === 'dark' ?
-                                            grey[ 700 ] :
-                                            grey[ 300 ] :
-                                        null
-                                }
                             ]}
                         >
                             <ListItemIcon
