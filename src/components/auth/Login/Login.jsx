@@ -54,10 +54,9 @@ const Login = () => {
             </div>
             <div className="login-right">
                 <form onSubmit={handleSubmit} className="login-form">
-                    <h2 className="form-title">Login Now!</h2>
-                    <small className="required">* = required field</small>
-                    <input type="email" name="email" placeholder="* Enter Your Email" value={formData.email} onChange={handleChange} className="login-input" />
-                    <input type="password" name="password" placeholder="* Enter Your Password" value={formData.password} onChange={handleChange} className="login-input" />
+                    <h2 className="form-title">Login Now</h2>
+                    <input type="email" name="email" placeholder="E-mail" value={formData.email} onChange={handleChange} className="login-input" required />
+                    <input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} className="login-input" required />
                     <Link to="/forgot-password" className="forgot-password-link">Forgot Password?</Link>
                     <input type="submit" value="Sign in" className="login-button"/>
                     <p className="signup-option">Don't have an account? <Link to="/register" className="link">Sign up</Link></p>

@@ -36,28 +36,18 @@
     text-align: center;
 }
 
-.required {
-    text-align: center;
-    color: red;
-    font-family: "Zilla Slab", serif;
-    display: block;
-    margin-bottom: 1rem;
-}
-
 .login-right {
     width: 60%;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 2.5rem;
-    background: linear-gradient(135deg, #064e3b, #16a34a, #10b981)
+    background: linear-gradient(135deg, #064e3b, #16a34a, #10b981);
+    color: white;
 }
 
 .login-form {
-    background-color: white;
     padding: 2rem 3rem;
-    border-radius: 0.5rem;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
     width: 100%;
     height: max-content;
     max-width: 28rem;
@@ -67,7 +57,7 @@
     font-size: 1.75rem;
     font-weight: 600;
     text-align: center;
-    margin-bottom: 1rem;
+    margin-bottom: 2.5rem;
     font-family: "Oswald", sans-serif;
 }
 
@@ -83,7 +73,6 @@
     margin-bottom: 1rem;
     font-size: 0.9rem;
     font-family: "Oswald", sans-serif;
-    opacity: 0.6;
 }
 
 .login-input:focus {
@@ -124,7 +113,7 @@
 }
 
 .signup-option .link {
-    color: #00897b;
+    color: white;
     text-decoration: none;
     font-weight: 400;
 }
@@ -136,10 +125,10 @@
 .forgot-password-link {
     display: block;
     text-align: right;
-    margin-top: 0.5rem;
+    margin-top: -0.5rem;
     margin-bottom: 1rem;
     font-size: 0.9rem;
-    color: #00897b;
+    color: whitesmoke;
     text-decoration: none;
     font-weight: 600;
     font-family: "Oswald", sans-serif;
