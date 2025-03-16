@@ -5,7 +5,7 @@
 }
 
 .footer {
-    background: #064E3B;
+    background: linear-gradient(135deg, #064E3B, #0F766E);
     color: #fff;
     padding: 30px 20px 20px 20px;
     font-size: 1rem;
