@@ -26,8 +26,7 @@ const FreezeTaskForm = () => {
     };
 
     return (
-        <Box sx={{ maxWidth: 500, mx: "auto", p: 3, boxShadow: 3, borderRadius: 2,
-            backgroundColor: theme.palette.mode === "dark" ? "#263238" : "white" }}>
+        <Box sx={{ maxWidth: 500, mx: "auto", p: 3 }}>
             <Typography variant="body1" textAlign="center" color="gray" mb={3}>
             Task freezing is subject to team leader confirmation.<br/> Please provide a valid reason.
             </Typography>
