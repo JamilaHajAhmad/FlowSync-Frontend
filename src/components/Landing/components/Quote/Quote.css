@@ -9,32 +9,35 @@
     background: url('../../../../assets/images/quote.png') right/contain no-repeat;
     height: 300px;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    color: white;
+    flex-direction: column;
+    overflow-x: hidden;
 }
 
-.quote-overlay {
-    background: rgba(0, 0, 0, 0.6);
-    padding: 40px;
-    border-radius: 10px;
-    max-width: 800px;
-    position: absolute;
-    left: 70px;
-}
-
-.quote-section h2 {
-    font-size: 2.5rem;
+.quote h2 {
+    font-size: 2rem;
     font-weight: bold;
+    background: linear-gradient(135deg, #064E3B, #0F766E);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+    left: 7%;
+    top: 40%;
 }
 
-.quote-section span {
+.quote span {
     color: #10B981;
 }
 
-.quote-section p {
+.quote p {
     margin-top: 10px;
     font-size: 1.2rem;
     opacity: 0.8;
+    background: linear-gradient(135deg, #064E3B, #0F766E);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+    left: 7%;
+    top: 40%;
 }
