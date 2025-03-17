@@ -23,6 +23,8 @@ import FreezeTask from './components/teamMember/dashboard/components/FreezeTask'
 import Settings from './components/common/Settings';
 import Requests from './components/teamLeader/dashboard/components/Requests';
 import EditProfile from './components/common/EditProfile';
+import ChangePW from './components/common/ChangePW';
+
 
 
 const App = () => {
@@ -50,6 +52,8 @@ const App = () => {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/requests" element={<Requests />} />
                 <Route path="/settings/edit-profile" element={<EditProfile />} />
+                <Route path="/settings/Change-password" element={<ChangePW />} />
+
 
 
             </Routes>
