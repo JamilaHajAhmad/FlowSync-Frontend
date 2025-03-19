@@ -1,22 +1,61 @@
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
-import { Avatar, Typography, Chip } from "@mui/material";
+import { Avatar, Typography, Chip, Stack, Button } from "@mui/material";
 import Box from "@mui/material/Box";
+import { useState } from "react";
 
-const columns = [
-    {
-        field: "name",
-        headerName: "Name",
-        flex: 1.5,
-        minWidth: 180,
-        renderCell: (params) => (
-            <Box display="flex" alignItems="center" justifyContent="center" gap={1} sx={{ py: 1 }}>
-                <Avatar>{params.row.avatar}</Avatar>
-                <Typography variant="body2">{params.value}</Typography>
-            </Box>
-        ),
-        headerAlign: "center"
-    },
-    {
+const getStatusColor = (status) => {
+    switch (status) {
+        case "Completed":
+            return { color: "green", background: "#e0f7e9" };
+        case "Delayed":
+            return { color: "red", background: "#fde8e8" };
+        case "Ongoing":
+            return { color: "orange", background: "#fff4e0" };
+        case "Frozen":
+            return { color: "#1976D2", background: "#E3F2FD" };
+        default:
+            return { color: "#059669", background: "#ecfdf5" };
+    }
+};
+
+const getColumns = (tab) => {
+    const baseColumns = [
+        {
+            field: "name",
+            headerName: "Name",
+            flex: 1,
+            minWidth: 200,
+            headerAlign: "center",
+            renderCell: (params) => (
+                <Typography sx={{ textAlign: 'center' }}>
+                    {params.value}
+                </Typography>
+            )
+        },
+        {
+            field: "frnNumber",
+            headerName: "FRN Number",
+            flex: 1,
+            minWidth: 120,
+            headerAlign: "center"
+        },
+        {
+            field: "ossNumber",
+            headerName: "OSS Number",
+            flex: 1,
+            minWidth: 120,
+            headerAlign: "center"
+        },
+        {
+            field: "openDate",
+            headerName: "Open Date",
+            flex: 1,
+            minWidth: 130,
+            headerAlign: "center"
+        }
+    ];
+
+    const statusColumn = {
         field: "status",
         headerName: "Status",
         flex: 1,
@@ -32,69 +71,154 @@ const columns = [
             />
         ),
         headerAlign: "center"
-    },
-    {
-        field: "frnNumber",
-        headerName: "FRN Number",
-        flex: 1,
-        minWidth: 120,
-        headerAlign: "center"
-    },
-    {
-        field: "openDate",
-        headerName: "Open Date",
-        flex: 1,
-        minWidth: 130,
-        headerAlign: "center"
-    },
-    {
-        field: "dayLefts",
-        headerName: "Day Lefts",
-        flex: 1,
-        minWidth: 100,
-        type: "number",
-        headerAlign: "center"
-    }
-];
+    };
 
-
-const rows = [
-    { id: 1, name: "Omar Zaid Al-Malek", status: "Ongoing", frnNumber: "#123", openDate: "08.08.2024", dayLefts: 4 },
-    { id: 2, name: "Omar Zaid Al-Malek", status: "Delayed", frnNumber: "#123", openDate: "08.08.2024", dayLefts: 4 },
-    { id: 3, name: "Omar Zaid Al-Malek", status: "Frozen", frnNumber: "#123", openDate: "08.08.2024", dayLefts: 4 },
-    { id: 4, name: "Omar Zaid Al-Malek", status: "Ongoing", frnNumber: "#123", openDate: "08.08.2024", dayLefts: 4 },
-    { id: 5, name: "Omar Zaid Al-Malek", status: "Completed", frnNumber: "#123", openDate: "08.08.2024", dayLefts: 4 },
-    { id: 1, name: "Omar Zaid Al-Malek", status: "Ongoing", frnNumber: "#123", openDate: "08.08.2024", dayLefts: 4 },
-    { id: 1, name: "Omar Zaid Al-Malek", status: "Ongoing", frnNumber: "#123", openDate: "08.08.2024", dayLefts: 4 },
-    { id: 1, name: "Omar Zaid Al-Malek", status: "Ongoing", frnNumber: "#123", openDate: "08.08.2024", dayLefts: 4 },
-];
-
-const getStatusColor = (status) => {
-    switch (status) {
-        case "Completed":
-            return { color: "green", background: "#e0f7e9" };
-        case "Delayed":
-            return { color: "red", background: "#fde8e8" };
-        case "Ongoing":
-            return { color: "orange", background: "#fff4e0" };
-        case "Frozen":
-            return { color: "#1976D2", background: "#E3F2FD" }; // Light blue for Frozen
+    switch(tab) {
+        case 'All':
+            return [
+                ...baseColumns,
+                statusColumn,
+                {
+                    field: "priority",
+                    headerName: "Priority",
+                    flex: 1,
+                    headerAlign: "center"
+                },
+                {
+                    field: "caseType",
+                    headerName: "Case Type",
+                    flex: 1,
+                    headerAlign: "center"
+                },
+                {
+                    field: "caseSource",
+                    headerName: "Case Source",
+                    flex: 1,
+                    headerAlign: "center"
+                }
+            ];
+        case 'Completed':
+            return [
+                ...baseColumns,
+                {
+                    field: "priority",
+                    headerName: "Priority",
+                    flex: 1,
+                    headerAlign: "center"
+                },
+                {
+                    field: "completedAt",
+                    headerName: "Completed At",
+                    flex: 1,
+                    headerAlign: "center"
+                }
+            ];
+        case 'Ongoing':
+            return [
+                ...baseColumns,
+                {
+                    field: "priority",
+                    headerName: "Priority",
+                    flex: 1,
+                    headerAlign: "center"
+                },
+                {
+                    field: "dayLefts",
+                    headerName: "Days Left",
+                    flex: 1,
+                    type: "number",
+                    headerAlign: "center"
+                }
+            ];
+        case 'Delayed':
+            return [
+                ...baseColumns,
+                {
+                    field: "priority",
+                    headerName: "Priority",
+                    flex: 1,
+                    headerAlign: "center"
+                },
+                {
+                    field: "daysDelayed",
+                    headerName: "Days Delayed",
+                    flex: 1,
+                    type: "number",
+                    headerAlign: "center"
+                }
+            ];
+        case 'Frozen':
+            return [
+                ...baseColumns,
+                {
+                    field: "priority",
+                    headerName: "Priority",
+                    flex: 1,
+                    headerAlign: "center"
+                },
+                {
+                    field: "frozenAt",
+                    headerName: "Frozen At",
+                    flex: 1,
+                    headerAlign: "center"
+                }
+            ];
         default:
-            return {};
+            return baseColumns;
     }
 };
 
-
+// Update the rows data to include all necessary fields
+const rows = [
+    {
+        id: 1,
+        name: "Omar Zaid Al-Malek",
+        status: "Ongoing",
+        priority: "High",
+        frnNumber: "#123",
+        ossNumber: "OSS-456",
+        openDate: "08.08.2024",
+        dayLefts: 4,
+        daysDelayed: 0,
+        completedAt: "",
+        frozenAt: "",
+        caseType: "Investigation",
+        caseSource: "Email"
+    },
+    // ... add more rows with all fields
+];
 
 export default function Tasks() {
+    const [activeTab, setActiveTab] = useState('All');
+
     return (
         <Box sx={{ height: 520, width: "100%" }}>
+            <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+                {['All', 'Completed', 'Ongoing', 'Delayed', 'Frozen'].map((tab) => (
+                    <Button
+                        key={tab}
+                        variant="contained"
+                        onClick={() => setActiveTab(tab)}
+                        sx={{
+                            backgroundColor: getStatusColor(tab).background,
+                            color: getStatusColor(tab).color,
+                            '&:hover': {
+                                backgroundColor: getStatusColor(tab).background,
+                                opacity: 0.9
+                            }
+                        }}
+                    >
+                        {tab}
+                    </Button>
+                ))}
+            </Stack>
+            
             <DataGrid
                 rows={rows}
-                columns={columns}
+                columns={getColumns(activeTab)}
                 disableRowSelectionOnClick
                 pagination
-                pageSizeOptions={[ 5, 10, 20 ]}
+                pageSizeOptions={[5, 10, 20]}
                 initialState={{
                     pagination: {
                         paginationModel: { pageSize: 5, page: 0 },
