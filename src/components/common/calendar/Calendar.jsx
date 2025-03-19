@@ -5,6 +5,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import Modal from 'react-modal';
+import { toast } from 'react-toastify';
 import './Calendar.css';
 import { useTheme } from '@mui/material';
 
@@ -18,6 +19,7 @@ export default function Calendar() {
     const [ isConfirmModalOpen, setIsConfirmModalOpen ] = useState(false);
     const [ selectedEvent, setSelectedEvent ] = useState(null);
     const [ newEventTitle, setNewEventTitle ] = useState('');
+    const [ newEventTime, setNewEventTime ] = useState('');
 
     useEffect(() => {
         if (currentEvents.length > 0) {
@@ -56,22 +58,56 @@ export default function Calendar() {
         setSelectedEvent(selectInfo);
     }
 
+    // Add this helper function to check for event overlap
+    function checkEventOverlap(newStart, newEnd, existingEvents, excludeEventId = null) {
+        const start = new Date(newStart);
+        const end = new Date(newEnd);
+
+        return existingEvents.some(event => {
+            if (event.id === excludeEventId) return false;
+            
+            const eventStart = new Date(event.start);
+            const eventEnd = new Date(event.end);
+
+            return (start < eventEnd && end > eventStart);
+        });
+    }
+
+    // Modify the handleAddEvent function
     function handleAddEvent() {
         let calendarApi = selectedEvent.view.calendar;
-        calendarApi.unselect(); // clear date selection
+        calendarApi.unselect();
 
         if (newEventTitle) {
+            // Create date object from selected date and time
+            const startDate = new Date(selectedEvent.startStr);
+            if (newEventTime) {
+                const [hours, minutes] = newEventTime.split(':');
+                startDate.setHours(parseInt(hours), parseInt(minutes));
+            }
+
+            // Create end date (1 hour after start by default)
+            const endDate = new Date(startDate);
+            endDate.setHours(endDate.getHours() + 1);
+
+            // Check for overlap
+            if (checkEventOverlap(startDate, endDate, currentEvents)) {
+                toast.error('Cannot add event: Time slot is already occupied');
+                return;
+            }
+
             const newEvent = {
-                id: String(Date.now()), // Unique ID
+                id: String(Date.now()),
                 title: newEventTitle,
-                start: selectedEvent.startStr,
-                end: selectedEvent.endStr,
-                allDay: selectedEvent.allDay,
+                start: startDate.toISOString(),
+                end: endDate.toISOString(),
+                allDay: !newEventTime,
             };
-            setCurrentEvents((prevEvents) => [ ...prevEvents, newEvent ]);
+            setCurrentEvents(prevEvents => [...prevEvents, newEvent]);
         }
         setIsAddEventModalOpen(false);
         setNewEventTitle('');
+        setNewEventTime('');
     }
 
     function handleEventClick(clickInfo) {
@@ -92,8 +128,17 @@ export default function Calendar() {
         setIsConfirmModalOpen(false);
     }
 
+    // Modify handleEventDrop to check for overlap when dragging
     function handleEventDrop(dropInfo) {
         const { event } = dropInfo;
+        
+        // Check for overlap
+        if (checkEventOverlap(event.start, event.end, currentEvents, event.id)) {
+            dropInfo.revert();
+            alert('Cannot move event: Time slot is already occupied');
+            return;
+        }
+
         setCurrentEvents((prevEvents) =>
             prevEvents.map((evt) =>
                 evt.id === event.id
@@ -108,8 +153,16 @@ export default function Calendar() {
         );
     }
 
+    // Modify handleEventResize to check for overlap when resizing
     function handleEventResize(resizeInfo) {
         const { event } = resizeInfo;
+
+        // Check for overlap
+        if (checkEventOverlap(event.start, event.end, currentEvents, event.id)) {
+            resizeInfo.revert();
+            alert('Cannot resize event: Would overlap with existing event');
+            return;
+        }
 
         // Get the start and end dates
         const startDate = new Date(event.start);
@@ -200,6 +253,11 @@ export default function Calendar() {
                     value={newEventTitle}
                     onChange={(e) => setNewEventTitle(e.target.value)}
                 />
+                <input
+                    type="time"
+                    value={newEventTime}
+                    onChange={(e) => setNewEventTime(e.target.value)}
+                />
                 <div className="modal-buttons">
                     <button onClick={handleAddEvent}>Add Event</button>
                     <button onClick={() => setIsAddEventModalOpen(false)}>Cancel</button>
@@ -225,10 +283,21 @@ export default function Calendar() {
     );
 }
 
+// Add this helper function before renderEventContent
+function formatEventTime(timeText) {
+    if (!timeText) return '';
+    return timeText
+        .replace('a', 'am')
+        .replace('p', 'pm')
+        .toLowerCase();
+}
+
+// Update the renderEventContent function
 function renderEventContent(eventInfo) {
+    const formattedTime = formatEventTime(eventInfo.timeText);
     return (
         <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'center' }}>
-            <b>{eventInfo.timeText}</b>
+            <b>{formattedTime}</b>
             <i>{eventInfo.event.title}</i>
         </div>
     );
