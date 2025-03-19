@@ -16,9 +16,6 @@ import ControlPointOutlinedIcon from '@mui/icons-material/ControlPointOutlined';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
 import GridViewOutlinedIcon from '@mui/icons-material/GridViewOutlined';
-import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
-import PieChartOutlineOutlinedIcon from '@mui/icons-material/PieChartOutlineOutlined';
-import TimelineOutlinedIcon from '@mui/icons-material/TimelineOutlined';
 import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, Typography, Box } from '@mui/material';
@@ -109,10 +106,7 @@ const links = [
     { "text": "Team Members", "icon": <GroupOutlinedIcon />, "path": "/members" },
     { "text": "Board", "icon": <GridViewOutlinedIcon />, "path": "/leader-board" },
     { "text": "Calendar", "icon": <CalendarMonthOutlinedIcon />, "path": "/calendar" },
-    { "text": "Profile", "icon": <AccountCircleOutlinedIcon />, "path": "/profile" },
-    { "text": "Bar Chart", "icon": <BarChartOutlinedIcon />, "path": "/bar-chart" },
-    { "text": "Pie Chart", "icon": <PieChartOutlineOutlinedIcon />, "path": "/pie-chart" },
-    { "text": "Line Chart", "icon": <TimelineOutlinedIcon />, "path": "/line-chart" }
+    { "text": "Profile", "icon": <AccountCircleOutlinedIcon />, "path": "/profile" }
 ];
 
 export default function Sidebar({ open, handleDrawerClose }) {
