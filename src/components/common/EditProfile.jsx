@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, TextField, Button, Typography, Avatar, Select, MenuItem, Grid, Paper, IconButton, CssBaseline } from "@mui/material";
+import { Box, TextField, Button, Typography, Avatar, Select, MenuItem, Grid, Paper, IconButton, CssBaseline, FormControl, InputLabel } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { styled, ThemeProvider } from '@mui/material/styles';
 import logo from '../../assets/images/logo.png';
@@ -13,21 +13,35 @@ const StyledTextField = styled(TextField)(() => ({
         },
         '&.Mui-focused fieldset': {
             borderColor: '#059669',
+            borderWidth: 2
         }
     },
-    '& .MuiInputLabel-root.Mui-focused': {
-        color: '#059669',
+    '& .MuiInputLabel-root': {
+        '&.MuiInputLabel-shrink': {
+            backgroundColor: '#ffffff',
+            padding: '0 8px',
+            transform: 'translate(14px, -9px) scale(0.75)',
+        },
+        '&.Mui-focused': {
+            color: '#059669',
+        }
     }
 }));
 
 const StyledSelect = styled(Select)(() => ({
     '& .MuiOutlinedInput-notchedOutline': {
-        '&:hover': {
-            borderColor: '#10B981',
-        }
+        borderRadius: '8px',
+        borderColor: '#e5e7eb',
+    },
+    '&:hover .MuiOutlinedInput-notchedOutline': {
+        borderColor: '#10B981',
     },
     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
         borderColor: '#059669',
+        borderWidth: 2
+    },
+    '& .MuiSelect-select': {
+        padding: '16.5px 14px',
     }
 }));
 
@@ -36,17 +50,15 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
     background: theme.palette.mode === 'dark' ? '#1F2937' : '#ffffff',
 }));
 
-
 const EditProfile = () => {
-    const [ formData, setFormData ] = useState({
+    const [formData, setFormData] = useState({
         firstName: "Charlene",
         lastName: "Reed",
         email: "charlenereed@gmail.com",
         dateOfBirth: "1990-01-25",
-        presentAddress: "San Jose, California, USA",
-        permanentAddress: "San Jose, California, USA",
-        city: "San Jose",
-        country: "USA",
+        address: "San Jose, California",
+        bio: "Passionate developer and tech enthusiast.",
+        phone: "+1 123 456 7890",
         status: "On Duty"
     });
 
@@ -54,14 +66,13 @@ const EditProfile = () => {
         const { name, value } = event.target;
         setFormData(prevData => ({
             ...prevData,
-            [ name ]: value
+            [name]: value
         }));
     };
 
     const handleSubmit = (event) => {
         event.preventDefault();
         console.log('Form Data:', formData);
-        // Add your submit logic here
     };
 
     const theme = useTheme();
@@ -78,17 +89,21 @@ const EditProfile = () => {
                 flexDirection: 'column',
                 gap: 4
             }}>
-                <Box display="flex" alignItems="center" position="relative" left="-180px">
+                {/* Logo & Title */}
+                <Box display="flex" alignItems="center" position="relative" left="-200px">
                     <img src={logo} alt="FlowSync Logo" style={{ height: 40, marginRight: 10 }} />
-                    <Typography variant="h6" component="div" sx={{ color: '#059669', fontWeight: 'bold' }}>
+                    <Typography variant="h6" sx={{ color: '#059669', fontWeight: 'bold' }}>
                         FlowSync
                     </Typography>
                 </Box>
+
+                {/* Profile Edit Section */}
                 <StyledPaper elevation={0}>
                     <Typography
                         variant="h4"
                         sx={{
                             mb: 4,
+                            mt: -4,
                             background: 'linear-gradient(45deg, #064E3B 30%, #059669 90%)',
                             backgroundClip: 'text',
                             color: 'transparent',
@@ -98,18 +113,9 @@ const EditProfile = () => {
                         Edit Profile
                     </Typography>
 
-                    <Box
-                        display="flex"
-                        alignItems="center"
-                        gap={3}
-                        mb={4}
-                        sx={{
-                            p: 3,
-                            borderRadius: 2,
-                            position: 'relative'
-                        }}
-                    >
-                        <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', top: '-200px', left: '-20px' }}>
+                    <Box display="flex" alignItems="center" gap={3} mb={4}>
+                        {/* Profile Avatar */}
+                        <Box sx={{ position: 'relative', top: -200, left: -30 }}>
                             <Avatar
                                 src="/profile.jpg"
                                 sx={{
@@ -117,7 +123,6 @@ const EditProfile = () => {
                                     height: 100,
                                     border: '4px solid #059669',
                                     boxShadow: '0 0 15px rgba(5,150,105,0.3)',
-                                    marginRight: 2 // Adding space between the avatar and text fields
                                 }}
                             />
                             <IconButton
@@ -136,92 +141,152 @@ const EditProfile = () => {
                             </IconButton>
                         </Box>
 
+                        {/* Profile Form */}
                         <form onSubmit={handleSubmit} style={{ flexGrow: 1 }}>
                             <Grid container spacing={3}>
-                                {[ { label: "First Name", name: "firstName", value: formData.firstName } ].map((field, index) => (
-                                    <Grid item xs={12} sm={6} key={index}>
-                                        <StyledTextField
-                                            fullWidth
-                                            label={field.label}
-                                            name={field.name}
-                                            type={field.type || "text"}
-                                            value={field.value}
-                                            onChange={handleChange}
-                                            InputLabelProps={{
-                                                shrink: field.type === "date" || true,
-                                                sx: { color: '#374151' }
-                                            }}
-                                            sx={{
-                                                '& .MuiOutlinedInput-root': {
-                                                    borderRadius: '8px',
-                                                }
-                                            }}
-                                        />
-                                    </Grid>
-                                ))}
-                                {[ { label: "Last Name", name: "lastName", value: formData.lastName },
-                                { label: "Email", name: "email", type: "email", value: formData.email },
-                                { label: "Date of Birth", name: "dateOfBirth", type: "date", value: formData.dateOfBirth },
-                                { label: "Present Address", name: "presentAddress", value: formData.presentAddress },
-                                { label: "Permanent Address", name: "permanentAddress", value: formData.permanentAddress },
-                                { label: "City", name: "city", value: formData.city },
-                                { label: "Country", name: "country", value: formData.country }
-                                ].map((field, index) => (
-                                    <Grid item xs={12} sm={6} key={index}>
-                                        <StyledTextField
-                                            fullWidth
-                                            label={field.label}
-                                            name={field.name}
-                                            type={field.type || "text"}
-                                            value={field.value}
-                                            onChange={handleChange}
-                                            InputLabelProps={{
-                                                shrink: field.type === "date" || true,
-                                                sx: { color: '#374151' }
-                                            }}
-                                            sx={{
-                                                '& .MuiOutlinedInput-root': {
-                                                    borderRadius: '8px',
-                                                }
-                                            }}
-                                        />
-                                    </Grid>
-                                ))}
+                                {/* First Name */}
                                 <Grid item xs={12} sm={6}>
-                                    <StyledSelect
+                                    <StyledTextField
                                         fullWidth
-                                        name="status"
-                                        value={formData.status}
+                                        label="First Name"
+                                        name="firstName"
+                                        value={formData.firstName}
                                         onChange={handleChange}
-                                        sx={{
-                                            borderRadius: '8px',
-                                            '& .MuiSelect-select': {
-                                                padding: '16.5px 14px',
+                                        InputLabelProps={{ shrink: true }}
+                                    />
+                                </Grid>
+
+                                {/* Last Name */}
+                                <Grid item xs={12} sm={6}>
+                                    <StyledTextField
+                                        fullWidth
+                                        label="Last Name"
+                                        name="lastName"
+                                        value={formData.lastName}
+                                        onChange={handleChange}
+                                        InputLabelProps={{ shrink: true }}
+                                    />
+                                </Grid>
+
+                                {/* Email */}
+                                <Grid item xs={12} sm={6}>
+                                    <StyledTextField
+                                        fullWidth
+                                        label="Email"
+                                        name="email"
+                                        type="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        InputLabelProps={{ shrink: true }}
+                                    />
+                                </Grid>
+
+                                {/* Date of Birth */}
+                                <Grid item xs={12} sm={6}>
+                                    <StyledTextField
+                                        fullWidth
+                                        label="Date of Birth"
+                                        name="dateOfBirth"
+                                        type="date"
+                                        value={formData.dateOfBirth}
+                                        onChange={handleChange}
+                                        InputLabelProps={{ shrink: true }}
+                                    />
+                                </Grid>
+
+                                {/* Address */}
+                                <Grid item xs={12} sm={6}>
+                                    <StyledTextField
+                                        fullWidth
+                                        label="Address"
+                                        name="address"
+                                        value={formData.address}
+                                        onChange={handleChange}
+                                        placeholder="Enter your address"
+                                        InputLabelProps={{ 
+                                            shrink: true,
+                                            sx: {
+                                                bgcolor: 'background.paper'
                                             }
                                         }}
-                                    >
-                                        <MenuItem value="On Duty">On Duty</MenuItem>
-                                        <MenuItem value="Temporarily Leave">Temporarily Leave</MenuItem>
-                                        <MenuItem value="Annual Leave">Annual Leave</MenuItem>
-                                    </StyledSelect>
+                                    />
+                                </Grid>
+
+                                {/* Phone */}
+                                <Grid item xs={12} sm={6}>
+                                    <StyledTextField
+                                        fullWidth
+                                        label="Phone"
+                                        name="phone"
+                                        value={formData.phone}
+                                        onChange={handleChange}
+                                        placeholder="Enter your phone"
+                                        InputLabelProps={{ 
+                                            shrink: true,
+                                            sx: {
+                                                bgcolor: 'background.paper'
+                                            }
+                                        }}
+                                    />
+                                </Grid>
+
+                                {/* Bio (Full Width) */}
+                                <Grid item xs={12}>
+                                    <StyledTextField
+                                        fullWidth
+                                        multiline
+                                        rows={3}
+                                        label="Bio"
+                                        name="bio"
+                                        value={formData.bio}
+                                        onChange={handleChange}
+                                        placeholder="Write about yourself..."
+                                        InputLabelProps={{ 
+                                            shrink: true,
+                                            sx: {
+                                                bgcolor: 'background.paper'
+                                            }
+                                        }}
+                                    />
+                                </Grid>
+
+                                {/* Status Select */}
+                                <Grid item xs={12} sm={6}>
+                                    <FormControl fullWidth>
+                                        <InputLabel
+                                            id="status-label"
+                                            sx={{
+                                                bgcolor: 'background.paper',
+                                                px: 1,
+                                                '&.MuiInputLabel-shrink': {
+                                                    transform: 'translate(14px, -9px) scale(0.75)',
+                                                },
+                                                '&.Mui-focused': {
+                                                    color: '#059669',
+                                                },
+                                                color: '#374151',
+                                            }}
+                                        >
+                                            Status
+                                        </InputLabel>
+                                        <StyledSelect
+                                            labelId="status-label"
+                                            name="status"
+                                            value={formData.status}
+                                            onChange={handleChange}
+                                            label="Status"
+                                        >
+                                            <MenuItem value="On Duty">On Duty</MenuItem>
+                                            <MenuItem value="Temporarily Leave">Temporarily Leave</MenuItem>
+                                            <MenuItem value="Annual Leave">Annual Leave</MenuItem>
+                                        </StyledSelect>
+                                    </FormControl>
                                 </Grid>
                             </Grid>
 
+                            {/* Save Button */}
                             <Box mt={4} textAlign="right">
-                                <Button
-                                    type="submit"
-                                    variant="contained"
-                                    size="large"
-                                    sx={{
-                                        bgcolor: '#059669',
-                                        px: 4,
-                                        py: 1.5,
-                                        borderRadius: '8px',
-                                        '&:hover': {
-                                            bgcolor: '#047857'
-                                        }
-                                    }}
-                                >
+                                <Button type="submit" variant="contained" size="large" sx={{ bgcolor: '#059669', '&:hover': { bgcolor: '#047857' } }}>
                                     Save Changes
                                 </Button>
                             </Box>
