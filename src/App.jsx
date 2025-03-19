@@ -25,8 +25,6 @@ import Requests from './components/teamLeader/dashboard/components/Requests';
 import EditProfile from './components/common/EditProfile';
 import ChangePW from './components/common/ChangePW';
 
-
-
 const App = () => {
     return (
         <BrowserRouter>
@@ -53,9 +51,6 @@ const App = () => {
                 <Route path="/requests" element={<Requests />} />
                 <Route path="/settings/edit-profile" element={<EditProfile />} />
                 <Route path="/settings/Change-password" element={<ChangePW />} />
-
-
-
             </Routes>
             <ToastContainer />
         </BrowserRouter>
