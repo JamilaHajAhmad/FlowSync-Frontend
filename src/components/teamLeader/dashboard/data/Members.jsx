@@ -4,8 +4,8 @@ import {
     DataGrid,
     GridToolbar,
 } from "@mui/x-data-grid";
-import { Avatar, Typography, Chip, IconButton } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
+import { Typography, Chip, IconButton } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close"; // استبدال DeleteIcon بـ CloseIcon
 
 export default function Members() {
     const [ rows, setRows ] = React.useState(
@@ -14,8 +14,7 @@ export default function Members() {
             name: `User ${i + 1}`,
             status: i % 3 === 0 ? "On Duty" : i % 3 === 1 ? "Annual Leave" : "Temporarily Leave",
             email: `user${i + 1}@example.com`,
-            tasks: Math.floor(Math.random() * 5),
-            avatar: `U${i + 1}`,
+            tasks: Math.floor(Math.random() * 5)
         }))
     );
 
@@ -43,10 +42,9 @@ export default function Members() {
             flex: 1.5,
             minWidth: 180,
             renderCell: (params) => (
-                <Box display="flex" alignItems="center" justifyContent= "center" gap={1} sx={{ py: 1 }}>
-                    <Avatar>{params.row.avatar}</Avatar>
-                    <Typography variant="body2">{params.value}</Typography>
-                </Box>
+                <Typography sx={{ textAlign: 'center' }}>
+                    {params.value}
+                </Typography>
             ),
             headerAlign: "center"
         },
@@ -93,7 +91,7 @@ export default function Members() {
                     color="error"
                     onClick={() => handleDelete(params.row.id)}
                 >
-                    <DeleteIcon />
+                    <CloseIcon /> {/* استبدال أيقونة السلة بـ CloseIcon */}
                 </IconButton>
             ),
             headerAlign: "center"
