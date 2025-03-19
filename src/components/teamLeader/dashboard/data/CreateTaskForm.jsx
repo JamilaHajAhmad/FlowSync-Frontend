@@ -10,11 +10,11 @@ import {
   Button,
   Typography,
   FormControl,
-  InputLabel
+  InputLabel,
+  Autocomplete
 } from "@mui/material";
 import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
-import { useTheme } from '@mui/material/styles';
 
 const caseSources = [
   "Email Inquiry",
@@ -35,7 +35,7 @@ const caseSources = [
 ];
 
 const CreateTaskForm = () => {
-  const [ formData, setFormData ] = useState({
+  const [formData, setFormData] = useState({
     frnNumber: "",
     ossNumber: "",
     priority: "Regular",
@@ -44,8 +44,6 @@ const CreateTaskForm = () => {
     caseSource: "",
   });
 
-  const theme = useTheme();
-
   const employees = [
     { id: 1, name: "John Doe", ongoingTasks: 3 },
     { id: 2, name: "Jane Smith", ongoingTasks: 1 },
@@ -53,12 +51,15 @@ const CreateTaskForm = () => {
   ];
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [ e.target.name ]: e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleCaseSourceChange = (event, newValue) => {
+    setFormData({ ...formData, caseSource: newValue || "" });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Validation: Ensure required fields are filled
     if (!formData.frnNumber || !formData.ossNumber || !formData.employee || !formData.caseType || !formData.caseSource) {
       toast.error("All fields are required!");
       return;
@@ -68,9 +69,7 @@ const CreateTaskForm = () => {
   };
 
   return (
-    <Box sx={{
-      maxWidth: 500, mx: "auto", p: 3
-    }}>
+    <Box sx={{ maxWidth: 500, mx: "auto", p: 3 }}>
       <form onSubmit={handleSubmit}>
         <TextField
           label="FRN Number"
@@ -122,36 +121,34 @@ const CreateTaskForm = () => {
           sx={{ mb: 2 }}
         />
 
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="body1" fontWeight="bold" sx={{ mb: 1 }}>Case Source</Typography>
-          <input
-            type="text"
-            name="caseSource"
-            value={formData.caseSource}
-            onChange={handleChange}
-            list="caseSourceOptions"
-            placeholder="Select or type case source"
-            required
-            style={{
-              width: '100%',
-              padding: '12px',
-              fontSize: '16px',
-              borderRadius: '4px',
-              border: '1px solid #ccc',
-              backgroundColor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#f5f5f5',
-              color: theme.palette.text.primary,
-              '&:focus': {
-                outline: 'none',
-                borderColor: theme.palette.primary.main,
-              }
-            }}
-          />
-          <datalist id="caseSourceOptions">
-            {caseSources.map((source, index) => (
-              <option key={index} value={source} />
-            ))}
-          </datalist>
-        </Box>
+        <Autocomplete
+          options={caseSources}
+          value={formData.caseSource}
+          onChange={handleCaseSourceChange}
+          disablePortal
+          PopperProps={{
+            placement: 'bottom-start',
+            style: {
+              width: 'fit-content'
+            }
+          }}
+          renderInput={(params) => (
+            <TextField 
+              {...params} 
+              label="Case Source" 
+              variant="filled" 
+              required 
+            />
+          )}
+          fullWidth
+          sx={{ 
+            mb: 2,
+            '& .MuiAutocomplete-popper': {
+              position: 'absolute',
+              zIndex: 1000
+            }
+          }}
+        />
 
         <Box sx={{ textAlign: "center" }}>
           <Button type="submit" variant="contained" color="primary">
