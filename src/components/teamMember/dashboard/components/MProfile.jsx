@@ -5,7 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Topbar from '../../../common/Topbar';
 import MSidebar from './MSidebar';
 import getDesignTokens from '../../../../theme';
-
+import MProfile from '../data/MProfile';
 
 const DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
@@ -42,7 +42,7 @@ export default function MiniDrawer() {
                 <MSidebar open={open} handleDrawerClose={handleDrawerClose} />
                 <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
                     <DrawerHeader />
-                    Member Profile
+                    <MProfile />
                 </Box>
             </Box>
         </ThemeProvider>
