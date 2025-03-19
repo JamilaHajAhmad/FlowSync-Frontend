@@ -10,9 +10,7 @@ const PageHeading = ({ title, subtitle }) => {
                 variant="h3"
                 fontWeight="bold"
                 sx={{
-                    background: "linear-gradient(90deg, #064e3b, #16a34a, #10b981)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
+                    color:  "#064e3b",
                     display: "inline-block",
                     filter: theme.palette.mode === "dark" ? "brightness(150%)" : null
                 }}
