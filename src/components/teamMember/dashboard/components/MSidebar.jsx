@@ -11,7 +11,6 @@ import MuiDrawer from '@mui/material/Drawer';
 import { styled, useTheme } from '@mui/material/styles';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
-import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
 import GridViewOutlinedIcon from '@mui/icons-material/GridViewOutlined';
@@ -102,7 +101,6 @@ const links = [
     { "text": "Dashboard", "icon": <HomeOutlinedIcon />, "path": "/member-dashboard" },
     { "text": "Freeze Task", "icon": <AcUnitIcon />, "path": "/freeze-task" },
     { "text": "Tasks", "icon": <AssignmentOutlinedIcon />, "path": "/member-tasks" },
-    { "text": "Team Members", "icon": <GroupOutlinedIcon />, "path": "/colleagues" },
     { "text": "Board", "icon": <GridViewOutlinedIcon />, "path": "/member-board" },
     { "text": "Calendar", "icon": <CalendarMonthOutlinedIcon />, "path": "/member-calendar" },
     { "text": "Profile", "icon": <AccountCircleOutlinedIcon />, "path": "/member-profile" }
