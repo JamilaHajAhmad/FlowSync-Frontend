@@ -1,35 +1,31 @@
 import React from 'react';
-import List from '@mui/material/List';
-import IconButton from '@mui/material/IconButton';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import MuiDrawer from '@mui/material/Drawer';
-import { styled, useTheme } from '@mui/material/styles';
-import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
-import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
-import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined';
-import ControlPointOutlinedIcon from '@mui/icons-material/ControlPointOutlined';
-import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
-import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
-import GridViewOutlinedIcon from '@mui/icons-material/GridViewOutlined';
-import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
 import { useNavigate } from 'react-router-dom';
-import { Avatar, Typography, Box } from '@mui/material';
+import {
+    HomeOutlined,
+    AssignmentOutlined,
+    GroupOutlined,
+    AccountCircleOutlined,
+    CalendarMonthOutlined,
+    AcUnit,
+    PersonAddAlt,
+    Analytics,
+    ExitToApp as ExitToAppIcon
+} from '@mui/icons-material';
+import MuiDrawer from '@mui/material/Drawer';
+import { 
+    Avatar, 
+    Typography, 
+    Box, 
+    List,
+    ListItem,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText,
+    styled
+} from '@mui/material';
 import defaultImg from '../../../../assets/images/default.jpg';
-import logo from '../../../../assets/images/logo.png';
 
-const drawerWidth = 240;
-
-const DrawerHeader = styled('div')(({ theme }) => ({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    padding: theme.spacing(0, 1),
-}));
+const drawerWidth = 260;
 
 const openedMixin = (theme) => ({
     width: drawerWidth,
@@ -99,105 +95,145 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 );
 
 const links = [
-    { "text": "Dashboard", "icon": <HomeOutlinedIcon />, "path": "/leader-dashboard" },
-    { "text": "Account Requests", "icon": <PersonAddAltIcon />, "path": "/requests" },
-    { "text": "Create New Task", "icon": <ControlPointOutlinedIcon />, "path": "/create-new-task" },
-    { "text": "Tasks", "icon": <AssignmentOutlinedIcon />, "path": "/tasks" },
-    { "text": "Team Members", "icon": <GroupOutlinedIcon />, "path": "/members" },
-    { "text": "Board", "icon": <GridViewOutlinedIcon />, "path": "/leader-board" },
-    { "text": "Calendar", "icon": <CalendarMonthOutlinedIcon />, "path": "/calendar" },
-    { "text": "Profile", "icon": <AccountCircleOutlinedIcon />, "path": "/profile" }
+    { text: "Dashboard", icon: <HomeOutlined />, path: "/leader-dashboard" },
+    { text: "Account Requests", icon: <PersonAddAlt />, path: "/account-requests" },
+    { text: "Freeze Task Requests", icon: <AcUnit />, path: "/freeze-requests" },
+    { text: "Tasks", icon: <AssignmentOutlined />, path: "/tasks" },
+    { text: "Team Members", icon: <GroupOutlined />, path: "/members" },
+    { text: "Calendar", icon: <CalendarMonthOutlined />, path: "/calendar" },
+    { text: "Profile", icon: <AccountCircleOutlined />, path: "/profile" },
+    { text: "Analytics", icon: <Analytics />, path: "/analytics" }
 ];
 
-export default function Sidebar({ open, handleDrawerClose }) {
-    const theme = useTheme();
+export default function Sidebar({ open }) {
+    
     const navigate = useNavigate();
 
     return (
-        <Drawer variant="permanent" open={open} className='sidebar'>
-            {open && (  // Only render DrawerHeader when sidebar is open
-                <DrawerHeader>
-                    <IconButton onClick={handleDrawerClose}>
-                        {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-                    </IconButton>
-                </DrawerHeader>
-            )}
-            {open && (
-                <Box display="flex" alignItems="center" sx={{ mt: -2.5, mx: 5 }}>
-                    <img src={logo} alt="Platform Logo" style={{ height: 40, marginRight: 10, filter: "brightness(160%)" }} />
-                    <Typography variant="h6" noWrap component="div"
+        <Drawer variant="permanent" open={open}>
+            <Box sx={{ 
+                background: 'linear-gradient(135deg, #064E3B, #0F766E)',
+                height: '100%',
+                color: 'white',
+                display: 'flex',
+                flexDirection: 'column'
+            }}>
+                <Box 
+                    sx={{ 
+                        p: 2,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: open ? 'flex-start' : 'center',
+                        transition: '0.2s'
+                    }}
+                >
+                    <Avatar
+                        src={defaultImg}
                         sx={{
-                            color: "whitesmoke"
-                        }}>
-                        FlowSync
-                    </Typography>
-                </Box>
-            )}
-            <Avatar sx={{
-                mx: "auto",
-                my: 1.5,
-                width: open ? 65 : 44,
-                height: open ? 65 : 44,
-                border: "2px solid grey",
-                transition: "0.3s"
-            }} alt="avatar" src={defaultImg} />
-            <Typography align='center' sx={{ fontSize: open ? 17 : 0, mb: 1 }}>John Doe</Typography>
-            <Typography align='center' sx={{
-                fontSize: open ? 15 : 0, mb: 1, color: "whitesmoke"
-            }}>Team Leader</Typography>
-            <List>
-                {links.map((item) => (
-                    <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
-                        <ListItemButton onClick={() => {
-                            navigate(item.path);
+                            width: open ? 50 : 40,
+                            height: open ? 50 : 40,
+                            border: "2px solid grey",
+                            transition: '0.2s'
                         }}
-                            sx={[
-                                {
+                    />
+                    {open && (
+                        <Box sx={{ ml: 2 }}>
+                            <Typography 
+                                sx={{ 
+                                    color: "white",
+                                    fontSize: '0.95rem',
+                                    fontWeight: 600,
+                                    lineHeight: 1.2
+                                }}
+                            >
+                                John Doe
+                            </Typography>
+                            <Typography 
+                                sx={{ 
+                                    color: "whitesmoke",
+                                    fontSize: '0.8rem',
+                                    opacity: 0.8
+                                }}
+                            >
+                                Team Leader
+                            </Typography>
+                        </Box>
+                    )}
+                </Box>
+
+                <List sx={{ flexGrow: 1, overflow: 'hidden' }}>
+                    {links.map((link) => (
+                        <ListItem key={link.text} disablePadding sx={{ display: 'block' }}>
+                            <ListItemButton
+                                sx={{
                                     minHeight: 48,
+                                    justifyContent: open ? 'initial' : 'center',
                                     px: 2.5,
-                                },
-                                open
-                                    ? {
-                                        justifyContent: 'initial',
+                                    '&:hover': {
+                                        backgroundColor: 'rgba(255, 255, 255, 0.08)'
                                     }
-                                    : {
+                                }}
+                                onClick={() => navigate(link.path)}
+                            >
+                                <ListItemIcon
+                                    sx={{
+                                        minWidth: 0,
+                                        mr: open ? 3 : 'auto',
                                         justifyContent: 'center',
-                                    },
-                            ]}
+                                        color: 'white'
+                                    }}
+                                >
+                                    {link.icon}
+                                </ListItemIcon>
+                                <ListItemText 
+                                    primary={link.text} 
+                                    sx={{ 
+                                        opacity: open ? 1 : 0,
+                                        color: 'white'
+                                    }} 
+                                />
+                            </ListItemButton>
+                        </ListItem>
+                    ))}
+                </List>
+
+                <List sx={{ mt: 'auto' }}>
+                    <ListItem disablePadding sx={{ display: 'block' }}>
+                        <ListItemButton
+                            sx={{
+                                minHeight: 48,
+                                justifyContent: open ? 'initial' : 'center',
+                                px: 2.5,
+                                '&:hover': {
+                                    backgroundColor: 'rgba(255, 255, 255, 0.08)'
+                                }
+                            }}
+                            onClick={() => navigate('/')}
                         >
                             <ListItemIcon
-                                sx={[
-                                    {
-                                        minWidth: 0,
-                                        justifyContent: 'center',
-                                    },
-                                    open
-                                        ? {
-                                            mr: 3,
-                                        }
-                                        : {
-                                            mr: 'auto',
-                                        },
-                                ]}
+                                sx={{
+                                    minWidth: 0,
+                                    mr: open ? 3 : 'auto',
+                                    justifyContent: 'center',
+                                    color: 'white'
+                                }}
                             >
-                                {item.icon}
+                                <ExitToAppIcon />
                             </ListItemIcon>
-                            <ListItemText
-                                primary={item.text}
-                                sx={[
-                                    open
-                                        ? {
-                                            opacity: 1,
-                                        }
-                                        : {
-                                            opacity: 0,
-                                        },
-                                ]}
+                            <ListItemText 
+                                primary="Sign Out" 
+                                sx={{ 
+                                    opacity: open ? 1 : 0,
+                                    color: 'white',
+                                    '& .MuiTypography-root': {
+                                        fontWeight: 600
+                                    }
+                                }} 
                             />
                         </ListItemButton>
                     </ListItem>
-                ))}
-            </List>
+                </List>
+            </Box>
         </Drawer>
-    )
+    );
 }
