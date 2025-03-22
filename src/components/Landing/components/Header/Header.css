@@ -15,6 +15,7 @@ header h1 {
     position: absolute;
     left: 65px;
     top: 38px;
+    font-size: 30px;
 }
 
 header nav {
