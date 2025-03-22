@@ -8,7 +8,6 @@ import getDesignTokens from '../../../../theme';
 import PageHeading from '../../../common/PageHeading';
 import Tasks from '../data/Tasks';
 
-
 const DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
     alignItems: 'center',
@@ -17,16 +16,11 @@ const DrawerHeader = styled('div')(({ theme }) => ({
     ...theme.mixins.toolbar,
 }));
 
-
 export default function MiniDrawer() {
     const [ open, setOpen ] = React.useState(false);
 
     const handleDrawerOpen = () => {
-        setOpen(true);
-    };
-
-    const handleDrawerClose = () => {
-        setOpen(false);
+        setOpen(!open);
     };
 
     const [ mode, setMode ] = React.useState(
@@ -40,7 +34,7 @@ export default function MiniDrawer() {
             <Box sx={{ display: 'flex' }}>
                 <CssBaseline />
                 <Topbar open={open} handleDrawerOpen={handleDrawerOpen} setMode={setMode} />
-                <Sidebar open={open} handleDrawerClose={handleDrawerClose} />
+                <Sidebar open={open} />
                 <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
                     <DrawerHeader />
                     <PageHeading title="Team Tasks Overview" subtitle="Manage and monitor the progress of your team's tasks efficiently" />
