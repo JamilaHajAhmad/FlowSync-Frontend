@@ -5,7 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Topbar from '../../../common/Topbar';
 import MSidebar from './MSidebar';
 import getDesignTokens from '../../../../theme';
-
+import Dashboard from '../data/Dashboard';
 
 const DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
@@ -21,11 +21,7 @@ export default function MiniDrawer() {
     const [ open, setOpen ] = React.useState(false);
 
     const handleDrawerOpen = () => {
-        setOpen(true);
-    };
-
-    const handleDrawerClose = () => {
-        setOpen(false);
+        setOpen(!open);
     };
 
     const [ mode, setMode ] = React.useState(
@@ -39,10 +35,9 @@ export default function MiniDrawer() {
             <Box sx={{ display: 'flex' }}>
                 <CssBaseline />
                 <Topbar open={open} handleDrawerOpen={handleDrawerOpen} setMode={setMode} />
-                <MSidebar open={open} handleDrawerClose={handleDrawerClose} />
+                <MSidebar open={open} />
                 <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-                    <DrawerHeader />
-                    Member Dashboard
+                    <Dashboard />
                 </Box>
             </Box>
         </ThemeProvider>
