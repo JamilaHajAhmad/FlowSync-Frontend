@@ -1,54 +1,38 @@
 import React from 'react';
-import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
-import MuiAppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import { styled, alpha } from '@mui/material/styles';
-import SearchIcon from '@mui/icons-material/Search';
-import InputBase from '@mui/material/InputBase';
-import { Stack, useTheme } from '@mui/material';
-import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined';
-import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
-import DarkModeOutlinedIcon from '@mui/icons-material/NightlightOutlined';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import ExitToAppOutlinedIcon from '@mui/icons-material/ExitToAppOutlined';
-import { Box } from '@mui/material';
 import { Link } from 'react-router-dom';
-
-//const drawerWidth = 240;
-
-const AppBar = styled(MuiAppBar, {
-    shouldForwardProp: (prop) => prop !== 'open',
-})(({ theme }) => ({
-    zIndex: theme.zIndex.drawer + 1,
-    background: 'linear-gradient(135deg, #064E3B, #0F766E)',
-    width: '100%', // Always keep full width
-    transition: theme.transitions.create(['margin'], {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.leavingScreen,
-    }),
-    '& .MuiToolbar-root': {
-        color: '#fff',
-    },
-    '& .MuiIconButton-root': {
-        color: '#fff',
-    },
-    '& .MuiInputBase-root': {
-        color: '#fff',
-    },
-}));
+import {
+    LightModeOutlined,
+    DarkModeOutlined,
+    NotificationsNoneOutlined,
+    SettingsOutlined,
+    Search as SearchIcon,
+    Menu as MenuIcon
+} from '@mui/icons-material';
+import { 
+    useTheme, 
+    IconButton,
+    InputBase, 
+    Stack, 
+    Box, 
+    Typography,
+    AppBar,
+    Toolbar
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+import logo from '../../assets/images/logo.png';
+import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 
 const Search = styled('div')(({ theme }) => ({
     position: 'relative',
-    borderRadius: theme.shape.borderRadius,
-    backgroundColor: alpha(theme.palette.common.white, 0.15),
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     '&:hover': {
-        backgroundColor: alpha(theme.palette.common.white, 0.25),
+        backgroundColor: 'rgba(255, 255, 255, 0.25)',
     },
     marginRight: theme.spacing(2),
     marginLeft: 0,
     width: '100%',
-    [ theme.breakpoints.up('sm') ]: {
+    [theme.breakpoints.up('sm')]: {
         marginLeft: theme.spacing(3),
         width: 'auto',
     },
@@ -66,57 +50,114 @@ const SearchIconWrapper = styled('div')(({ theme }) => ({
 
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
     color: 'inherit',
+    width: '100%',
     '& .MuiInputBase-input': {
         padding: theme.spacing(1, 1, 1, 0),
-        // vertical padding + font size from searchIcon
         paddingLeft: `calc(1em + ${theme.spacing(4)})`,
         transition: theme.transitions.create('width'),
         width: '100%',
-        [ theme.breakpoints.up('md') ]: {
+        [theme.breakpoints.up('md')]: {
             width: '20ch',
         },
     },
 }));
 
+const StyledAppBar = styled(AppBar, {
+    shouldForwardProp: (prop) => prop !== 'open',
+})(({ theme }) => ({
+    zIndex: theme.zIndex.drawer + 1,
+    width: '100%', // This ensures the Topbar spans full width
+    position: 'fixed',
+    left: 0,
+    height: 64, // Set a fixed height for the AppBar
+    '& .MuiToolbar-root': {
+        minHeight: 64, // Match the height
+        padding: theme.spacing(0, 3) // Add horizontal padding
+    }
+}));
+
+const TopbarOffset = styled('div')(({ theme }) => ({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    padding: theme.spacing(0, 1),
+    ...theme.mixins.toolbar, // This adds proper toolbar spacing
+    minHeight: '64px' // Match the AppBar height
+}));
 
 export default function Topbar({ open, handleDrawerOpen, setMode }) {
     const theme = useTheme();
 
     return (
-        <AppBar position="fixed" open={open}>
-            <Toolbar>
-                <IconButton
-                    color="inherit"
-                    aria-label="open drawer"
-                    onClick={handleDrawerOpen}
-                    edge="start"
-                    sx={[
-                        {
+        <>
+            <StyledAppBar 
+                position="fixed" 
+                sx={{
+                    background: 'linear-gradient(135deg, #064E3B, #0F766E)',
+                }}
+            >
+                <Toolbar>
+                    <IconButton
+                        color="inherit"
+                        aria-label={open ? "close drawer" : "open drawer"}
+                        onClick={handleDrawerOpen} // Same function handles both open and close
+                        edge="start"
+                        sx={{
                             marginRight: 5,
-                        },
-                        open && { display: 'none' },
-                    ]}
-                >
-                    <MenuIcon />
-                </IconButton>
-                <Search>
-                    <SearchIconWrapper>
-                        <SearchIcon />
-                    </SearchIconWrapper>
-                    <StyledInputBase
-                        placeholder="Search…"
-                        inputProps={{ 'aria-label': 'search' }}
-                    />
-                </Search>
-                <Box flexGrow={1} />
-                <Stack direction="row">
+                            color: 'white',
+                            '&:hover': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.08)'
+                            }
+                        }}
+                    >
+                        {open ? <MenuOpenIcon /> : <MenuIcon />}
+                    </IconButton>
+
+                    <Box 
+                        display="flex" 
+                        alignItems="center" 
+                    >
+                        <img 
+                            src={logo} 
+                            alt="FlowSync" 
+                            style={{ 
+                                height: 40,
+                                marginRight: 10,
+                                filter: "brightness(160%)"
+                            }} 
+                        />
+                        <Typography 
+                            variant="h6" 
+                            sx={{ 
+                                color: "whitesmoke",
+                                fontWeight: 600,
+                                display: { xs: 'none', sm: 'block' }
+                            }}
+                        >
+                            FlowSync
+                        </Typography>
+                    </Box>
+
+                    <Box sx={{ flexGrow: 1 }} />
+                    
+                    <Search>
+                        <SearchIconWrapper>
+                            <SearchIcon />
+                        </SearchIconWrapper>
+                        <StyledInputBase
+                            placeholder="Search…"
+                            inputProps={{ 'aria-label': 'search' }}
+                        />
+                    </Search>
+
+                    <Stack direction="row">
                     {theme.palette.mode === 'light' ? (
                         <IconButton color='inherit' onClick={() => {
                             localStorage.setItem("currentMode", theme.palette.mode === 'dark' ? 'light' : 'dark');
                             setMode((prevMode) =>
                                 prevMode === 'light' ? 'dark' : 'light')
                         }}>
-                            <LightModeOutlinedIcon />
+                            <LightModeOutlined />
                         </IconButton>
                     ) : (
                         <IconButton color='inherit' onClick={() => {
@@ -124,24 +165,21 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                             setMode((prevMode) =>
                                 prevMode === 'light' ? 'dark' : 'light');
                         }}>
-                            <DarkModeOutlinedIcon />
+                            <DarkModeOutlined />
                         </IconButton>
                     )}
                     <IconButton color='inherit'>
-                        <NotificationsNoneOutlinedIcon />
+                        <NotificationsNoneOutlined />
                     </IconButton>
                     <Box sx={{ color: "white", mt: 1 }}>
                         <IconButton color='inherit'>
-                            <Link to="/settings" style={{ color: 'white' }}> <SettingsOutlinedIcon /> </Link>
-                        </IconButton>
-                    </Box>
-                    <Box sx={{ color: "white", mt: 1 }}>
-                        <IconButton color='inherit'>
-                            <Link to="/" style={{ color: 'white' }}> <ExitToAppOutlinedIcon /> </Link>
+                            <Link to="/settings" style={{ color: 'white' }}> <SettingsOutlined /> </Link>
                         </IconButton>
                     </Box>
                 </Stack>
-            </Toolbar>
-        </AppBar>
-    )
+                </Toolbar>
+            </StyledAppBar>
+            <TopbarOffset /> 
+        </>
+    );
 }
