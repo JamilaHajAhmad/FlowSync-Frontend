@@ -1,18 +1,27 @@
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
-import { Avatar, Typography, Chip, Stack, Button } from "@mui/material";
+import { DataGrid, GridToolbarContainer } from "@mui/x-data-grid";
+import { 
+    Chip, 
+    Stack, 
+    Button,
+} from "@mui/material";
+import { Add as AddIcon } from '@mui/icons-material';
 import Box from "@mui/material/Box";
 import { useState } from "react";
+import CreateTaskForm from './CreateTaskForm';
 
 const getStatusColor = (status) => {
-    switch (status) {
-        case "Completed":
+    const normalizedStatus = status.toLowerCase();
+    switch (normalizedStatus) {
+        case "completed":
             return { color: "green", background: "#e0f7e9" };
-        case "Delayed":
+        case "delayed":
             return { color: "red", background: "#fde8e8" };
-        case "Ongoing":
+        case "ongoing":
             return { color: "orange", background: "#fff4e0" };
-        case "Frozen":
+        case "frozen":
             return { color: "#1976D2", background: "#E3F2FD" };
+        case "all":
+            return { color: "#059669", background: "#ecfdf5" };
         default:
             return { color: "#059669", background: "#ecfdf5" };
     }
@@ -26,11 +35,6 @@ const getColumns = (tab) => {
             flex: 1,
             minWidth: 200,
             headerAlign: "center",
-            renderCell: (params) => (
-                <Typography sx={{ textAlign: 'center' }}>
-                    {params.value}
-                </Typography>
-            )
         },
         {
             field: "frnNumber",
@@ -190,29 +194,69 @@ const rows = [
 
 export default function Tasks() {
     const [activeTab, setActiveTab] = useState('All');
+    const [openDialog, setOpenDialog] = useState(false);
+
+    const handleOpenDialog = () => setOpenDialog(true);
+    const handleCloseDialog = () => setOpenDialog(false);
 
     return (
         <Box sx={{ height: 520, width: "100%" }}>
-            <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-                {['All', 'Completed', 'Ongoing', 'Delayed', 'Frozen'].map((tab) => (
-                    <Button
-                        key={tab}
-                        variant="contained"
-                        onClick={() => setActiveTab(tab)}
-                        sx={{
-                            backgroundColor: getStatusColor(tab).background,
-                            color: getStatusColor(tab).color,
-                            '&:hover': {
-                                backgroundColor: getStatusColor(tab).background,
-                                opacity: 0.9
-                            }
-                        }}
-                    >
-                        {tab}
-                    </Button>
-                ))}
-            </Stack>
-            
+            <CreateTaskForm 
+                open={openDialog} 
+                onClose={handleCloseDialog} 
+            />
+
+            {/* Tabs and Create Button Section */}
+            <Box 
+                sx={{ 
+                    mb: 2,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}
+            >
+                <Stack direction="row" spacing={1}>
+                    {['All', 'Completed', 'Ongoing', 'Delayed', 'Frozen'].map((tab) => (
+                        <Button
+                            key={tab}
+                            variant={activeTab === tab ? "contained" : "outlined"}
+                            onClick={() => setActiveTab(tab)}
+                            size="small"
+                            sx={{
+                                backgroundColor: activeTab === tab ? getStatusColor(tab).background : 'transparent',
+                                color: getStatusColor(tab).color,
+                                borderColor: getStatusColor(tab).color,
+                                '&:hover': {
+                                    backgroundColor: getStatusColor(tab).background,
+                                    opacity: 0.9
+                                }
+                            }}
+                        >
+                            {tab}
+                        </Button>
+                    ))}
+                </Stack>
+
+                <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={handleOpenDialog}
+                    sx={{
+                        backgroundColor: '#059669',
+                        '&:hover': {
+                            backgroundColor: '#047857'
+                        },
+                        borderRadius: '50px',
+                        padding: '8px 16px',
+                        textTransform: 'none',
+                        fontWeight: 'bold'
+                    }}
+                >
+                    Create New Task
+                </Button>
+            </Box>
+
+            {/* DataGrid */}
             <DataGrid
                 rows={rows}
                 columns={getColumns(activeTab)}
@@ -225,15 +269,12 @@ export default function Tasks() {
                     },
                 }}
                 sx={{
-                    "& .MuiDataGrid-row": {
-                        padding: "10px 0"
-                    },
+                    overflowX: 'hidden',
                     "& .MuiDataGrid-cell": {
                         justifyContent: "center",
                         textAlign: "center",
                     },
                 }}
-                slots={{ toolbar: GridToolbar }}
             />
         </Box>
     );
