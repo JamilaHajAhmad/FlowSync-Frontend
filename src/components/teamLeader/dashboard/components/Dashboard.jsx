@@ -21,11 +21,7 @@ export default function MiniDrawer() {
     const [ open, setOpen ] = React.useState(false);
 
     const handleDrawerOpen = () => {
-        setOpen(true);
-    };
-
-    const handleDrawerClose = () => {
-        setOpen(false);
+        setOpen(!open);
     };
 
     const [ mode, setMode ] = React.useState(
@@ -39,10 +35,9 @@ export default function MiniDrawer() {
             <Box sx={{ display: 'flex' }}>
                 <CssBaseline />
                 <Topbar open={open} handleDrawerOpen={handleDrawerOpen} setMode={setMode} />
-                <Sidebar open={open} handleDrawerClose={handleDrawerClose} />
+                <Sidebar open={open} />
                 <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
                     <DrawerHeader />
-                    Dashboard
                 </Box>
             </Box>
         </ThemeProvider>
