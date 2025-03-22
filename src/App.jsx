@@ -1,4 +1,5 @@
 import React from 'react';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -7,21 +8,29 @@ import Register from './components/auth/Register/Register';
 import Login from './components/auth/Login/Login';
 import ForgetPassword from './components/auth/ForgetPassword/ForgetPassword';
 import Dashboard from './components/teamLeader/dashboard/components/Dashboard';
-import CreateTask from './components/teamLeader/dashboard/components/createTask';
 import Tasks from './components/teamLeader/dashboard/components/Tasks';
 import Members from './components/teamLeader/dashboard/components/Members';
-import Board from './components/teamLeader/dashboard/components/Board';
 import Calendar from './components/teamLeader/dashboard/components/Calendar';
 import ProfilePage from './components/common/profile/ProfilePage';
 import MDashboard from './components/teamMember/dashboard/components/MDashboard';
 import MTasks from './components/teamMember/dashboard/components/MTasks';
-import MBoard from './components/teamMember/dashboard/components/MBoard';
+import Board from './components/teamMember/dashboard/components/Board';
 import MCalendar from './components/teamMember/dashboard/components/MCalendar';
 import FreezeTask from './components/teamMember/dashboard/components/FreezeTask';
 import Settings from './components/common/Settings';
-import Requests from './components/teamLeader/dashboard/components/Requests';
+import ARequests from './components/teamLeader/dashboard/components/ARequests';
 import EditProfile from './components/common/EditProfile';
 import ChangePW from './components/common/ChangePW';
+import Analytics from './components/teamLeader/dashboard/components/Analytics';
+import FRequests from './components/teamLeader/dashboard/components/FRequests';
+import Layout from './components/teamLeader/analytics/layout/layout';
+import Bar from './components/teamLeader/analytics/bar/Bar';
+import HeatMap from './components/teamLeader/analytics/heatmap/HeatMap';
+import Line from './components/teamLeader/analytics/line/Line';
+import Pie from './components/teamLeader/analytics/pie/Pie';
+import Stream from './components/teamLeader/analytics/stream/Stream';
+import Stacked from './components/teamLeader/analytics/stacked/Stacked';
+
 
 const App = () => {
     return (
@@ -32,21 +41,30 @@ const App = () => {
                 <Route path="/login" element={<Login />} />
                 <Route path="/forgot-password" element={<ForgetPassword />} />
                 <Route path="/leader-dashboard" element={<Dashboard />} />
-                <Route path="/create-new-task" element={<CreateTask />} />
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/members" element={<Members />} />
-                <Route path="/leader-board" element={<Board />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/member-dashboard" element={<MDashboard />} />
                 <Route path="/member-tasks" element={<MTasks />} />
-                <Route path="/member-board" element={<MBoard />} />
+                <Route path="/member-board" element={<Board />} />
                 <Route path="/member-calendar" element={<MCalendar />} />
                 <Route path="/freeze-task" element={<FreezeTask />} />
                 <Route path="/settings" element={<Settings />} />
-                <Route path="/requests" element={<Requests />} />
+                <Route path="/account-requests" element={<ARequests />} />
+                <Route path="/freeze-requests" element={<FRequests />} />
                 <Route path="/settings/edit-profile" element={<EditProfile />} />
                 <Route path="/settings/Change-password" element={<ChangePW />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/analytics/bar" element={<Layout children={<Bar />} />} />
+                <Route path="/analytics/line" element={<Layout children={<Line />} />} />
+                <Route path="/analytics/pie" element={<Layout children={<Pie />} />} />
+                <Route path="/analytics/stream" element={<Layout children={<Stream />} />} />
+                <Route path="/analytics/stacked" element={<Layout children={<Stacked />} />} />
+                <Route path="/analytics/heatmap" element={<Layout children={<HeatMap />} />} />
+
+
+
             </Routes>
             <ToastContainer />
         </BrowserRouter>
