@@ -28,6 +28,7 @@
 .login-title {
     font-size: 2rem;
     font-weight: bold;
+    font-family: 'Times New Roman', Times, serif;
 }
 
 .login-subtitle {
@@ -83,8 +84,8 @@
 
 .login-button {
     width: fit-content;
-    background-color: #00897b;
-    color: white;
+    background-color: white;
+    color: #16a34a;
     padding: 10px 20px;
     border: none;
     margin-left: 36%;
@@ -98,10 +99,6 @@
     -ms-transition: background 0.3s ease;
     -o-transition: background 0.3s ease;
     font-family: "Oswald", sans-serif;
-}
-
-.login-button:hover {
-    background-color: #00695c;
 }
 
 .signup-option {
