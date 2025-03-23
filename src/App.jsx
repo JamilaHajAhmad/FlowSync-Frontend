@@ -14,7 +14,6 @@ import Calendar from './components/teamLeader/dashboard/components/Calendar';
 import ProfilePage from './components/common/profile/ProfilePage';
 import MDashboard from './components/teamMember/dashboard/components/MDashboard';
 import MTasks from './components/teamMember/dashboard/components/MTasks';
-import Board from './components/teamMember/dashboard/components/Board';
 import MCalendar from './components/teamMember/dashboard/components/MCalendar';
 import FreezeTask from './components/teamMember/dashboard/components/FreezeTask';
 import Settings from './components/common/Settings';
@@ -47,7 +46,6 @@ const App = () => {
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/member-dashboard" element={<MDashboard />} />
                 <Route path="/member-tasks" element={<MTasks />} />
-                <Route path="/member-board" element={<Board />} />
                 <Route path="/member-calendar" element={<MCalendar />} />
                 <Route path="/freeze-task" element={<FreezeTask />} />
                 <Route path="/settings" element={<Settings />} />
@@ -62,9 +60,6 @@ const App = () => {
                 <Route path="/analytics/stream" element={<Layout children={<Stream />} />} />
                 <Route path="/analytics/stacked" element={<Layout children={<Stacked />} />} />
                 <Route path="/analytics/heatmap" element={<Layout children={<HeatMap />} />} />
-
-
-
             </Routes>
             <ToastContainer />
         </BrowserRouter>
