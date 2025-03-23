@@ -10,8 +10,6 @@ import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
-import GridViewOutlinedIcon from '@mui/icons-material/GridViewOutlined';
-import AcUnitIcon from '@mui/icons-material/AcUnit';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, Typography, Box } from '@mui/material';
 import defaultImg from '../../../../assets/images/default.jpg';
@@ -88,9 +86,7 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 
 const links = [
     { "text": "Dashboard", "icon": <HomeOutlinedIcon />, "path": "/member-dashboard" },
-    { "text": "Freeze Task", "icon": <AcUnitIcon />, "path": "/freeze-task" },
     { "text": "Tasks", "icon": <AssignmentOutlinedIcon />, "path": "/member-tasks" },
-    { "text": "Board", "icon": <GridViewOutlinedIcon />, "path": "/member-board" },
     { "text": "Calendar", "icon": <CalendarMonthOutlinedIcon />, "path": "/member-calendar" },
     { "text": "Profile", "icon": <AccountCircleOutlinedIcon />, "path": "/profile" }
 ];
