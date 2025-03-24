@@ -5,7 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Topbar from '../../../common/Topbar';
 import MSidebar from './MSidebar';
 import getDesignTokens from '../../../../theme';
-import Dashboard from '../data/Dashboard';
+import Dashboard from '../pages/Dashboard';
 
 const DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
