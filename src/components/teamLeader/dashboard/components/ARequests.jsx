@@ -6,7 +6,7 @@ import Topbar from '../../../common/Topbar';
 import Sidebar from './Sidebar';
 import getDesignTokens from '../../../../theme';
 import PageHeading from '../../../common/PageHeading';
-import ARequests from '../data/ARequests';
+import ARequests from '../pages/ARequests';
 
 
 const DrawerHeader = styled('div')(({ theme }) => ({
