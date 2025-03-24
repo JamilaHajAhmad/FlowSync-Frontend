@@ -6,7 +6,7 @@ import Topbar from '../../../common/Topbar';
 import MSidebar from './MSidebar';
 import getDesignTokens from '../../../../theme';
 import PageHeading from '../../../common/PageHeading';
-import FreezeTaskForm from '../data/FreezeTaskForm';
+import FreezeTaskForm from '../pages/FreezeTaskForm';
 
 const DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
