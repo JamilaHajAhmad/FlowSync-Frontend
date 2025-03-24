@@ -7,7 +7,7 @@ import Landing from './components/Landing/Landing';
 import Register from './components/auth/Register/Register';
 import Login from './components/auth/Login/Login';
 import ForgetPassword from './components/auth/ForgetPassword/ForgetPassword';
-import Dashboard from './components/teamLeader/dashboard/components/Dashboard';
+import Home from './components/teamLeader/dashboard/components/Home';
 import Tasks from './components/teamLeader/dashboard/components/Tasks';
 import Members from './components/teamLeader/dashboard/components/Members';
 import Calendar from './components/teamLeader/dashboard/components/Calendar';
@@ -39,7 +39,7 @@ const App = () => {
                 <Route path="/register" element={<Register />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/forgot-password" element={<ForgetPassword />} />
-                <Route path="/leader-dashboard" element={<Dashboard />} />
+                <Route path="/leader-dashboard" element={<Home />} />
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/members" element={<Members />} />
                 <Route path="/calendar" element={<Calendar />} />
