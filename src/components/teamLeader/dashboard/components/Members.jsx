@@ -5,7 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Topbar from '../../../common/Topbar';
 import Sidebar from './Sidebar';
 import getDesignTokens from '../../../../theme';
-import Members from '../data/Members';
+import Members from '../pages/Members';
 import PageHeading from '../../../common/PageHeading';
 
 const DrawerHeader = styled('div')(({ theme }) => ({
