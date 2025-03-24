@@ -6,7 +6,7 @@ import Topbar from '../../../common/Topbar';
 import MSidebar from './MSidebar';
 import getDesignTokens from '../../../../theme';
 import PageHeading from '../../../common/PageHeading';
-import Tasks from '../data/Tasks';
+import Tasks from '../pages/Tasks';
 
 const DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
