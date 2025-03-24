@@ -6,7 +6,7 @@ import Topbar from '../../../common/Topbar';
 import Sidebar from './Sidebar';
 import getDesignTokens from '../../../../theme';
 import PageHeading from '../../../common/PageHeading';
-import Analytics from '../data/Analytics';
+import Analytics from '../pages/Analytics';
 
 const DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
