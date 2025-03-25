@@ -12,7 +12,7 @@ import Tasks from './components/teamLeader/dashboard/components/Tasks';
 import Members from './components/teamLeader/dashboard/components/Members';
 import Calendar from './components/teamLeader/dashboard/components/Calendar';
 import ProfilePage from './components/common/profile/ProfilePage';
-import MDashboard from './components/teamMember/dashboard/components/MDashboard';
+import MHome from './components/teamMember/dashboard/components/MHome';
 import MTasks from './components/teamMember/dashboard/components/MTasks';
 import MCalendar from './components/teamMember/dashboard/components/MCalendar';
 import FreezeTask from './components/teamMember/dashboard/components/FreezeTask';
@@ -44,7 +44,7 @@ const App = () => {
                 <Route path="/members" element={<Members />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/member-dashboard" element={<MDashboard />} />
+                <Route path="/member-dashboard" element={<MHome />} />
                 <Route path="/member-tasks" element={<MTasks />} />
                 <Route path="/member-calendar" element={<MCalendar />} />
                 <Route path="/freeze-task" element={<FreezeTask />} />
