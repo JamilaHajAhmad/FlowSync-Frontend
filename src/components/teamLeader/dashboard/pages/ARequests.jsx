@@ -1,4 +1,4 @@
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
@@ -58,7 +58,7 @@ const ARequests = () => {
             align: 'center',
             headerAlign: 'center',
             renderCell: (params) => (
-                <Box display="flex" gap={1} justifyContent="center" width="100%">
+                <Box display="flex" gap={1} justifyContent="center" width="100%" padding={1}>
                     <Button
                         variant="contained"
                         color="success"
@@ -88,21 +88,47 @@ const ARequests = () => {
                 <DataGrid 
                     rows={requests} 
                     columns={columns} 
-                    pageSize={5} 
                     disableRowSelectionOnClick
+                    pagination
+                    pageSizeOptions={[5, 10, 20]}
+                    initialState={{
+                        pagination: {
+                            paginationModel: { pageSize: 5, page: 0 },
+                        },
+                    }}
                     sx={{
-                        '& .MuiDataGrid-cell': {
-                            py: 2, // Add padding to cells
+                        overflowX: 'hidden',
+                        "& .MuiDataGrid-cell": {
+                            justifyContent: "center",
+                            textAlign: "center",
                         },
-                        '& .MuiDataGrid-row': {
-                            alignItems: 'center', // Center content vertically
+                        "& .MuiDataGrid-columnHeaders": {
+                            backgroundColor: '#F9FAFB',
                         },
-                        '& .MuiDataGrid-columnHeaders': {
-                            backgroundColor: 'primary.main',
-                            '& .MuiDataGrid-columnHeaderTitle': {
-                                fontWeight: 'bold',
-                            }
-                        }
+                        "& .MuiDataGrid-footerContainer": {
+                            display: 'flex',
+                            justifyContent: 'flex-start', // Align pagination controls to the left
+                            alignItems: 'center', // Vertically center the controls
+                            padding: '0 16px', // Add padding for spacing
+                        },
+                        "& .MuiTablePagination-toolbar": {
+                            justifyContent: 'flex-start', // Align toolbar content to the left
+                            alignItems: 'center', // Vertically center the toolbar content
+                        },
+                        "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
+                            display: 'flex',
+                            alignItems: 'center', // Vertically center the text
+                            justifyContent: 'center', // Horizontally center the text
+                        },
+                        "& .MuiTablePagination-select": {
+                            display: 'flex',
+                            alignItems: 'center', // Vertically center the dropdown
+                        },
+                        "& .MuiTablePagination-actions": {
+                            display: 'flex',
+                            alignItems: 'center', // Vertically center the navigation arrows
+                            marginLeft: 'auto', // Push the navigation arrows to the far right
+                        },
                     }}
                 />
             </Box>
