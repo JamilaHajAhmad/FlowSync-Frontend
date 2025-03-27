@@ -1,22 +1,22 @@
 import { Box, Button } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
-import AcUnitIcon from '@mui/icons-material/AcUnit'; // Ice icon for freeze
 import CancelIcon from "@mui/icons-material/Cancel";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 const initialRequests = [
     { 
         id: 1, 
-        taskId: "TSK-001", 
+        FRN: "TSK-001", 
         requesterName: "Omar Zaid", 
         reason: "Waiting for client feedback", 
         requestDate: "2024-03-20" 
     },
     { 
         id: 2, 
-        taskId: "TSK-002", 
+        FRN: "TSK-002", 
         requesterName: "Lina Khaled", 
         reason: "Blocked by technical issues", 
         requestDate: "2024-03-21" 
@@ -38,8 +38,8 @@ const FRequests = () => {
 
     const columns = [
         { 
-            field: "taskId", 
-            headerName: "Task ID", 
+            field: "FRN", 
+            headerName: "FRN", 
             flex: 1, 
             minWidth: 120,
             align: 'center',
@@ -73,25 +73,20 @@ const FRequests = () => {
             field: "actions",
             headerName: "Actions",
             flex: 1,
-            minWidth: 200,
+            minWidth: 250,
             sortable: false,
             align: 'center',
             headerAlign: 'center',
             renderCell: (params) => (
-                <Box display="flex" gap={1} justifyContent="center" width="100%">
+                <Box display="flex" gap={1} justifyContent="center" width="100%" padding={1}>
                     <Button
                         variant="contained"
-                        sx={{
-                            bgcolor: '#1976D2',
-                            '&:hover': {
-                                bgcolor: '#1565C0'
-                            }
-                        }}
+                        color="success"
                         size="small"
-                        startIcon={<AcUnitIcon />}
+                        startIcon={<CheckCircleIcon />}
                         onClick={() => handleFreeze(params.row.id)}
                     >
-                        Freeze
+                        Approve
                     </Button>
                     <Button
                         variant="contained"
@@ -113,22 +108,47 @@ const FRequests = () => {
                 <DataGrid 
                     rows={requests} 
                     columns={columns} 
-                    pageSize={5} 
                     disableRowSelectionOnClick
+                    pagination
+                    pageSizeOptions={[5, 10, 20]}
+                    initialState={{
+                        pagination: {
+                            paginationModel: { pageSize: 5, page: 0 },
+                        },
+                    }}
                     sx={{
-                        '& .MuiDataGrid-cell': {
-                            py: 2,
+                        overflowX: 'hidden',
+                        "& .MuiDataGrid-cell": {
+                            justifyContent: "center",
+                            textAlign: "center",
                         },
-                        '& .MuiDataGrid-row': {
-                            alignItems: 'center',
+                        "& .MuiDataGrid-columnHeaders": {
+                            backgroundColor: '#F9FAFB',
                         },
-                        '& .MuiDataGrid-columnHeaders': {
-                            backgroundColor: '#1976D2',
-                            color: 'black',
-                            '& .MuiDataGrid-columnHeaderTitle': {
-                                fontWeight: 'bold',
-                            }
-                        }
+                        "& .MuiDataGrid-footerContainer": {
+                            display: 'flex',
+                            justifyContent: 'flex-start', // Align pagination controls to the left
+                            alignItems: 'center', // Vertically center the controls
+                            padding: '0 16px', // Add padding for spacing
+                        },
+                        "& .MuiTablePagination-toolbar": {
+                            justifyContent: 'flex-start', // Align toolbar content to the left
+                            alignItems: 'center', // Vertically center the toolbar content
+                        },
+                        "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
+                            display: 'flex',
+                            alignItems: 'center', // Vertically center the text
+                            justifyContent: 'center', // Horizontally center the text
+                        },
+                        "& .MuiTablePagination-select": {
+                            display: 'flex',
+                            alignItems: 'center', // Vertically center the dropdown
+                        },
+                        "& .MuiTablePagination-actions": {
+                            display: 'flex',
+                            alignItems: 'center', // Vertically center the navigation arrows
+                            marginLeft: 'auto', // Push the navigation arrows to the far right
+                        },
                     }}
                 />
             </Box>
