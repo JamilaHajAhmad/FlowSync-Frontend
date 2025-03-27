@@ -1,8 +1,9 @@
-import { DataGrid, GridToolbarContainer } from "@mui/x-data-grid";
+import { DataGrid } from "@mui/x-data-grid";
 import { 
     Chip, 
     Stack, 
     Button,
+    Typography
 } from "@mui/material";
 import { Add as AddIcon } from '@mui/icons-material';
 import Box from "@mui/material/Box";
@@ -32,7 +33,7 @@ const getColumns = (tab) => {
         {
             field: "name",
             headerName: "Name",
-            flex: 1,
+            flex: 1.5, // Increased flex
             minWidth: 200,
             headerAlign: "center",
         },
@@ -86,18 +87,21 @@ const getColumns = (tab) => {
                     field: "priority",
                     headerName: "Priority",
                     flex: 1,
+                    minWidth: 100, // Added minWidth
                     headerAlign: "center"
                 },
                 {
                     field: "caseType",
                     headerName: "Case Type",
                     flex: 1,
+                    minWidth: 130, // Added minWidth
                     headerAlign: "center"
                 },
                 {
                     field: "caseSource",
                     headerName: "Case Source",
                     flex: 1,
+                    minWidth: 120, // Added minWidth
                     headerAlign: "center"
                 }
             ];
@@ -189,33 +193,94 @@ const rows = [
         caseType: "Investigation",
         caseSource: "Email"
     },
-    // ... add more rows with all fields
+    {
+        id: 1,
+        name: "Omar Zaid Al-Malek",
+        status: "Ongoing",
+        priority: "High",
+        frnNumber: "#123",
+        ossNumber: "OSS-456",
+        openDate: "08.08.2024",
+        dayLefts: 4,
+        daysDelayed: 0,
+        completedAt: "",
+        frozenAt: "",
+        caseType: "Investigation",
+        caseSource: "Email"
+    },
+    {
+        id: 1,
+        name: "Omar Zaid Al-Malek",
+        status: "Ongoing",
+        priority: "High",
+        frnNumber: "#123",
+        ossNumber: "OSS-456",
+        openDate: "08.08.2024",
+        dayLefts: 4,
+        daysDelayed: 0,
+        completedAt: "",
+        frozenAt: "",
+        caseType: "Investigation",
+        caseSource: "Email"
+    }, {
+        id: 1,
+        name: "Omar Zaid Al-Malek",
+        status: "Ongoing",
+        priority: "High",
+        frnNumber: "#123",
+        ossNumber: "OSS-456",
+        openDate: "08.08.2024",
+        dayLefts: 4,
+        daysDelayed: 0,
+        completedAt: "",
+        frozenAt: "",
+        caseType: "Investigation",
+        caseSource: "Email"
+    },
+    
 ];
 
-export default function Tasks() {
+export default function Tasks({ 
+    hideCreateButton, 
+    showTabs,
+    containerWidth = "100%", // New prop with default value
+    tabsAlignment = "right", // New prop with default value
+    showTitle = true, // New prop with default value
+    showToolbarBorder = true // Add new prop with default value
+}) {
     const [activeTab, setActiveTab] = useState('All');
     const [openDialog, setOpenDialog] = useState(false);
 
     const handleOpenDialog = () => setOpenDialog(true);
     const handleCloseDialog = () => setOpenDialog(false);
 
-    return (
-        <Box sx={{ height: 520, width: "100%" }}>
-            <CreateTaskForm 
-                open={openDialog} 
-                onClose={handleCloseDialog} 
-            />
-
-            {/* Tabs and Create Button Section */}
+    // Updated CustomToolbar component
+    const CustomToolbar = () => {
+        if (!showTabs) return null;
+        
+        return (
             <Box 
                 sx={{ 
-                    mb: 2,
+                    p: 2,
                     display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
+                    justifyContent: tabsAlignment === 'right' ? 'space-between' : 'flex-start',
+                    alignItems: 'center',
+                    borderBottom: showToolbarBorder ? '1px solid #E0E0E0' : 'none',
+                    gap: 2
                 }}
             >
-                <Stack direction="row" spacing={1}>
+                {showTitle && (
+                    <Typography variant="h6" sx={{ color: '#374151' }}>
+                        Team Tasks
+                    </Typography>
+                )}
+                <Stack 
+                    direction="row" 
+                    spacing={1}
+                    sx={{
+                        ml: tabsAlignment === 'left' && !showTitle ? 0 : 'auto'
+                    }}
+                >
                     {['All', 'Completed', 'Ongoing', 'Delayed', 'Frozen'].map((tab) => (
                         <Button
                             key={tab}
@@ -236,27 +301,41 @@ export default function Tasks() {
                         </Button>
                     ))}
                 </Stack>
-
-                <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={handleOpenDialog}
-                    sx={{
-                        backgroundColor: '#059669',
-                        '&:hover': {
-                            backgroundColor: '#047857'
-                        },
-                        borderRadius: '50px',
-                        padding: '8px 16px',
-                        textTransform: 'none',
-                        fontWeight: 'bold'
-                    }}
-                >
-                    Create New Task
-                </Button>
             </Box>
+        );
+    };
 
-            {/* DataGrid */}
+    return (
+        <Box sx={{ height: 520, width: containerWidth, flexGrow: 1 }}>
+            <CreateTaskForm 
+                open={openDialog} 
+                onClose={handleCloseDialog} 
+            />
+
+            {/* Create Button Section */}
+            {!hideCreateButton && (
+                <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={handleOpenDialog}
+                        sx={{
+                            backgroundColor: '#059669',
+                            '&:hover': {
+                                backgroundColor: '#047857'
+                            },
+                            borderRadius: '50px',
+                            padding: '8px 16px',
+                            textTransform: 'none',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        Create New Task
+                    </Button>
+                </Box>
+            )}
+
+            {/* DataGrid with integrated tabs */}
             <DataGrid
                 rows={rows}
                 columns={getColumns(activeTab)}
@@ -268,11 +347,20 @@ export default function Tasks() {
                         paginationModel: { pageSize: 5, page: 0 },
                     },
                 }}
+                slots={{
+                    toolbar: showTabs ? CustomToolbar : null,
+                }}
                 sx={{
                     overflowX: 'hidden',
                     "& .MuiDataGrid-cell": {
                         justifyContent: "center",
                         textAlign: "center",
+                    },
+                    "& .MuiDataGrid-columnHeaders": {
+                        backgroundColor: '#F9FAFB',
+                    },
+                    "& .MuiDataGrid-row:nth-of-type(even)": {
+                        backgroundColor: '#F9FAFB',
                     },
                 }}
             />
