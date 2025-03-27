@@ -1,14 +1,11 @@
 import * as React from "react";
 import Box from "@mui/material/Box";
-import {
-    DataGrid,
-    GridToolbar,
-} from "@mui/x-data-grid";
-import { Typography, Chip, IconButton } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close"; // استبدال DeleteIcon بـ CloseIcon
+import { DataGrid } from "@mui/x-data-grid";
+import { Typography, Chip, IconButton, Stack } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close"; // استيراد أيقونة الإكس
 
-export default function Members() {
-    const [ rows, setRows ] = React.useState(
+export default function Members({ showActions = true }) {
+    const [rows, setRows] = React.useState(
         Array.from({ length: 12 }, (_, i) => ({
             id: i + 1,
             name: `User ${i + 1}`,
@@ -83,20 +80,24 @@ export default function Members() {
         {
             field: "actions",
             headerName: "Actions",
-            flex: 0.5,
+            flex: 1,
             minWidth: 100,
-            sortable: false,
-            renderCell: (params) => (
-                <IconButton
-                    color="error"
-                    onClick={() => handleDelete(params.row.id)}
-                >
-                    <CloseIcon /> {/* استبدال أيقونة السلة بـ CloseIcon */}
-                </IconButton>
-            ),
+            renderCell: (params) => {
+                return showActions ? (
+                    <Stack direction="row" spacing={1}>
+                        <IconButton
+                            size="small"
+                            onClick={() => handleDelete(params.row.id)}
+                            sx={{ color: 'error.main' }}
+                        >
+                            <CloseIcon fontSize="small" /> {/* استبدال أيقونة السلة بإكس */}
+                        </IconButton>
+                    </Stack>
+                ) : null;
+            },
             headerAlign: "center"
-        },
-    ];
+        }
+    ].filter(col => showActions || col.field !== "actions"); // إخفاء عمود Actions إذا كان showActions = false
 
     return (
         <Box sx={{ height: 520, width: "100%" }}>
@@ -105,22 +106,39 @@ export default function Members() {
                 columns={columns}
                 disableRowSelectionOnClick
                 pagination
-                pageSizeOptions={[ 5, 10, 20 ]}
+                pageSizeOptions={[5, 10, 20]}
                 initialState={{
                     pagination: {
                         paginationModel: { pageSize: 5, page: 0 },
                     },
                 }}
                 sx={{
-                    "& .MuiDataGrid-row": {
-                        padding: "10px 0"
+                    '& .MuiDataGrid-cell': {
+                        py: 2,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center'
                     },
-                    "& .MuiDataGrid-cell": {
-                        justifyContent: "center",
-                        textAlign: "center",
+                    '& .MuiDataGrid-row': {
+                        alignItems: 'center',
                     },
+                    '& .MuiDataGrid-columnHeaders': {
+                        backgroundColor: '#1976D2',
+                        '& .MuiDataGrid-columnHeaderTitle': {
+                            fontWeight: 'bold',
+                        }
+                    },
+                    '& .MuiDataGrid-virtualScroller': {
+                        overflow: 'hidden'
+                    },
+                    '& .MuiDataGrid-cell:focus': {
+                        outline: 'none'
+                    },
+                    '& .MuiDataGrid-cellContent': {
+                        width: '100%',
+                        textAlign: 'center'
+                    }
                 }}
-                slots={{ toolbar: GridToolbar }}
             />
         </Box>
     );
