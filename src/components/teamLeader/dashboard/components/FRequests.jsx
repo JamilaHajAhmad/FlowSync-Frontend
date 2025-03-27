@@ -40,8 +40,8 @@ export default function MiniDrawer() {
                 <Sidebar open={open} />
                 <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
                     <DrawerHeader />
-                    <PageHeading title="Account Approval Requests"
-                    subtitle="Review and manage team member account requests" />
+                    <PageHeading title="Freeze Task Requests"
+                    subtitle="Review and handle the freeze task requests" />
                     <FRequests />
                 </Box>
             </Box>
