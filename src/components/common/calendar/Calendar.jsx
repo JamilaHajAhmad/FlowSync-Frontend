@@ -4,22 +4,19 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import Modal from 'react-modal';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
 import { toast } from 'react-toastify';
 import './Calendar.css';
 import { useTheme } from '@mui/material';
 
-Modal.setAppElement('#root');
-
 export default function Calendar() {
     const theme = useTheme();
-    const [ weekendsVisible, setWeekendsVisible ] = useState(true);
-    const [ currentEvents, setCurrentEvents ] = useState([]);
-    const [ isAddEventModalOpen, setIsAddEventModalOpen ] = useState(false);
-    const [ isConfirmModalOpen, setIsConfirmModalOpen ] = useState(false);
-    const [ selectedEvent, setSelectedEvent ] = useState(null);
-    const [ newEventTitle, setNewEventTitle ] = useState('');
-    const [ newEventTime, setNewEventTime ] = useState('');
+    const [currentEvents, setCurrentEvents] = useState([]);
+    const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [selectedEvent, setSelectedEvent] = useState(null);
+    const [newEventTitle, setNewEventTitle] = useState('');
+    const [newEventTime, setNewEventTime] = useState('');
 
     useEffect(() => {
         if (currentEvents.length > 0) {
@@ -48,10 +45,6 @@ export default function Calendar() {
             }
         }
     }, []);
-
-    function handleWeekendsToggle() {
-        setWeekendsVisible(!weekendsVisible);
-    }
 
     function handleDateSelect(selectInfo) {
         setIsAddEventModalOpen(true);
@@ -135,7 +128,7 @@ export default function Calendar() {
         // Check for overlap
         if (checkEventOverlap(event.start, event.end, currentEvents, event.id)) {
             dropInfo.revert();
-            alert('Cannot move event: Time slot is already occupied');
+            toast.error('Cannot move event: Time slot is already occupied');
             return;
         }
 
@@ -160,7 +153,7 @@ export default function Calendar() {
         // Check for overlap
         if (checkEventOverlap(event.start, event.end, currentEvents, event.id)) {
             resizeInfo.revert();
-            alert('Cannot resize event: Would overlap with existing event');
+            toast.error('Cannot resize event: Would overlap with existing event');
             return;
         }
 
@@ -199,16 +192,20 @@ export default function Calendar() {
     }
 
     function dayCellClassNames(info) {
-        const today = new Date().getDate();
-        const cellDay = info.date.getDate();
-        return cellDay === today ? 'current-day' : '';
+        const today = new Date();
+        const cellDate = info.date;
+        
+        // Check if the date is today (same day, month, and year)
+        const isToday = cellDate.getDate() === today.getDate() &&
+                        cellDate.getMonth() === today.getMonth() &&
+                        cellDate.getFullYear() === today.getFullYear();
+        
+        return isToday ? 'current-day' : '';
     }
 
     return (
-        <div className='calendar-page'>
+        <div className="calendar-page">
             <Sidebar
-                weekendsVisible={weekendsVisible}
-                handleWeekendsToggle={handleWeekendsToggle}
                 currentEvents={currentEvents}
             />
             <div className='calendar-main' style={{ color: theme.palette.mode === 'dark' ? 'black' : '#000000' }}>
@@ -224,7 +221,6 @@ export default function Calendar() {
                     selectable={true}
                     selectMirror={true}
                     dayMaxEvents={true}
-                    weekends={weekendsVisible}
                     select={handleDateSelect}
                     eventContent={renderEventContent} // custom render function
                     eventClick={handleEventClick}
@@ -238,47 +234,137 @@ export default function Calendar() {
                 />
             </div>
 
-            {/* Add Event Modal */}
-            <Modal
-                isOpen={isAddEventModalOpen}
-                onRequestClose={() => setIsAddEventModalOpen(false)}
-                contentLabel="Add Event"
-                className="modal"
-                overlayClassName="overlay"
+            {/* Add Event Dialog */}
+            <Dialog
+                open={isAddEventModalOpen}
+                onClose={() => setIsAddEventModalOpen(false)}
+                aria-labelledby="add-event-dialog-title"
+                sx={{
+                    '& .MuiDialog-paper': {
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        backgroundColor: 'white',
+                        padding: '1.5rem',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                        width: '500px', // Increased width for a rectangular shape
+                        maxWidth: '90vw',
+                        height: 'auto', // Adjust height dynamically based on content
+                    },
+                }}
             >
-                <h2 style={{ color: theme.palette.mode === 'dark' ? 'black' : '' }}>Add Event</h2>
-                <input
-                    type="text"
-                    placeholder="Event Title"
-                    value={newEventTitle}
-                    onChange={(e) => setNewEventTitle(e.target.value)}
-                />
-                <input
-                    type="time"
-                    value={newEventTime}
-                    onChange={(e) => setNewEventTime(e.target.value)}
-                />
-                <div className="modal-buttons">
-                    <button onClick={handleAddEvent}>Add Event</button>
-                    <button onClick={() => setIsAddEventModalOpen(false)}>Cancel</button>
-                </div>
-            </Modal>
+                <DialogTitle id="add-event-dialog-title" sx={{ fontWeight: 'bold', fontSize: '1.25rem', textAlign: 'center' }}>
+                    Add Event
+                </DialogTitle>
+                <DialogContent>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        label="Event Title"
+                        type="text"
+                        fullWidth
+                        value={newEventTitle}
+                        onChange={(e) => setNewEventTitle(e.target.value)}
+                        sx={{ marginBottom: '1rem' }}
+                    />
+                    <TextField
+                        margin="dense"
+                        placeholder="--:--"
+                        type="time"
+                        fullWidth
+                        value={newEventTime}
+                        onChange={(e) => setNewEventTime(e.target.value)}
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                    />
+                </DialogContent>
+                <DialogActions sx={{ justifyContent: 'space-between', padding: '1rem' }}>
+                    <Button
+                        onClick={() => setIsAddEventModalOpen(false)}
+                        color="black"
+                        variant="outlined"
+                        sx={{
+                            textTransform: 'none',
+                            borderRadius: '4px',
+                            padding: '0.5rem 1.5rem',
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleAddEvent}
+                        color="primary"
+                        variant="contained"
+                        sx={{
+                            textTransform: 'none',
+                            borderRadius: '4px',
+                            padding: '0.5rem 1.5rem',
+                        }}
+                    >
+                        Add
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
-            {/* Confirm Delete Modal */}
-            <Modal
-                isOpen={isConfirmModalOpen}
-                onRequestClose={() => setIsConfirmModalOpen(false)}
-                contentLabel="Confirm Delete"
-                className="modal"
-                overlayClassName="overlay"
+            {/* Confirm Delete Dialog */}
+            <Dialog
+                open={isConfirmModalOpen}
+                onClose={() => setIsConfirmModalOpen(false)}
+                aria-labelledby="confirm-delete-dialog-title"
+                sx={{
+                    '& .MuiDialog-paper': {
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        backgroundColor: 'white',
+                        padding: '1rem',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                        width: '500px', // Increased width for a rectangular shape
+                        maxWidth: '90vw',
+                        height: 'auto', // Adjust height dynamically based on content
+                    },
+                }}
             >
-                <h2 style={{ color: theme.palette.mode === 'dark' ? 'black' : '#000000' }}>Confirm Delete</h2>
-                <p style={{ color: theme.palette.mode === 'dark' ? 'black' : '#000000' }}>Are you sure you want to delete the event '{selectedEvent?.title}'?</p>
-                <div className="modal-buttons">
-                    <button onClick={handleConfirmDelete}>Yes</button>
-                    <button onClick={() => setIsConfirmModalOpen(false)}>No</button>
-                </div>
-            </Modal>
+                <DialogTitle id="confirm-delete-dialog-title" sx={{ fontWeight: 'bold', fontSize: '1.25rem', textAlign: 'center' }}>
+                    Confirm Delete
+                </DialogTitle>
+                <DialogContent>
+                    <p style={{ textAlign: 'center', margin: '0.1rem 0' }}>
+                        Are you sure you want to delete the event <b>'{selectedEvent?.title}'</b>?
+                    </p>
+                </DialogContent>
+                <DialogActions sx={{ justifyContent: 'space-between', padding: '1rem' }}>
+                    <Button
+                        onClick={() => setIsConfirmModalOpen(false)}
+                        color="black"
+                        variant="outlined"
+                        sx={{
+                            textTransform: 'none',
+                            borderRadius: '4px',
+                            padding: '0.5rem 1.5rem',
+                        }}
+                    >
+                        No
+                    </Button>
+                    <Button
+                        onClick={handleConfirmDelete}
+                        color="error"
+                        variant="contained"
+                        sx={{
+                            textTransform: 'none',
+                            borderRadius: '4px',
+                            padding: '0.5rem 1.5rem',
+                        }}
+                    >
+                        Yes
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </div>
     );
 }
@@ -303,7 +389,7 @@ function renderEventContent(eventInfo) {
     );
 }
 
-function Sidebar({ weekendsVisible, handleWeekendsToggle, currentEvents }) {
+function Sidebar({ currentEvents }) {
     return (
         <div className='calendar-sidebar'>
             <div className='calendar-sidebar-section'>
@@ -313,16 +399,6 @@ function Sidebar({ weekendsVisible, handleWeekendsToggle, currentEvents }) {
                     <li>Drag, drop, and resize events</li>
                     <li>Click an event to delete it</li>
                 </ul>
-            </div>
-            <div className='calendar-sidebar-section'>
-                <label>
-                    <input
-                        type='checkbox'
-                        checked={weekendsVisible}
-                        onChange={handleWeekendsToggle}
-                    ></input>
-                    toggle weekends
-                </label>
             </div>
             <div className='calendar-sidebar-section'>
                 <h2>All Events ({currentEvents.length})</h2>
