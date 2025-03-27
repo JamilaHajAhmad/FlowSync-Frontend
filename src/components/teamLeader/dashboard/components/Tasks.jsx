@@ -38,7 +38,14 @@ export default function MiniDrawer() {
                 <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
                     <DrawerHeader />
                     <PageHeading title="Team Tasks Overview" subtitle="Manage and monitor the progress of your team's tasks efficiently" />
-                    <Tasks />
+                    <Tasks 
+                        hideCreateButton={false} 
+                        showTabs={true}
+                        containerWidth="100%"
+                        tabsAlignment="left"
+                        showTitle={false}
+                        showToolbarBorder={false}
+                    />
                 </Box>
             </Box>
         </ThemeProvider>
