@@ -36,13 +36,37 @@ const DownloadDialog = ({ open, handleClose, handleDownload }) => {
                 Download Report
             </DialogTitle>
             <DialogContent sx={{ mt: 2 }}>
-                <FormControl fullWidth>
-                    <InputLabel>File Type</InputLabel>
+                <FormControl fullWidth variant="outlined">
+                    <InputLabel 
+                        id="file-type-label"
+                        sx={{
+                            '&.Mui-focused': {
+                                color: '#059669',
+                            },
+                            '&.MuiInputLabel-shrink': {
+                                background: 'white',
+                                px: 1,
+                            }
+                        }}
+                    >
+                        Select file type
+                    </InputLabel>
                     <Select
+                        labelId="file-type-label"
                         value={fileType}
-                        label="File Type"
+                        label="Select file type"
                         onChange={handleChange}
-                        sx={{ mt: 1 }}
+                        sx={{
+                            '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: '#e0e0e0',
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: '#059669',
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: '#059669',
+                            }
+                        }}
                     >
                         <MenuItem value="pdf">
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
