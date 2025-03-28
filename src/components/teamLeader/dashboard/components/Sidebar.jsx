@@ -6,10 +6,9 @@ import {
     GroupOutlined,
     AccountCircleOutlined,
     CalendarMonthOutlined,
-    AcUnit,
-    PersonAddAlt,
     Analytics,
-    ExitToApp as ExitToAppIcon
+    ExitToApp as ExitToAppIcon,
+    AddTask as AddTaskIcon
 } from '@mui/icons-material';
 import MuiDrawer from '@mui/material/Drawer';
 import { 
@@ -96,8 +95,7 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 
 const links = [
     { text: "Dashboard", icon: <HomeOutlined />, path: "/leader-dashboard" },
-    { text: "Account Requests", icon: <PersonAddAlt />, path: "/account-requests" },
-    { text: "Freeze Task Requests", icon: <AcUnit />, path: "/freeze-requests" },
+    { text: "Requests", icon: <AddTaskIcon />, path: "/requests" },
     { text: "Tasks", icon: <AssignmentOutlined />, path: "/tasks" },
     { text: "Team Members", icon: <GroupOutlined />, path: "/members" },
     { text: "Calendar", icon: <CalendarMonthOutlined />, path: "/calendar" },
