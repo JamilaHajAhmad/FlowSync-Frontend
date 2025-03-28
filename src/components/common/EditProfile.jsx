@@ -59,6 +59,7 @@ const EditProfile = () => {
         address: "San Jose, California",
         bio: "Passionate developer and tech enthusiast.",
         phone: "+1 123 456 7890",
+        major: "Computer Science",
         status: "On Duty"
     });
 
@@ -230,23 +231,16 @@ const EditProfile = () => {
                                     />
                                 </Grid>
 
-                                {/* Bio (Full Width) */}
-                                <Grid item xs={12}>
+                               
+                                <Grid item xs={12} sm={6}>
                                     <StyledTextField
                                         fullWidth
-                                        multiline
-                                        rows={3}
-                                        label="Bio"
-                                        name="bio"
-                                        value={formData.bio}
+                                        label="Major"
+                                        name="major"
+                                        type="text"
+                                        value={formData.major}
                                         onChange={handleChange}
-                                        placeholder="Write about yourself..."
-                                        InputLabelProps={{ 
-                                            shrink: true,
-                                            sx: {
-                                                bgcolor: 'background.paper'
-                                            }
-                                        }}
+                                        InputLabelProps={{ shrink: true }}
                                     />
                                 </Grid>
 
@@ -282,6 +276,26 @@ const EditProfile = () => {
                                         </StyledSelect>
                                     </FormControl>
                                 </Grid>
+                                 {/* Bio (Full Width) */}
+                                 <Grid item xs={12}>
+                                    <StyledTextField
+                                        fullWidth
+                                        multiline
+                                        rows={3}
+                                        label="Bio"
+                                        name="bio"
+                                        value={formData.bio}
+                                        onChange={handleChange}
+                                        placeholder="Write about yourself..."
+                                        InputLabelProps={{ 
+                                            shrink: true,
+                                            sx: {
+                                                bgcolor: 'background.paper'
+                                            }
+                                        }}
+                                    />
+                                </Grid>
+
                             </Grid>
 
                             {/* Save Button */}
