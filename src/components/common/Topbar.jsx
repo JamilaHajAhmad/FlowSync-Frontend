@@ -171,7 +171,7 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                     <IconButton color='inherit'>
                         <NotificationsNoneOutlined />
                     </IconButton>
-                    <IconButton color='inherit' sx={{ marginTop: -0.4 }}>
+                    <IconButton color='inherit' sx={{ marginTop: -1.1 }}>
                         <Link to="/settings" style={{ color: 'white' }}> <SettingsOutlined /> </Link>
                     </IconButton>
                 </Stack>
