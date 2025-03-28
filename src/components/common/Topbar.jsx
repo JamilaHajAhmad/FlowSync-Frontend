@@ -16,11 +16,16 @@ import {
     Box, 
     Typography,
     AppBar,
-    Toolbar
+    Toolbar,
+    Badge,
+    Menu
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import logo from '../../assets/images/logo.png';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
+import { NotificationContext } from "./notification/NotificationContext";
+import { useState, useContext } from 'react';
+import NotificationList from './notification/NotificationList';
 
 const Search = styled('div')(({ theme }) => ({
     position: 'relative',
@@ -87,6 +92,22 @@ const TopbarOffset = styled('div')(({ theme }) => ({
 
 export default function Topbar({ open, handleDrawerOpen, setMode }) {
     const theme = useTheme();
+    const { notifications, markAsRead } = useContext(NotificationContext);
+    const [anchorEl, setAnchorEl] = useState(null);
+
+    const unreadCount = notifications.filter((n) => !n.read).length;
+
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+        // Mark all notifications as read when opening the menu
+        if (unreadCount > 0) {
+            notifications
+                .filter(notification => !notification.read)
+                .forEach(notification => markAsRead(notification.id));
+        }
+    };
+
+    const handleClose = () => setAnchorEl(null);
 
     return (
         <>
@@ -168,11 +189,54 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                             <DarkModeOutlined />
                         </IconButton>
                     )}
-                    <IconButton color='inherit'>
-                        <NotificationsNoneOutlined />
+                    <IconButton 
+                        color='inherit' 
+                        onClick={handleClick}
+                        aria-controls="notification-menu"
+                        aria-haspopup="true"
+                    >
+                        <Badge badgeContent={unreadCount} color="error">
+                            <NotificationsNoneOutlined />
+                        </Badge>
                     </IconButton>
-                    <IconButton color='inherit' sx={{ marginTop: -1.1 }}>
-                        <Link to="/settings" style={{ color: 'white' }}> <SettingsOutlined /> </Link>
+
+                    <Menu
+                        id="notification-menu"
+                        anchorEl={anchorEl}
+                        open={Boolean(anchorEl)}
+                        onClose={handleClose}
+                        PaperProps={{
+                            sx: {
+                                maxHeight: 400,
+                                width: 350,
+                                mt: 1.5,
+                                '&::-webkit-scrollbar': {
+                                    width: '0.4em'
+                                },
+                                '&::-webkit-scrollbar-track': {
+                                    background: '#f1f1f1'
+                                },
+                                '&::-webkit-scrollbar-thumb': {
+                                    backgroundColor: '#888'
+                                }
+                            }
+                        }}
+                        anchorOrigin={{
+                            vertical: 'bottom',
+                            horizontal: 'right',
+                        }}
+                        transformOrigin={{
+                            vertical: 'top',
+                            horizontal: 'right',
+                        }}
+                    >
+                        <NotificationList onClose={handleClose} />
+                    </Menu>
+
+                    <IconButton color='inherit' sx={{ marginTop: -0.4 }}>
+                        <Link to="/settings" style={{ color: 'white' }}> 
+                            <SettingsOutlined /> 
+                        </Link>
                     </IconButton>
                 </Stack>
                 </Toolbar>
