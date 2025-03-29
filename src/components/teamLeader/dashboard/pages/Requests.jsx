@@ -2,46 +2,32 @@ import { Box, Button, Tabs, Tab } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useNotifications } from "../../../common/notification/NotificationContext";
+import { NotificationContext } from "../../../common/notification/NotificationContext";
 
 const initialRequests = {
     signup: [
         {
-            id: 1,
+            id: 101,
             type: 'signup',
             name: "Omar Zaid",
             email: "omar@example.com",
             date: "2024-03-20",
         },
         {
-            id: 1,
+            id: 102,
             type: 'signup',
             name: "Omar Zaid",
             email: "omar@example.com",
             date: "2024-03-20",
         },
-        {
-            id: 1,
-            type: 'signup',
-            name: "Omar Zaid",
-            email: "omar@example.com",
-            date: "2024-03-20",
-        },
-        {
-            id: 1,
-            type: 'signup',
-            name: "Omar Zaid",
-            email: "omar@example.com",
-            date: "2024-03-20",
-        },
-        
+        // ...more signup requests with unique IDs
     ],
     freeze: [
         {
-            id: 1,
+            id: 201,
             type: 'freeze',
             name: "Lina Khaled",
             email: "lina@example.com",
@@ -50,7 +36,7 @@ const initialRequests = {
             reason: "Medical Leave"
         },
         {
-            id: 1,
+            id: 202,
             type: 'freeze',
             name: "Lina Khaled",
             email: "lina@example.com",
@@ -58,29 +44,11 @@ const initialRequests = {
             frn: "TASK-123",
             reason: "Medical Leave"
         },
-        {
-            id: 1,
-            type: 'freeze',
-            name: "Lina Khaled",
-            email: "lina@example.com",
-            date: "2024-03-21",
-            frn: "TASK-123",
-            reason: "Medical Leave"
-        },
-        {
-            id: 1,
-            type: 'freeze',
-            name: "Lina Khaled",
-            email: "lina@example.com",
-            date: "2024-03-21",
-            frn: "TASK-123",
-            reason: "Medical Leave"
-        },
-        // ...more freeze requests
+        // ...more freeze requests with unique IDs
     ],
     completion: [
         {
-            id: 1,
+            id: 301,
             type: 'completion',
             name: "Ahmad Hassan",
             email: "ahmad@example.com",
@@ -88,45 +56,21 @@ const initialRequests = {
             frn: "TASK-123"       
         },
         {
-            id: 1,
+            id: 302,
             type: 'completion',
             name: "Ahmad Hassan",
             email: "ahmad@example.com",
             date: "2024-03-22",
             frn: "TASK-123"       
         },
-        {
-            id: 1,
-            type: 'completion',
-            name: "Ahmad Hassan",
-            email: "ahmad@example.com",
-            date: "2024-03-22",
-            frn: "TASK-123"       
-        },
-        {
-            id: 1,
-            type: 'completion',
-            name: "Ahmad Hassan",
-            email: "ahmad@example.com",
-            date: "2024-03-22",
-            frn: "TASK-123"       
-        },
-        {
-            id: 1,
-            type: 'completion',
-            name: "Ahmad Hassan",
-            email: "ahmad@example.com",
-            date: "2024-03-22",
-            frn: "TASK-123"       
-        },
-        // ...more completion requests
+        // ...more completion requests with unique IDs
     ]
 };
 
 const Requests = () => {
+    const { addNotification } = useContext(NotificationContext);
     const [ currentTab, setCurrentTab ] = useState(0);
     const [ requests, setRequests ] = useState(initialRequests);
-    const { addNotification } = useNotifications();
 
     const handleTabChange = (event, newValue) => {
         setCurrentTab(newValue);
@@ -226,20 +170,58 @@ const Requests = () => {
     };
 
     const handleApprove = (id, type) => {
+        const request = requests[type].find(req => req.id === id);
         setRequests(prev => ({
             ...prev,
-            [ type ]: prev[ type ].filter(request => request.id !== id)
+            [type]: prev[type].filter(request => request.id !== id)
         }));
+
+        // Add notification based on request type
+        const notificationData = {
+            id: Date.now(),
+            type: 'success',
+            title: `${type.charAt(0).toUpperCase() + type.slice(1)} Request Approved`,
+            message: getNotificationMessage(type, request),
+            time: new Date().toLocaleTimeString(),
+            read: false
+        };
+
+        addNotification(notificationData);
         toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} request approved successfully!`);
-        addNotification("request approved successfully", "success")
     };
 
     const handleReject = (id, type) => {
+        const request = requests[type].find(req => req.id === id);
         setRequests(prev => ({
             ...prev,
-            [ type ]: prev[ type ].filter(request => request.id !== id)
+            [type]: prev[type].filter(request => request.id !== id)
         }));
+
+        // Add notification based on request type
+        const notificationData = {
+            id: Date.now(),
+            type: 'error',
+            title: `${type.charAt(0).toUpperCase() + type.slice(1)} Request Rejected`,
+            message: getNotificationMessage(type, request),
+            time: new Date().toLocaleTimeString(),
+            read: false
+        };
+
+        addNotification(notificationData);
         toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} request rejected.`);
+    };
+
+    const getNotificationMessage = (type, request) => {
+        switch (type) {
+            case 'signup':
+                return `Account request for ${request.name} has been ${request.status}`;
+            case 'freeze':
+                return `Task freeze request (${request.frn}) from ${request.name} has been ${request.status}`;
+            case 'completion':
+                return `Task completion request (${request.frn}) from ${request.name} has been ${request.status}`;
+            default:
+                return `Request has been ${request.status}`;
+        }
     };
 
     return (
