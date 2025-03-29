@@ -23,7 +23,7 @@ import {
 import { styled } from '@mui/material/styles';
 import logo from '../../assets/images/logo.png';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
-import { NotificationContext } from "./notification/NotificationContext";
+import { NotificationContext } from "./notification/NotificationContext.js";
 import { useState, useContext } from 'react';
 import NotificationList from './notification/NotificationList';
 
@@ -92,19 +92,13 @@ const TopbarOffset = styled('div')(({ theme }) => ({
 
 export default function Topbar({ open, handleDrawerOpen, setMode }) {
     const theme = useTheme();
-    const { notifications, markAsRead } = useContext(NotificationContext);
+    const { notifications } = useContext(NotificationContext);
     const [anchorEl, setAnchorEl] = useState(null);
 
     const unreadCount = notifications.filter((n) => !n.read).length;
 
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);
-        // Mark all notifications as read when opening the menu
-        if (unreadCount > 0) {
-            notifications
-                .filter(notification => !notification.read)
-                .forEach(notification => markAsRead(notification.id));
-        }
     };
 
     const handleClose = () => setAnchorEl(null);
@@ -207,17 +201,19 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                         onClose={handleClose}
                         PaperProps={{
                             sx: {
-                                maxHeight: 400,
+                                maxHeight: '80vh',
                                 width: 350,
                                 mt: 1.5,
+                                overflowY: 'auto',
                                 '&::-webkit-scrollbar': {
-                                    width: '0.4em'
+                                    width: '6px'
                                 },
                                 '&::-webkit-scrollbar-track': {
                                     background: '#f1f1f1'
                                 },
                                 '&::-webkit-scrollbar-thumb': {
-                                    backgroundColor: '#888'
+                                    backgroundColor: '#888',
+                                    borderRadius: '3px'
                                 }
                             }
                         }}
