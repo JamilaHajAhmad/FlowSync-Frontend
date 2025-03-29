@@ -2,8 +2,7 @@ import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
-import { NotificationProvider } from "./components/common/notification/NotificationContext";
-import NotificationList from "./components/common/notification/NotificationList";
+import NotificationProvider from "./components/common/notification/NotificationProvider";
 import 'react-toastify/dist/ReactToastify.css';
 import Landing from './components/Landing/Landing';
 import Register from './components/auth/Register/Register';
@@ -30,13 +29,12 @@ import Line from './components/teamLeader/analytics/line/Line';
 import Pie from './components/teamLeader/analytics/pie/Pie';
 import Stream from './components/teamLeader/analytics/stream/Stream';
 import Stacked from './components/teamLeader/analytics/stacked/Stacked';
-
+import NotificationsPage from './components/common/notification/NotificationsPage';
 
 const App = () => {
     return (
         <NotificationProvider>
             <BrowserRouter>
-                <NotificationList />
                 <Routes>
                     <Route path="/" element={<Landing />} />
                     <Route path="/register" element={<Register />} />
@@ -62,6 +60,7 @@ const App = () => {
                     <Route path="/analytics/stream" element={<Layout children={<Stream />} />} />
                     <Route path="/analytics/stacked" element={<Layout children={<Stacked />} />} />
                     <Route path="/analytics/heatmap" element={<Layout children={<HeatMap />} />} />
+                    <Route path="/notifications" element={<NotificationsPage />}  />
                 </Routes>
                 <ToastContainer />
             </BrowserRouter>
