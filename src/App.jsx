@@ -30,6 +30,7 @@ import Pie from './components/teamLeader/analytics/pie/Pie';
 import Stream from './components/teamLeader/analytics/stream/Stream';
 import Stacked from './components/teamLeader/analytics/stacked/Stacked';
 import NotificationsPage from './components/common/notification/NotificationsPage';
+import ChatbotButton from './components/common/chat/ChatbotButton';
 
 const App = () => {
     return (
@@ -63,6 +64,8 @@ const App = () => {
                     <Route path="/notifications" element={<NotificationsPage />}  />
                 </Routes>
                 <ToastContainer />
+                <ChatbotButton />
+                {/* Add any other components that should be present on all pages */}
             </BrowserRouter>
         </NotificationProvider>
     );
