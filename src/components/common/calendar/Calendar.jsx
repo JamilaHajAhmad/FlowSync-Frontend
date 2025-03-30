@@ -47,6 +47,19 @@ export default function Calendar() {
     }, []);
 
     function handleDateSelect(selectInfo) {
+        const selectedDate = new Date(selectInfo.start);
+        const today = new Date();
+        
+        // Reset hours, minutes, seconds, and milliseconds for accurate date comparison
+        today.setHours(0, 0, 0, 0);
+        selectedDate.setHours(0, 0, 0, 0);
+
+        if (selectedDate < today) {
+            toast.error("Cannot add events in the past. Please select a present or a future date.");
+            selectInfo.view.calendar.unselect();
+            return;
+        }
+
         setIsAddEventModalOpen(true);
         setSelectedEvent(selectInfo);
     }
