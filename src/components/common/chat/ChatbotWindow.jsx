@@ -9,11 +9,11 @@ import {
     Slide,
     Fade
 } from "@mui/material";
-import { Close as CloseIcon, Send as SendIcon, SmartToy } from "@mui/icons-material";
+import { Send as SendIcon, SmartToy } from "@mui/icons-material";
 import { sendMessageToAI } from "./ChatbotAPI"; 
 import LoadingDots from './LoadingDots';
 
-const ChatbotWindow = ({ onClose, open }) => {
+const ChatbotWindow = ({ open }) => {
     const [messages, setMessages] = useState([
         { text: "Hello! How can I assist you today?", sender: "bot" }
     ]);
@@ -67,9 +67,10 @@ const ChatbotWindow = ({ onClose, open }) => {
                     elevation={6}
                     sx={{
                         position: "fixed",
-                        bottom: 80,
+                        bottom: 80,  // Keep bottom spacing
                         right: 20,
                         width: 380,
+                        maxHeight: "calc(100vh - 160px)", // Add space from top
                         height: 500,
                         borderRadius: 3,
                         display: "flex",
@@ -83,7 +84,7 @@ const ChatbotWindow = ({ onClose, open }) => {
                         }
                     }}
                 >
-                    {/* Header */}
+                    {/* Header - Removed close icon */}
                     <Box
                         sx={{
                             display: "flex",
@@ -105,15 +106,6 @@ const ChatbotWindow = ({ onClose, open }) => {
                                 Always here to help
                             </Typography>
                         </Box>
-                        <IconButton 
-                            onClick={onClose} 
-                            sx={{ 
-                                color: "#fff",
-                                '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.1)' }
-                            }}
-                        >
-                            <CloseIcon />
-                        </IconButton>
                     </Box>
 
                     {/* Messages Area */}
