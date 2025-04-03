@@ -14,6 +14,8 @@ import { useNavigate } from 'react-router-dom';
 import { Avatar, Typography, Box } from '@mui/material';
 import defaultImg from '../../../../assets/images/default.jpg';
 import { ExitToApp as ExitToAppIcon } from '@mui/icons-material';
+import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
+import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 
 const drawerWidth = 260;
 
@@ -88,7 +90,9 @@ const links = [
     { "text": "Dashboard", "icon": <HomeOutlinedIcon />, "path": "/member-dashboard" },
     { "text": "Tasks", "icon": <AssignmentOutlinedIcon />, "path": "/member-tasks" },
     { "text": "Calendar", "icon": <CalendarMonthOutlinedIcon />, "path": "/member-calendar" },
-    { "text": "Profile", "icon": <AccountCircleOutlinedIcon />, "path": "/profile" }
+    { "text": "Profile", "icon": <AccountCircleOutlinedIcon />, "path": "/profile" },
+    { "text": "FAQs", "icon": <QuestionMarkIcon />, "path": "/faq" },
+    { "text": "Feedback & Support", "icon": <SupportAgentIcon />, "path": "/feedback&support" }
 ];
 
 
