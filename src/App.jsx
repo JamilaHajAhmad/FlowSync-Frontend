@@ -31,6 +31,8 @@ import Stream from './components/teamLeader/analytics/stream/Stream';
 import Stacked from './components/teamLeader/analytics/stacked/Stacked';
 import NotificationsPage from './components/common/notification/NotificationsPage';
 import ChatbotButton from './components/common/chat/ChatbotButton';
+import FAQ from './components/teamMember/dashboard/components/FAQ';
+import FeedbackSupport from './components/teamMember/dashboard/components/FeedbackSupport';
 
 const App = () => {
     return (
@@ -62,6 +64,8 @@ const App = () => {
                     <Route path="/analytics/stacked" element={<Layout children={<Stacked />} />} />
                     <Route path="/analytics/heatmap" element={<Layout children={<HeatMap />} />} />
                     <Route path="/notifications" element={<NotificationsPage />}  />
+                    <Route path="/faq" element={<FAQ />} />
+                    <Route path="/feedback&support" element={<FeedbackSupport />} />
                 </Routes>
                 <ToastContainer />
                 <ChatbotButton />
