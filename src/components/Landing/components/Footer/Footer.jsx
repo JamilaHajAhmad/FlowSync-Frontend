@@ -5,22 +5,23 @@ import facebook from '../../../../assets/images/facebook.png';
 import linkedin from '../../../../assets/images/linkedin.png';
 import x from '../../../../assets/images/x.png';
 import { motion as Motion } from 'framer-motion';
-import { scaleUp } from '../../../../variants';
+import { itemVariants, containerVariants } from '../../../../variants';
 import { scrollIntoSection } from '../../../../utils';
 
 const Footer = () => {
     return (
-        <Motion.footer className="footer"
-            variants={scaleUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.2 }}>
-            <div className="footer-container">
-                <div className="footer-brand">
+        <footer className="footer">
+            <Motion.div 
+                className="footer-container"
+                variants={containerVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.2 }}>
+                <Motion.div className="footer-brand" variants={itemVariants}>
                     <img src={logo} alt="FlowSync Logo" className="footer-logo" />
                     <p>Boost team collaboration with seamless task management.</p>
-                </div>
-                <div className="footer-links">
+                </Motion.div>
+                <Motion.div className="footer-links" variants={itemVariants}>
                     <h3>Quick Links</h3>
                     <ul>
                         <li onClick={() => scrollIntoSection("home")}><a href="#home">Home</a></li>
@@ -28,33 +29,35 @@ const Footer = () => {
                         <li onClick={() => scrollIntoSection("how-it-works")}><a href="#how-it-works">How It Works</a></li>
                         <li onClick={() => scrollIntoSection("about")}><a href="#about">About</a></li>
                     </ul>
-                </div>
-                <div className="footer-support">
+                </Motion.div>
+                <Motion.div className="footer-support" variants={itemVariants}>
                     <h3>Support</h3>
                     <ul>
                         <li><a href="/help">Help Center</a></li>
                         <li><a href="/privacy">Privacy Policy</a></li>
                         <li><a href="/terms">Terms of Service</a></li>
                     </ul>
-                </div>
-                <div className="footer-newsletter">
+                </Motion.div>
+                <Motion.div className="footer-newsletter" variants={itemVariants}>
                     <h3>Stay Updated</h3>
                     <p>Subscribe to get the latest updates and news.</p>
                     <form>
                         <input type="email" placeholder="Enter your email" required />
                         <button type="submit">Subscribe</button>
                     </form>
-                </div>
-            </div>
-            <div className="footer-bottom">
+                </Motion.div>
+            </Motion.div>
+            <Motion.div 
+                className="footer-bottom"
+                variants={itemVariants}>
                 <p>© {new Date().getFullYear()} FlowSync. All rights reserved.</p>
                 <div className="social-icons">
                     <a href="https://facebook.com"><img src={facebook} alt="Facebook" /></a>
                     <a href="https://x.com"><img src={x} alt="Twitter-X" /></a>
                     <a href="https://linkedin.com"><img src={linkedin} alt="LinkedIn" /></a>
                 </div>
-            </div>
-        </Motion.footer>
+            </Motion.div>
+        </footer>
     )
 }
 
