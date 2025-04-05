@@ -7,13 +7,33 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 const getStatusColor = (status) => {
   switch (status) {
     case "Ongoing":
-      return { color: "orange", icon: <TaskIcon /> };
+      return { 
+        color: "#fff4e0",  // Light orange background
+        textColor: "orange", // Orange text
+        icon: <TaskIcon sx={{ color: "#ed6c02" }} />,
+        borderLeftColor: "#ed6c02"
+      };
     case "Frozen":
-      return { color: "blue", icon: <AcUnit /> };
+      return { 
+        color: "#E3F2FD",  // Light blue background
+        textColor: "#1976D2", // Blue text
+        icon: <AcUnit sx={{ color: "#1976D2" }} />,
+        borderLeftColor: "#1976D2"
+      };
     case "Delayed":
-      return { color: "red", icon: <ErrorOutlineIcon /> };
+      return { 
+        color: "#fde8e8",  // Light red background
+        textColor: "red", // Red text
+        icon: <ErrorOutlineIcon sx={{ color: "#d32f2f" }} />,
+        borderLeftColor: "#d32f2f"
+      };
     default:
-      return { color: "black", icon: null };
+      return { 
+        color: "#ecfdf5",  // Light green background
+        textColor: "#059669", // Green text
+        icon: null,
+        borderLeftColor: "#059669"
+      };
   }
 };
 
@@ -49,9 +69,16 @@ const TaskReminderCard = () => {
   return (
     <>
       {tasks.map((task, index) => {
-        const { color, icon } = getStatusColor(task.status);
+        const { color, textColor, icon, borderLeftColor } = getStatusColor(task.status);
         return (
-          <Card key={index} sx={{ maxWidth: 400, borderLeft: `5px solid ${color}`, mb: 2 }}>
+          <Card 
+            key={index} 
+            sx={{ 
+              maxWidth: 400, 
+              borderLeft: `5px solid ${borderLeftColor}`, 
+              mb: 2, 
+            }}
+          >
             <CardContent>
               <Box display="flex" alignItems="center" gap={1}>
                 {icon}
@@ -61,7 +88,14 @@ const TaskReminderCard = () => {
                 {task.description}
               </Typography>
               <Box display="flex" justifyContent="space-between" mt={2}>
-                <Chip label={task.status} sx={{ bgcolor: color, color: "white" }} />
+                <Chip 
+                  label={task.status} 
+                  sx={{ 
+                    bgcolor: color,
+                    color: textColor,
+                    borderRadius: '16px'
+                  }} 
+                />
                 <Typography variant="body2">Due: {task.dueDate}</Typography>
               </Box>
             </CardContent>
