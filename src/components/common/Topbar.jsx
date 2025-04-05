@@ -165,7 +165,7 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                         />
                     </Search>
 
-                    <Stack direction="row">
+                    <Stack direction="row" spacing={-0.5}>
                     {theme.palette.mode === 'light' ? (
                         <IconButton color='inherit' onClick={() => {
                             localStorage.setItem("currentMode", theme.palette.mode === 'dark' ? 'light' : 'dark');
@@ -229,9 +229,9 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                         <NotificationList onClose={handleClose} />
                     </Menu>
 
-                    <IconButton color='inherit' sx={{ marginTop: -0.4 }}>
+                    <IconButton color='inherit'>
                         <Link to="/settings" style={{ color: 'white' }}> 
-                            <SettingsOutlined /> 
+                            <SettingsOutlined sx={{ mt: -0.5 }}/> 
                         </Link>
                     </IconButton>
                 </Stack>
