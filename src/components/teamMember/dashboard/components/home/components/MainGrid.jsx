@@ -91,7 +91,7 @@ export default function MainGrid() {
         <Grid item xs={12} md={6}>
           <TasksOverview />
         </Grid>
-        <Grid item xs={12} md={6} sx={{ mt: (theme) => theme.spacing(19), ml: (theme) => theme.spacing(3) }}>
+        <Grid item xs={12} md={6} sx={{ mt: (theme) => theme.spacing(19), ml: (theme) => theme.spacing(5) }}>
           <KpiCard title="KPI" value={72} />
         </Grid>
       </Grid>
