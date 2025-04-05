@@ -1,16 +1,22 @@
-import { Box, Typography, Card, IconButton, Menu, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Button } from "@mui/material";
-import { MoreVert, Schedule, CalendarToday, ErrorOutline, CheckCircleOutline } from "@mui/icons-material";
+import { Box, Typography, Card, Dialog, DialogTitle, DialogContent, DialogActions, Button } from "@mui/material";
+import { Schedule, CalendarToday, ErrorOutline, CheckCircleOutline } from "@mui/icons-material";
 import { useState } from "react";
 import FreezeTaskForm from './FreezeTaskForm';
+import { DndContext, DragOverlay, closestCorners } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import UnfreezeTaskForm from './UnfreezeTaskForm';
+import CompleteTaskForm from './CompleteTaskForm';
 
 const getStatusColor = (status) => {
   switch (status) {
     case "Completed":
-      return { color: "green", background: "#e0f7e9" };
+      return { color: "#059669", background: "#e0f7e9" };
     case "Delayed":
-      return { color: "red", background: "#fde8e8" };
+      return { color: "#d32f2f", background: "#fde8e8" };
     case "Ongoing":
-      return { color: "orange", background: "#fff4e0" };
+      return { color: "#ed6c02", background: "#fff4e0" };
     case "Frozen":
       return { color: "#1976D2", background: "#E3F2FD" };
     default:
@@ -42,40 +48,53 @@ const rows = [
     freezingReason: "Waiting for client feedback"
   },
   { id: 3, status: "Delayed", frnNumber: "#125", openDate: "06.08.2024", dayLefts: 2 },
-  { id: 4, status: "Completed", frnNumber: "#126", openDate: "05.08.2024", dayLefts: 0, completedDate: "10.08.2024" }
+  { id: 4, status: "Completed", frnNumber: "#126", openDate: "05.08.2024", dayLefts: 0, completedDate: "10.08.2024" },
+ 
+  
+
+  { 
+    id: 10, 
+    status: "Ongoing", 
+    frnNumber: "#123", 
+    ossNumber: "OSS-001",
+    openDate: "08.08.2024", 
+    dayLefts: 5,
+    priority: "High",
+    progress: "75%",
+    description: "Implement new feature"
+  },
+  
 ];
 
 const statusColumns = ["Ongoing", "Frozen", "Delayed", "Completed"];
 
-const TaskCard = ({ task, onActionClick }) => {
-  const [anchorEl, setAnchorEl] = useState(null);
+const isMovementAllowed = (source, destination) => {
+  if (!source || !destination) return false;
+
+  const invalidMoves = {
+    'Ongoing': ['Delayed'],
+    'Delayed': ['Ongoing',],
+    'Frozen': ['Completed', 'Delayed'],
+    'Completed': ['Ongoing', 'Delayed', 'Frozen'],
+  };
+
+  return !invalidMoves[source]?.includes(destination);
+};
+
+const TaskCard = ({ task }) => {
   const [openDialog, setOpenDialog] = useState(false);
-  const [openFreezeDialog, setOpenFreezeDialog] = useState(false); // Add this state
+  
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: task.id.toString() });
 
-  const handleMenuOpen = (event) => {
-    event.stopPropagation();
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = (event) => {
-    if (event) {
-      event.stopPropagation(); // Prevent card click when closing menu
-    }
-    setAnchorEl(null);
-  };
-
-  const handleMenuItemClick = (action) => (event) => {
-    event.stopPropagation(); // Prevent card click
-    handleMenuClose();
-    onActionClick(action, task);
-  };
-
-  const handleCardClick = () => setOpenDialog(true);
-
-  const handleFreezeClick = (event) => {
-    event.stopPropagation();
-    handleMenuClose();
-    setOpenFreezeDialog(true);
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
   };
 
   const renderCardInfo = () => {
@@ -227,53 +246,24 @@ const TaskCard = ({ task, onActionClick }) => {
   };
 
   return (
-    <>
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      style={style}
+    >
       <Card
-        onClick={handleCardClick}
+        onClick={() => setOpenDialog(true)}
         sx={{
           p: 2,
           mb: 2,
-          cursor: 'pointer',
+          cursor: 'grab',
           '&:hover': { boxShadow: 3 },
           position: 'relative',
           borderLeft: `4px solid ${getStatusColor(task.status).color}`
         }}
       >
-        {task.status !== "Completed" && (
-          <IconButton
-            size="small"
-            sx={{ position: 'absolute', top: 8, right: 8 }}
-            onClick={handleMenuOpen}
-          >
-            <MoreVert />
-          </IconButton>
-        )}
-
         {renderCardInfo()}
-
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={handleMenuClose}
-          onClick={(e) => e.stopPropagation()} // Prevent card click when clicking menu
-        >
-          {(task.status === "Ongoing" || task.status === "Delayed") && (
-            <MenuItem onClick={handleMenuItemClick('complete')}>
-              Mark as Completed
-            </MenuItem>
-          )}
-          {task.status === "Frozen" && (
-            <MenuItem onClick={handleMenuItemClick('unfreeze')}>
-              Unfreeze Task
-            </MenuItem>
-          )}
-          {task.status !== "Frozen" && (
-            <MenuItem onClick={handleFreezeClick}>
-              Request Freeze
-            </MenuItem>
-          )}
-        </Menu>
-
       </Card>
 
       <Dialog 
@@ -298,86 +288,225 @@ const TaskCard = ({ task, onActionClick }) => {
           <Button onClick={() => setOpenDialog(false)}>Close</Button>
         </DialogActions>
       </Dialog>
-
-      <FreezeTaskForm
-        open={openFreezeDialog}
-        onClose={() => setOpenFreezeDialog(false)}
-        task={task}
-      />
-    </>
+    </div>
   );
 };
 
 const Tasks = () => {
+  const [tasksList, setTasksList] = useState(rows);
+  const [activeId, setActiveId] = useState(null);
+  const [openFreezeDialog, setOpenFreezeDialog] = useState(false);
+  const [openUnfreezeDialog, setOpenUnfreezeDialog] = useState(false);
+  const [openCompleteDialog, setOpenCompleteDialog] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [pendingStatusChange, setPendingStatusChange] = useState(null);
+
   const handleTaskAction = (action, task) => {
     console.log(`${action} action for task`, task);
-    // Implement action handling
+    // Implement action handling logic here
+    const newTasks = tasksList.map(t => 
+      t.id === task.id ? { ...t, status: pendingStatusChange } : t
+    );
+    setTasksList(newTasks);
+    setPendingStatusChange(null);
+  };
+
+  const handleDragStart = (event) => {
+    setActiveId(event.active.id);
+  };
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    
+    if (!over) return;
+
+    const activeTask = tasksList.find(task => task.id.toString() === active.id);
+    const overContainer = over.data.current?.sortable?.containerId || over.id;
+
+    // Check if movement is allowed
+    if (!isMovementAllowed(activeTask.status, overContainer)) {
+      return;
+    }
+
+    const updatedTask = { ...activeTask };
+    setPendingStatusChange(overContainer);
+
+    // Handle different status changes
+    if (overContainer === 'Frozen') {
+      setSelectedTask(updatedTask);
+      setOpenFreezeDialog(true);
+      return;
+    }
+
+    if (activeTask.status === 'Frozen' && overContainer === 'Ongoing') {
+      setSelectedTask(updatedTask);
+      setOpenUnfreezeDialog(true);
+      return;
+    }
+
+    if (overContainer === 'Completed') {
+      setSelectedTask(updatedTask);
+      setOpenCompleteDialog(true);
+      return;
+    }
+
+    // For other status changes
+    handleTaskAction('updateStatus', { ...updatedTask, status: overContainer });
+    setActiveId(null);
   };
 
   return (
-    <Box sx={{ 
-      height: '100%',
-      display: 'flex',
-      gap: 2,
-      p: 2,
-    }}>
-      {statusColumns.map(status => (
-        <Box
-          key={status}
-          sx={{
-            flex: 1, // Use flex: 1 to distribute space evenly
-            minWidth: 0, // Allow the box to shrink below its content size
-            backgroundColor: '#f5f5f5',
-            borderRadius: 2,
-            p: 2,
-            borderTop: `3px solid ${getStatusColor(status).color}`,
-            display: 'flex',
-            flexDirection: 'column'
-          }}
-        >
-          <Typography
-            variant="h6"
+    <DndContext
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      collisionDetection={closestCorners}
+    >
+      <Box
+        sx={{
+          height: 'calc(100vh - 32px)', // Full page height minus padding
+          display: 'flex',
+          gap: 2,
+          p: 2,
+          overflowX: 'hidden', // Prevent horizontal scrolling
+          overflowY: 'hidden', // Prevent outer vertical scrolling
+          width: '100%', // Ensure full width of the container
+          boxSizing: 'border-box', // Include padding and border in the element's total width and height
+        }}
+      >
+        {statusColumns.map((status) => (
+          <Box
+            key={status}
             sx={{
-              mb: 3,
-              color: getStatusColor(status).color,
-              textAlign: 'center',
-              fontWeight: 600,
-              p: 1,
-              borderRadius: '4px',
-              whiteSpace: 'nowrap' // Prevent text wrapping
+              flex: 1,
+              minWidth: '280px', // Minimum column width
+              maxWidth: '1fr', // Allow columns to shrink and fit within the container
+              backgroundColor: '#f5f5f5',
+              borderRadius: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%', // Full height of the container
+              overflow: 'hidden', // Prevent any internal overflow
+              borderTop: `3px solid ${getStatusColor(status).color}`,
             }}
           >
-            {status}
-          </Typography>
+            <Typography
+              variant="h6"
+              sx={{
+                p: 2,
+                color: getStatusColor(status).color,
+                textAlign: 'center',
+                fontWeight: 600,
+                borderRadius: '4px',
+                whiteSpace: 'nowrap', // Prevent text from wrapping or overflowing horizontally
+              }}
+            >
+              {status}
+            </Typography>
 
-          <Box sx={{ 
-            overflow: 'auto',
-            flex: 1, // Take remaining space
-            maxHeight: 'calc(100vh - 200px)',
-            '&::-webkit-scrollbar': {
-              width: '6px'
-            },
-            '&::-webkit-scrollbar-track': {
-              background: 'transparent'
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: '#bbb',
-              borderRadius: '3px'
-            }
-          }}>
-            {rows
-              .filter(task => task.status === status)
-              .map(task => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onActionClick={handleTaskAction}
-                />
-              ))}
+            <Box
+              sx={{
+                flex: 1,
+                overflowY: 'auto', // Allow vertical scrolling only
+                overflowX: 'hidden', // Prevent horizontal scrolling
+                px: 2,
+                pb: 2,
+                '&::-webkit-scrollbar': {
+                  width: '8px', // Scrollbar width
+                },
+                '&::-webkit-scrollbar-track': {
+                  backgroundColor: 'rgba(0,0,0,0.05)', // Scrollbar track color
+                  borderRadius: '4px', // Rounded scrollbar track
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  backgroundColor: 'rgba(0,0,0,0.15)', // Scrollbar thumb color
+                  borderRadius: '4px', // Rounded scrollbar thumb
+                  '&:hover': {
+                    backgroundColor: 'rgba(0,0,0,0.25)', // Darker color on hover
+                  },
+                },
+                '@media (hover: none)': {
+                  '&::-webkit-scrollbar': {
+                    display: 'none', // Hide scrollbar on touch devices
+                  },
+                },
+              }}
+            >
+              <SortableContext
+                items={tasksList
+                  .filter((task) => task.status === status)
+                  .map((task) => task.id.toString())}
+                strategy={verticalListSortingStrategy}
+                id={status}
+              >
+                {tasksList
+                  .filter((task) => task.status === status)
+                  .map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      isDragging={activeId === task.id.toString()}
+                    />
+                  ))}
+              </SortableContext>
+            </Box>
           </Box>
-        </Box>
-      ))}
-    </Box>
+        ))}
+      </Box>
+
+      <DragOverlay>
+        {activeId ? (
+          <TaskCard
+            task={tasksList.find(task => task.id.toString() === activeId)}
+            isDragging={false} // Set to false to prevent opacity change
+          />
+        ) : null}
+      </DragOverlay>
+
+      <FreezeTaskForm
+        open={openFreezeDialog}
+        onClose={() => {
+          setOpenFreezeDialog(false);
+          setSelectedTask(null);
+          setPendingStatusChange(null);
+        }}
+        task={selectedTask}
+        onConfirm={(task) => {
+          handleTaskAction('freeze', task);
+          setOpenFreezeDialog(false);
+          setSelectedTask(null);
+        }}
+      />
+
+      <UnfreezeTaskForm
+        open={openUnfreezeDialog}
+        onClose={() => {
+          setOpenUnfreezeDialog(false);
+          setSelectedTask(null);
+          setPendingStatusChange(null);
+        }}
+        task={selectedTask}
+        onConfirm={(task) => {
+          handleTaskAction('unfreeze', task);
+          setOpenUnfreezeDialog(false);
+          setSelectedTask(null);
+        }}
+      />
+
+      <CompleteTaskForm
+        open={openCompleteDialog}
+        onClose={() => {
+          setOpenCompleteDialog(false);
+          setSelectedTask(null);
+          setPendingStatusChange(null);
+        }}
+        task={selectedTask}
+        onConfirm={(task) => {
+          handleTaskAction('complete', task);
+          setOpenCompleteDialog(false);
+          setSelectedTask(null);
+        }}
+      />
+    </DndContext>
   );
 };
 
