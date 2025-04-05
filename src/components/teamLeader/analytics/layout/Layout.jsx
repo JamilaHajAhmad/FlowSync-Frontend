@@ -1,5 +1,5 @@
 import { Box, IconButton, Tooltip } from '@mui/material';
-import { Download } from '@mui/icons-material';
+import { Download, ArrowBack } from '@mui/icons-material';  // Add ArrowBack import
 import Sidebar from '../../dashboard/components/Sidebar';
 import Topbar from '../../../common/Topbar';
 import DownloadDialog from '../dialog/DownloadDialog';
@@ -7,8 +7,10 @@ import { useState } from 'react';
 import { jsPDF } from 'jspdf';
 import * as XLSX from 'xlsx';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 const Layout = ({ children, data }) => {
+    const navigate = useNavigate();
     const [ open, setOpen ] = useState(false);
     const [ mode, setMode ] = useState('light');
     const [downloadOpen, setDownloadOpen] = useState(false);
@@ -70,6 +72,23 @@ const Layout = ({ children, data }) => {
                     width: '100%',
                     position: 'relative'
                 }}>
+                    <Tooltip title="Return to Analytics" placement="right">
+                        <IconButton 
+                            onClick={() => navigate('/analytics')}  
+                            sx={{ 
+                                position: 'absolute',
+                                top: 16,
+                                left: 16,
+                                backgroundColor: mode === 'light' ? 'white' : 'rgba(255,255,255,0.1)',
+                                '&:hover': {
+                                    backgroundColor: mode === 'light' ? '#f5f5f5' : 'rgba(255,255,255,0.2)'
+                                },
+                                zIndex: 100
+                            }}
+                        >
+                            <ArrowBack />
+                        </IconButton>
+                    </Tooltip>
                     <Tooltip title="Download Report" placement="left">
                         <IconButton 
                             onClick={() => setDownloadOpen(true)}
