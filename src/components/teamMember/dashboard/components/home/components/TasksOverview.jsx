@@ -3,17 +3,10 @@ import {
   Box,
   Typography,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TablePagination,
-  TableHead,
-  TableRow,
-  Paper,
   Button,
   Chip
 } from "@mui/material";
+import { DataGrid } from '@mui/x-data-grid';
 import { useState } from 'react';
 
 function renderStatus(status) {
@@ -118,168 +111,179 @@ const rows = [
 ];
 
 const getColumns = (tab) => {
+  const baseColumns = [
+    { 
+      field: 'frnNumber', 
+      headerName: 'FRN Number',
+      flex: 1,
+      align: 'center',
+      headerAlign: 'center'
+    },
+    { 
+      field: 'ossNumber', 
+      headerName: 'OSS Number',
+      flex: 1,
+      align: 'center',
+      headerAlign: 'center'
+    },
+    {
+      field: 'status',
+      headerName: 'Status',
+      flex: 1,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: (params) => renderStatus(params.value)
+    },
+    {
+      field: 'priority',
+      headerName: 'Priority',
+      flex: 1,
+      align: 'center',
+      headerAlign: 'center'
+    },
+    {
+      field: 'caseType',
+      headerName: 'Case Type',
+      flex: 1,
+      align: 'center',
+      headerAlign: 'center'
+    },
+    {
+      field: 'caseSource',
+      headerName: 'Case Source',
+      flex: 1,
+      align: 'center',
+      headerAlign: 'center'
+    },
+    {
+      field: 'openDate',
+      headerName: 'Open Date',
+      flex: 1,
+      align: 'center',
+      headerAlign: 'center'
+    },
+    {
+      field: 'completedAt',
+      headerName: 'Completed At',
+      flex: 1,
+      align: 'center',
+      headerAlign: 'center'
+    },
+    {
+      field: 'dayLefts',
+      headerName: 'Days Left',
+      flex: 1,
+      align: 'center',
+      headerAlign: 'center'
+    },
+    {
+      field: 'daysDelayed',
+      headerName: 'Days Delayed',
+      flex: 1,
+      align: 'center',
+      headerAlign: 'center'
+    },
+    {
+      field: 'frozenAt',
+      headerName: 'Frozen At',
+      flex: 1,
+      align: 'center',
+      headerAlign: 'center'
+    }
+  ];
+
   switch (tab) {
     case 'All':
-      return [
-        { id: 'frnNumber', label: 'FRN Number' },
-        { id: 'ossNumber', label: 'OSS Number' },
-        { id: 'status', label: 'Status' },
-        { id: 'priority', label: 'Priority' },
-        { id: 'caseType', label: 'Case Type' },
-        { id: 'caseSource', label: 'Case Source' },
-        { id: 'openDate', label: 'Open Date' }
-      ];
+      return baseColumns.slice(0, 7);
     case 'Completed':
-      return [
-        { id: 'frnNumber', label: 'FRN Number' },
-        { id: 'ossNumber', label: 'OSS Number' },
-        { id: 'priority', label: 'Priority' },
-        { id: 'openDate', label: 'Open Date' },
-        { id: 'completedAt', label: 'Completed At' }
-      ];
+      return [baseColumns[0], baseColumns[1], baseColumns[3], baseColumns[6], baseColumns[7]];
     case 'On Going':
-      return [
-        { id: 'frnNumber', label: 'FRN Number' },
-        { id: 'ossNumber', label: 'OSS Number' },
-        { id: 'priority', label: 'Priority' },
-        { id: 'openDate', label: 'Open Date' },
-        { id: 'dayLefts', label: 'Days Left' }
-      ];
+      return [baseColumns[0], baseColumns[1], baseColumns[3], baseColumns[6], baseColumns[8]];
     case 'Delayed':
-      return [
-        { id: 'frnNumber', label: 'FRN Number' },
-        { id: 'ossNumber', label: 'OSS Number' },
-        { id: 'priority', label: 'Priority' },
-        { id: 'openDate', label: 'Open Date' },
-        { id: 'daysDelayed', label: 'Days Delayed' }
-      ];
+      return [baseColumns[0], baseColumns[1], baseColumns[3], baseColumns[6], baseColumns[9]];
     case 'Frozen':
-      return [
-        { id: 'frnNumber', label: 'FRN Number' },
-        { id: 'ossNumber', label: 'OSS Number' },
-        { id: 'priority', label: 'Priority' },
-        { id: 'openDate', label: 'Open Date' },
-        { id: 'frozenAt', label: 'Frozen At' }
-      ];
+      return [baseColumns[0], baseColumns[1], baseColumns[3], baseColumns[6], baseColumns[10]];
     default:
       return [];
   }
 };
 
+// Add IDs to rows
+const rowsWithIds = rows.map((row, index) => ({
+  id: index,
+  ...row
+}));
+
 function TasksOverview() {
   const [activeTab, setActiveTab] = useState('All');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const paginatedRows = rows.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
 
   return (
-    <Box sx={{ mt: 4 }}>
+    <Box sx={{ mt: 4, width: '750px' }}>
       <Typography variant="h6" sx={{ mb: 3 }}>Tasks Overview</Typography>
-      <TableContainer component={Paper} elevation={0}>
-        <Box sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          p: 2,
-          gap: 2
-        }}>
-          <Stack direction="row" spacing={1}>
-            {['All', 'Completed', 'On Going', 'Delayed', 'Frozen'].map((status) => (
+      <Box sx={{ 
+        border: '1px solid #e0e0e0',
+        borderRadius: '4px',
+        overflow: 'hidden'
+      }}>
+        <Stack 
+          direction="row" 
+          sx={{
+            borderBottom: '1px solid #e0e0e0',
+            backgroundColor: '#f9fafb',
+          }}
+        >
+          {['All', 'Completed', 'On Going', 'Delayed', 'Frozen'].map((status) => {
+            const colors = getStatusColor(status);
+            return (
               <Button
                 key={status}
-                variant="contained"
+                variant="text"
                 onClick={() => setActiveTab(status)}
                 sx={{
-                  backgroundColor: getStatusColor(status).background,
-                  color: getStatusColor(status).color,
+                  py: 1.5,
+                  px: 3,
+                  borderRadius: 0,
+                  borderBottom: activeTab === status ? `2px solid ${colors.color}` : '2px solid transparent',
+                  backgroundColor: activeTab === status ? colors.background : 'transparent',
+                  color: activeTab === status ? colors.color : 'inherit',
                   '&:hover': {
-                    backgroundColor: getStatusColor(status).background,
-                    opacity: 0.9
+                    backgroundColor: activeTab === status ? colors.background : 'rgba(0, 0, 0, 0.04)',
                   },
-                  '&.Mui-selected': {
-                    backgroundColor: getStatusColor(status).background,
-                    opacity: 1
-                  }
                 }}
               >
-                {renderStatus(status)}
+                {status}
               </Button>
-            ))}
-          </Stack>
-        </Box>
-        <Table>
-          <TableHead>
-            <TableRow>
-              {getColumns(activeTab).map((column) => (
-                <TableCell
-                  key={column.id}
-                  sx={{
-                    fontWeight: 'bold',
-                    textAlign: 'center'
-                  }}
-                >
-                  {column.label}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {paginatedRows.map((row, index) => (
-              <TableRow key={index}>
-                {getColumns(activeTab).map((column) => (
-                  <TableCell
-                    key={column.id}
-                    sx={{
-                      textAlign: 'center',
-                      ...(column.id === 'status' && {
-                        color: getStatusColor(row[column.id]).color,
-                        backgroundColor: getStatusColor(row[column.id]).background,
-                      })
-                    }}
-                  >
-                    {row[column.id]}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <TablePagination
-          component="div"
-          count={rows.length}
-          page={page}
-          onPageChange={handleChangePage}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          rowsPerPageOptions={[5, 10, 25]}
+            );
+          })}
+        </Stack>
+        <DataGrid
+          rows={rowsWithIds}
+          columns={getColumns(activeTab)}
+          pagination
+                pageSizeOptions={[5, 10, 20]}
+                initialState={{
+                    pagination: {
+                        paginationModel: { pageSize: 5, page: 0 },
+                    },
+                }}
+          disableSelectionOnClick
+          disableColumnMenu
+          autoHeight
           sx={{
-            '.MuiTablePagination-select': {
-              color: '#059669',
+            border: 'none',
+            '& .MuiDataGrid-cell': {
+              borderBottom: '1px solid #f0f0f0',
             },
-            '.MuiTablePagination-selectIcon': {
-              color: '#059669',
+            '& .MuiDataGrid-columnHeaders': {
+              backgroundColor: '#ffffff',
+              borderBottom: '1px solid #e0e0e0',
             },
-            '.MuiTablePagination-displayedRows': {
-              color: '#374151',
-            },
-            '.MuiTablePagination-actions': {
-              color: '#059669',
+            '& .MuiDataGrid-footerContainer': {
+              borderTop: '1px solid #e0e0e0',
             }
           }}
         />
-      </TableContainer>
+      </Box>
     </Box>
   );
 }
