@@ -46,6 +46,7 @@ const DownloadDialog = ({ open, handleClose, handleDownload }) => {
                             '&.MuiInputLabel-shrink': {
                                 background: 'white',
                                 px: 1,
+                                margin: '5px -2px'
                             }
                         }}
                     >
@@ -110,3 +111,4 @@ const DownloadDialog = ({ open, handleClose, handleDownload }) => {
 };
 
 export default DownloadDialog;
+
