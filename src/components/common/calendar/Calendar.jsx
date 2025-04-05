@@ -55,7 +55,6 @@ export default function Calendar() {
         selectedDate.setHours(0, 0, 0, 0);
 
         if (selectedDate < today) {
-            toast.error("Cannot add events in the past. Please select a present or a future date.");
             selectInfo.view.calendar.unselect();
             return;
         }
@@ -81,36 +80,44 @@ export default function Calendar() {
 
     // Modify the handleAddEvent function
     function handleAddEvent() {
+        // Validate required fields
+        if (!newEventTitle.trim()) {
+            toast.error('Event title is required');
+            return;
+        }
+
+        if (!newEventTime) {
+            toast.error('Event time is required');
+            return;
+        }
+
         let calendarApi = selectedEvent.view.calendar;
         calendarApi.unselect();
 
-        if (newEventTitle) {
-            // Create date object from selected date and time
-            const startDate = new Date(selectedEvent.startStr);
-            if (newEventTime) {
-                const [hours, minutes] = newEventTime.split(':');
-                startDate.setHours(parseInt(hours), parseInt(minutes));
-            }
+        // Create date object from selected date and time
+        const startDate = new Date(selectedEvent.startStr);
+        const [hours, minutes] = newEventTime.split(':');
+        startDate.setHours(parseInt(hours), parseInt(minutes));
 
-            // Create end date (1 hour after start by default)
-            const endDate = new Date(startDate);
-            endDate.setHours(endDate.getHours() + 1);
+        // Create end date (1 hour after start by default)
+        const endDate = new Date(startDate);
+        endDate.setHours(endDate.getHours() + 1);
 
-            // Check for overlap
-            if (checkEventOverlap(startDate, endDate, currentEvents)) {
-                toast.error('Cannot add event: Time slot is already occupied');
-                return;
-            }
-
-            const newEvent = {
-                id: String(Date.now()),
-                title: newEventTitle,
-                start: startDate.toISOString(),
-                end: endDate.toISOString(),
-                allDay: !newEventTime,
-            };
-            setCurrentEvents(prevEvents => [...prevEvents, newEvent]);
+        // Check for overlap
+        if (checkEventOverlap(startDate, endDate, currentEvents)) {
+            toast.error('Cannot add event: Time slot is already occupied');
+            return;
         }
+
+        const newEvent = {
+            id: String(Date.now()),
+            title: newEventTitle.trim(),
+            start: startDate.toISOString(),
+            end: endDate.toISOString(),
+            allDay: false,
+        };
+        setCurrentEvents(prevEvents => [...prevEvents, newEvent]);
+        
         setIsAddEventModalOpen(false);
         setNewEventTitle('');
         setNewEventTime('');
@@ -208,12 +215,18 @@ export default function Calendar() {
         const today = new Date();
         const cellDate = info.date;
         
-        // Check if the date is today (same day, month, and year)
+        // Reset hours for accurate comparison
+        today.setHours(0, 0, 0, 0);
+        cellDate.setHours(0, 0, 0, 0);
+        
+        // Check if date is in past
+        const isPast = cellDate < today;
+        // Check if the date is today
         const isToday = cellDate.getDate() === today.getDate() &&
                         cellDate.getMonth() === today.getMonth() &&
                         cellDate.getFullYear() === today.getFullYear();
         
-        return isToday ? 'current-day' : '';
+        return `${isToday ? 'current-day' : ''} ${isPast ? 'past-date' : ''}`;
     }
 
     return (
@@ -244,6 +257,9 @@ export default function Calendar() {
                     dayCellClassNames={dayCellClassNames} // Add custom class name for current day
                     height="100%"
                     events={currentEvents}
+                    selectConstraint={{
+                        start: new Date().toISOString().split('T')[0] // Today's date
+                    }}
                 />
             </div>
 
@@ -274,6 +290,7 @@ export default function Calendar() {
                 <DialogContent>
                     <TextField
                         autoFocus
+                        required
                         margin="dense"
                         label="Event Title"
                         type="text"
@@ -286,6 +303,7 @@ export default function Calendar() {
                         margin="dense"
                         placeholder="--:--"
                         type="time"
+                        required
                         fullWidth
                         value={newEventTime}
                         onChange={(e) => setNewEventTime(e.target.value)}
@@ -311,10 +329,15 @@ export default function Calendar() {
                         onClick={handleAddEvent}
                         color="primary"
                         variant="contained"
+                        disabled={!newEventTitle.trim() || !newEventTime}
                         sx={{
                             textTransform: 'none',
                             borderRadius: '4px',
                             padding: '0.5rem 1.5rem',
+                            '&.Mui-disabled': {
+                                backgroundColor: 'rgba(0, 0, 0, 0.12)',
+                                color: 'rgba(0, 0, 0, 0.26)'
+                            }
                         }}
                     >
                         Add
