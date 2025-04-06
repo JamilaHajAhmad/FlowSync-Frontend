@@ -53,7 +53,7 @@ const initialRequests = {
             name: "Ahmad Hassan",
             email: "ahmad@example.com",
             date: "2024-03-22",
-            frn: "TASK-123"       
+            frn: "TASK-123"
         },
         {
             id: 302,
@@ -61,7 +61,7 @@ const initialRequests = {
             name: "Ahmad Hassan",
             email: "ahmad@example.com",
             date: "2024-03-22",
-            frn: "TASK-123"       
+            frn: "TASK-123"
         },
         // ...more completion requests with unique IDs
     ]
@@ -170,10 +170,10 @@ const Requests = () => {
     };
 
     const handleApprove = (id, type) => {
-        const request = requests[type].find(req => req.id === id);
+        const request = requests[ type ].find(req => req.id === id);
         setRequests(prev => ({
             ...prev,
-            [type]: prev[type].filter(request => request.id !== id)
+            [ type ]: prev[ type ].filter(request => request.id !== id)
         }));
 
         // Add notification based on request type
@@ -191,10 +191,10 @@ const Requests = () => {
     };
 
     const handleReject = (id, type) => {
-        const request = requests[type].find(req => req.id === id);
+        const request = requests[ type ].find(req => req.id === id);
         setRequests(prev => ({
             ...prev,
-            [type]: prev[type].filter(request => request.id !== id)
+            [ type ]: prev[ type ].filter(request => request.id !== id)
         }));
 
         // Add notification based on request type
@@ -269,30 +269,22 @@ const Requests = () => {
                         "& .MuiDataGrid-columnHeaders": {
                             backgroundColor: '#F9FAFB',
                         },
-                        "& .MuiDataGrid-footerContainer": {
+                        // Add these styles for footer alignment
+                        '& .MuiDataGrid-footerContainer': {
+                            justifyContent: 'flex-end',
+                            alignItems: 'center',
                             display: 'flex',
-                            justifyContent: 'flex-start', // Align pagination controls to the left
-                            alignItems: 'center', // Vertically center the controls
-                            padding: '0 16px', // Add padding for spacing
                         },
-                        "& .MuiTablePagination-toolbar": {
-                            justifyContent: 'flex-start', // Align toolbar content to the left
-                            alignItems: 'center', // Vertically center the toolbar content
-                        },
-                        "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
+                        '& .MuiTablePagination-root': {
                             display: 'flex',
-                            alignItems: 'center', // Vertically center the text
-                            justifyContent: 'center', // Horizontally center the text
+                            alignItems: 'center'
                         },
-                        "& .MuiTablePagination-select": {
-                            display: 'flex',
-                            alignItems: 'center', // Vertically center the dropdown
+                        '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                            margin: 0
                         },
-                        "& .MuiTablePagination-actions": {
-                            display: 'flex',
-                            alignItems: 'center', // Vertically center the navigation arrows
-                            marginLeft: 'auto', // Push the navigation arrows to the far right
-                        },
+                        '& .MuiDataGrid-selectedRowCount': {
+                            display: 'none'
+                        }
                     }}
                 />
             </Box>

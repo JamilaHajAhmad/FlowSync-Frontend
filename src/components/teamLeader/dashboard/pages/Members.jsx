@@ -5,7 +5,7 @@ import { Typography, Chip, IconButton, Stack } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close"; // استيراد أيقونة الإكس
 
 export default function Members({ showActions = true }) {
-    const [rows, setRows] = React.useState(
+    const [ rows, setRows ] = React.useState(
         Array.from({ length: 12 }, (_, i) => ({
             id: i + 1,
             name: `User ${i + 1}`,
@@ -106,7 +106,7 @@ export default function Members({ showActions = true }) {
                 columns={columns}
                 disableRowSelectionOnClick
                 pagination
-                pageSizeOptions={[5, 10, 20]}
+                pageSizeOptions={[ 5, 10, 20 ]}
                 initialState={{
                     pagination: {
                         paginationModel: { pageSize: 5, page: 0 },
@@ -137,6 +137,22 @@ export default function Members({ showActions = true }) {
                     '& .MuiDataGrid-cellContent': {
                         width: '100%',
                         textAlign: 'center'
+                    },
+                    // Add these styles for footer alignment
+                    '& .MuiDataGrid-footerContainer': {
+                        justifyContent: 'flex-end ',
+                        alignItems: 'center',
+                        display: 'flex',
+                    },
+                    '& .MuiTablePagination-root': {
+                        display: 'flex',
+                        alignItems: 'center'
+                    },
+                    '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                        margin: 0
+                    },
+                    '& .MuiDataGrid-selectedRowCount': {
+                        display: 'none'
                     }
                 }}
             />

@@ -112,15 +112,15 @@ const rows = [
 
 const getColumns = (tab) => {
   const baseColumns = [
-    { 
-      field: 'frnNumber', 
+    {
+      field: 'frnNumber',
       headerName: 'FRN Number',
       flex: 1,
       align: 'center',
       headerAlign: 'center'
     },
-    { 
-      field: 'ossNumber', 
+    {
+      field: 'ossNumber',
       headerName: 'OSS Number',
       flex: 1,
       align: 'center',
@@ -196,13 +196,13 @@ const getColumns = (tab) => {
     case 'All':
       return baseColumns.slice(0, 7);
     case 'Completed':
-      return [baseColumns[0], baseColumns[1], baseColumns[3], baseColumns[6], baseColumns[7]];
+      return [ baseColumns[ 0 ], baseColumns[ 1 ], baseColumns[ 3 ], baseColumns[ 6 ], baseColumns[ 7 ] ];
     case 'On Going':
-      return [baseColumns[0], baseColumns[1], baseColumns[3], baseColumns[6], baseColumns[8]];
+      return [ baseColumns[ 0 ], baseColumns[ 1 ], baseColumns[ 3 ], baseColumns[ 6 ], baseColumns[ 8 ] ];
     case 'Delayed':
-      return [baseColumns[0], baseColumns[1], baseColumns[3], baseColumns[6], baseColumns[9]];
+      return [ baseColumns[ 0 ], baseColumns[ 1 ], baseColumns[ 3 ], baseColumns[ 6 ], baseColumns[ 9 ] ];
     case 'Frozen':
-      return [baseColumns[0], baseColumns[1], baseColumns[3], baseColumns[6], baseColumns[10]];
+      return [ baseColumns[ 0 ], baseColumns[ 1 ], baseColumns[ 3 ], baseColumns[ 6 ], baseColumns[ 10 ] ];
     default:
       return [];
   }
@@ -215,24 +215,24 @@ const rowsWithIds = rows.map((row, index) => ({
 }));
 
 function TasksOverview() {
-  const [activeTab, setActiveTab] = useState('All');
+  const [ activeTab, setActiveTab ] = useState('All');
 
   return (
     <Box sx={{ mt: 4, width: '750px' }}>
       <Typography variant="h6" sx={{ mb: 3 }}>Tasks Overview</Typography>
-      <Box sx={{ 
+      <Box sx={{
         border: '1px solid #e0e0e0',
         borderRadius: '4px',
         overflow: 'hidden'
       }}>
-        <Stack 
-          direction="row" 
+        <Stack
+          direction="row"
           sx={{
             borderBottom: '1px solid #e0e0e0',
             backgroundColor: '#f9fafb',
           }}
         >
-          {['All', 'Completed', 'On Going', 'Delayed', 'Frozen'].map((status) => {
+          {[ 'All', 'Completed', 'On Going', 'Delayed', 'Frozen' ].map((status) => {
             const colors = getStatusColor(status);
             return (
               <Button
@@ -260,12 +260,12 @@ function TasksOverview() {
           rows={rowsWithIds}
           columns={getColumns(activeTab)}
           pagination
-                pageSizeOptions={[5, 10, 20]}
-                initialState={{
-                    pagination: {
-                        paginationModel: { pageSize: 5, page: 0 },
-                    },
-                }}
+          pageSizeOptions={[ 5, 10, 20 ]}
+          initialState={{
+            pagination: {
+              paginationModel: { pageSize: 5, page: 0 },
+            },
+          }}
           disableSelectionOnClick
           disableColumnMenu
           autoHeight
@@ -278,8 +278,21 @@ function TasksOverview() {
               backgroundColor: '#ffffff',
               borderBottom: '1px solid #e0e0e0',
             },
+            // Add these styles for footer alignment
             '& .MuiDataGrid-footerContainer': {
-              borderTop: '1px solid #e0e0e0',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              display: 'flex',
+            },
+            '& .MuiTablePagination-root': {
+              display: 'flex',
+              alignItems: 'center'
+            },
+            '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+              margin: 0
+            },
+            '& .MuiDataGrid-selectedRowCount': {
+              display: 'none'
             }
           }}
         />

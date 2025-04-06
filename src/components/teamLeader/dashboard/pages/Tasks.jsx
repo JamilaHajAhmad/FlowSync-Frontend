@@ -362,6 +362,22 @@ export default function Tasks({
                     "& .MuiDataGrid-row:nth-of-type(even)": {
                         backgroundColor: '#F9FAFB',
                     },
+                    // Add these styles for footer alignment
+                    '& .MuiDataGrid-footerContainer': {
+                        justifyContent: 'flex-end',
+                        alignItems: 'center',
+                        display: 'flex',
+                    },
+                    '& .MuiTablePagination-root': {
+                        display: 'flex',
+                        alignItems: 'center'
+                    },
+                    '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                        margin: 0
+                    },
+                    '& .MuiDataGrid-selectedRowCount': {
+                        display: 'none'
+                    }
                 }}
             />
         </Box>
