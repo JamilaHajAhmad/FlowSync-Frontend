@@ -1,7 +1,14 @@
-import { Box, Button, Tabs, Tab } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
+import * as React from "react";
+import {
+    MaterialReactTable,
+    useMaterialReactTable,
+} from 'material-react-table';
+import { Box, Button, Tabs, Tab, Stack, Menu, MenuItem } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
 import { useState, useContext } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -69,38 +76,88 @@ const initialRequests = {
 
 const Requests = () => {
     const { addNotification } = useContext(NotificationContext);
-    const [ currentTab, setCurrentTab ] = useState(0);
-    const [ requests, setRequests ] = useState(initialRequests);
+    const [currentTab, setCurrentTab] = useState(0);
+    const [requests, setRequests] = useState(initialRequests);
+    const [anchorEl, setAnchorEl] = React.useState(null);
+    const open = Boolean(anchorEl);
 
     const handleTabChange = (event, newValue) => {
         setCurrentTab(newValue);
     };
 
+    const handleExportClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleExportClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleDownload = (fileType) => {
+        const currentType = Object.keys(requests)[currentTab];
+        const exportData = requests[currentType].map(row => ({
+            Name: row.name,
+            Email: row.email,
+            Date: row.date,
+            ...(row.frn && { FRN: row.frn }),
+            ...(row.reason && { Reason: row.reason })
+        }));
+
+        if (fileType === 'pdf') {
+            const pdf = new jsPDF('landscape');
+
+            const tableColumn = Object.keys(exportData[0]);
+            const tableRows = exportData.map(item => Object.values(item));
+
+            pdf.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 20,
+                theme: 'grid',
+                styles: {
+                    fontSize: 8,
+                    cellPadding: 2,
+                    overflow: 'linebreak'
+                },
+                headStyles: {
+                    fillColor: [5, 150, 105],
+                    textColor: 255,
+                    fontSize: 9,
+                    fontStyle: 'bold'
+                }
+            });
+
+            pdf.save(`${currentType}-requests.pdf`);
+        }
+        else if (fileType === 'excel') {
+            try {
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Requests");
+                XLSX.writeFile(wb, `${currentType}-requests.xlsx`);
+            } catch (error) {
+                console.error("Error creating Excel file:", error);
+            }
+        }
+        handleExportClose();
+    };
+
     const getColumns = (type) => {
         const baseColumns = [
             {
-                field: "name",
-                headerName: "Name",
-                flex: 1,
-                minWidth: 150,
-                align: 'center',
-                headerAlign: 'center'
+                accessorKey: "name",
+                header: "Name",
+                size: 150,
             },
             {
-                field: "email",
-                headerName: "Email",
-                flex: 1,
-                minWidth: 200,
-                align: 'center',
-                headerAlign: 'center'
+                accessorKey: "email",
+                header: "Email",
+                size: 200,
             },
             {
-                field: "date",
-                headerName: "Request Date",
-                flex: 1,
-                minWidth: 130,
-                align: 'center',
-                headerAlign: 'center'
+                accessorKey: "date",
+                header: "Request Date",
+                size: 130,
             },
         ];
 
@@ -108,75 +165,66 @@ const Requests = () => {
             signup: [],
             freeze: [
                 {
-                    field: "frn",
-                    headerName: "FRN",
-                    flex: 1,
-                    align: 'center',
-                    headerAlign: 'center'
+                    accessorKey: "frn",
+                    header: "FRN",
+                    size: 120,
                 },
                 {
-                    field: "reason",
-                    headerName: "Reason",
-                    flex: 1,
-                    align: 'center',
-                    headerAlign: 'center'
+                    accessorKey: "reason",
+                    header: "Reason",
+                    size: 150,
                 },
             ],
             completion: [
                 {
-                    field: "frn",
-                    headerName: "FRN",
-                    flex: 1,
-                    align: 'center',
-                    headerAlign: 'center'
+                    accessorKey: "frn",
+                    header: "FRN",
+                    size: 120,
                 }
             ]
         };
 
-        return [ ...baseColumns,
-        ...typeSpecificColumns[ type ],
-        {
-            field: "actions",
-            headerName: "Actions",
-            flex: 1,
-            minWidth: 250,
-            sortable: false,
-            align: 'center',
-            headerAlign: 'center',
-            renderCell: (params) => (
-                <Box display="flex" gap={1} justifyContent="center" width="100%" padding={1}>
-                    <Button
-                        variant="contained"
-                        color="success"
-                        size="small"
-                        startIcon={<CheckCircleIcon />}
-                        onClick={() => handleApprove(params.row.id, type)}
-                    >
-                        Approve
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="error"
-                        size="small"
-                        startIcon={<CancelIcon />}
-                        onClick={() => handleReject(params.row.id, type)}
-                    >
-                        Reject
-                    </Button>
-                </Box>
-            ),
-        }
+        return [
+            ...baseColumns,
+            ...typeSpecificColumns[type],
+            {
+                accessorKey: "actions",
+                header: "Actions",
+                size: 250,
+                enableColumnFilter: false,
+                Cell: ({ row }) => (
+                    <Stack direction="row" spacing={1}>
+                        <Button
+                            variant="contained"
+                            color="success"
+                            size="small"
+                            startIcon={<CheckCircleIcon />}
+                            onClick={() => handleApprove(row.original.id, type)}
+                        >
+                            Approve
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="error"
+                            size="small"
+                            startIcon={<CancelIcon />}
+                            onClick={() => handleReject(row.original.id, type)}
+                        >
+                            Reject
+                        </Button>
+                    </Stack>
+                ),
+            }
         ];
     };
 
     const handleApprove = (id, type) => {
-        const request = requests[ type ].find(req => req.id === id);
+        const request = requests[type].find(req => req.id === id);
         setRequests(prev => ({
             ...prev,
-            [ type ]: prev[ type ].filter(request => request.id !== id)
+            [type]: prev[type].filter(request => request.id !== id)
         }));
 
-        // Add notification based on request type
         const notificationData = {
             id: Date.now(),
             type: 'success',
@@ -191,13 +239,12 @@ const Requests = () => {
     };
 
     const handleReject = (id, type) => {
-        const request = requests[ type ].find(req => req.id === id);
+        const request = requests[type].find(req => req.id === id);
         setRequests(prev => ({
             ...prev,
-            [ type ]: prev[ type ].filter(request => request.id !== id)
+            [type]: prev[type].filter(request => request.id !== id)
         }));
 
-        // Add notification based on request type
         const notificationData = {
             id: Date.now(),
             type: 'error',
@@ -224,6 +271,47 @@ const Requests = () => {
         }
     };
 
+    const table = useMaterialReactTable({
+        columns: getColumns(Object.keys(requests)[currentTab]),
+        data: requests[Object.keys(requests)[currentTab]],
+        enableTopToolbar: true,
+        enableBottomToolbar: true,
+        enablePagination: true,
+        enableColumnFilters: true,
+        initialState: {
+            pagination: { pageSize: 5, pageIndex: 0 },
+        },
+        muiTableHeadCellProps: {
+            sx: {
+                backgroundColor: '#F9FAFB',
+                fontWeight: 'bold',
+            },
+        },
+        renderTopToolbarCustomActions: () => (
+            <Box sx={{ display: 'flex', gap: '16px', p: 2, justifyContent: 'flex-end' }}>
+                <Button
+                    onClick={handleExportClick}
+                    startIcon={<FileDownloadIcon />}
+                    sx={{ mt: -2 }}
+                >
+                    Export
+                </Button>
+                <Menu
+                    anchorEl={anchorEl}
+                    open={open}
+                    onClose={handleExportClose}
+                >
+                    <MenuItem onClick={() => handleDownload('excel')}>
+                        Export as Excel
+                    </MenuItem>
+                    <MenuItem onClick={() => handleDownload('pdf')}>
+                        Export as PDF
+                    </MenuItem>
+                </Menu>
+            </Box>
+        ),
+    });
+
     return (
         <Box p={3}>
             <Tabs
@@ -249,42 +337,14 @@ const Requests = () => {
             </Tabs>
 
             <Box sx={{ height: 400, width: "100%" }}>
-                <DataGrid
-                    rows={requests[ Object.keys(requests)[ currentTab ] ]}
-                    columns={getColumns(Object.keys(requests)[ currentTab ])}
-                    disableRowSelectionOnClick
-                    pagination
-                    pageSizeOptions={[ 5, 10, 20 ]}
-                    initialState={{
-                        pagination: {
-                            paginationModel: { pageSize: 5, page: 0 },
+                <MaterialReactTable
+                    table={table}
+                    muiTablePaperProps={{
+                        sx: {
+                            '& .MuiToolbar-root': {
+                                background: '#fff',
+                            },
                         },
-                    }}
-                    sx={{
-                        overflowX: 'hidden',
-                        "& .MuiDataGrid-cell": {
-                            justifyContent: "center",
-                            textAlign: "center",
-                        },
-                        "& .MuiDataGrid-columnHeaders": {
-                            backgroundColor: '#F9FAFB',
-                        },
-                        // Add these styles for footer alignment
-                        '& .MuiDataGrid-footerContainer': {
-                            justifyContent: 'flex-end',
-                            alignItems: 'center',
-                            display: 'flex',
-                        },
-                        '& .MuiTablePagination-root': {
-                            display: 'flex',
-                            alignItems: 'center'
-                        },
-                        '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
-                            margin: 0
-                        },
-                        '& .MuiDataGrid-selectedRowCount': {
-                            display: 'none'
-                        }
                     }}
                 />
             </Box>

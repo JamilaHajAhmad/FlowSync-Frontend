@@ -1,11 +1,16 @@
 import * as React from "react";
-import Box from "@mui/material/Box";
-import { DataGrid } from "@mui/x-data-grid";
-import { Typography, Chip, IconButton, Stack } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close"; // استيراد أيقونة الإكس
+import {
+    MaterialReactTable,
+    useMaterialReactTable,
+} from 'material-react-table';
+import { Box, IconButton, Stack, Chip, Button, Menu, MenuItem, Typography } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
 
 export default function Members({ showActions = true }) {
-    const [ rows, setRows ] = React.useState(
+    const [rows, setRows] = React.useState(
         Array.from({ length: 12 }, (_, i) => ({
             id: i + 1,
             name: `User ${i + 1}`,
@@ -34,128 +39,163 @@ export default function Members({ showActions = true }) {
 
     const columns = [
         {
-            field: "name",
-            headerName: "Users",
-            flex: 1.5,
-            minWidth: 180,
-            renderCell: (params) => (
+            accessorKey: "name",
+            header: "Users",
+            Cell: ({ cell }) => (
                 <Typography sx={{ textAlign: 'center' }}>
-                    {params.value}
+                    {cell.getValue()}
                 </Typography>
             ),
-            headerAlign: "center"
         },
         {
-            field: "status",
-            headerName: "Status",
-            flex: 1,
-            minWidth: 130,
-            renderCell: (params) => (
+            accessorKey: "status",
+            header: "Status",
+            Cell: ({ cell }) => (
                 <Chip
-                    label={params.value}
+                    label={cell.getValue()}
                     sx={{
                         fontSize: "12px",
-                        color: getStatusColor(params.value).color,
-                        backgroundColor: getStatusColor(params.value).background,
+                        color: getStatusColor(cell.getValue()).color,
+                        backgroundColor: getStatusColor(cell.getValue()).background,
                     }}
                 />
             ),
-            headerAlign: "center"
         },
         {
-            field: "email",
-            headerName: "E-mail",
-            flex: 1.5,
-            minWidth: 200,
-            headerAlign: "center"
+            accessorKey: "email",
+            header: "E-mail",
         },
         {
-            field: "tasks",
-            headerName: "Ongoing Tasks",
-            flex: 0.7,
-            minWidth: 120,
-            type: "number",
-            headerAlign: "center"
+            accessorKey: "tasks",
+            header: "Ongoing Tasks",
         },
         {
-            field: "actions",
-            headerName: "Actions",
-            flex: 1,
-            minWidth: 100,
-            renderCell: (params) => {
+            accessorKey: "actions",
+            header: "Actions",
+            enableColumnFilter: false, // Disable filtering for actions column
+            Cell: ({ row }) => {
                 return showActions ? (
                     <Stack direction="row" spacing={1}>
                         <IconButton
                             size="small"
-                            onClick={() => handleDelete(params.row.id)}
+                            onClick={() => handleDelete(row.original.id)}
                             sx={{ color: 'error.main' }}
                         >
-                            <CloseIcon fontSize="small" /> {/* استبدال أيقونة السلة بإكس */}
+                            <CloseIcon fontSize="small" />
                         </IconButton>
                     </Stack>
                 ) : null;
             },
-            headerAlign: "center"
+        },
+    ].filter(col => showActions || col.accessorKey !== "actions");
+
+    const [anchorEl, setAnchorEl] = React.useState(null);
+    const open = Boolean(anchorEl);
+
+    const handleExportClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleExportClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleDownload = (fileType) => {
+        const exportData = rows.map(row => ({
+            Name: row.name,
+            Status: row.status,
+            Email: row.email,
+            'Ongoing Tasks': row.tasks
+        }));
+
+        if (fileType === 'pdf') {
+            const pdf = new jsPDF('landscape');
+            
+            const tableColumn = ["Name", "Status", "Email", "Ongoing Tasks"];
+            const tableRows = exportData.map(item => [
+                item.Name,
+                item.Status,
+                item.Email,
+                item["Ongoing Tasks"]
+            ]);
+
+            pdf.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 20,
+                theme: 'grid',
+                styles: {
+                    fontSize: 8,
+                    cellPadding: 2,
+                    overflow: 'linebreak'
+                },
+                headStyles: {
+                    fillColor: [25, 118, 210],
+                    textColor: 255,
+                    fontSize: 9,
+                    fontStyle: 'bold'
+                }
+            });
+            
+            pdf.save('members-list.pdf');
+        } 
+        else if (fileType === 'excel') {
+            try {
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Members");
+                XLSX.writeFile(wb, "members-list.xlsx");
+            } catch (error) {
+                console.error("Error creating Excel file:", error);
+            }
         }
-    ].filter(col => showActions || col.field !== "actions"); // إخفاء عمود Actions إذا كان showActions = false
+        handleExportClose();
+    };
+
+    const table = useMaterialReactTable({
+        columns,
+        data: rows,
+        enableTopToolbar: true,
+        enableBottomToolbar: true,
+        enablePagination: true,
+        enableColumnFilters: true,
+        initialState: {
+            pagination: { pageSize: 5, pageIndex: 0 },
+        },
+        muiTableHeadCellProps: {
+            sx: {
+                backgroundColor: 'white',
+                color: 'black',
+                fontWeight: 'bold',
+            },
+        },
+        renderTopToolbarCustomActions: () => (
+            <Box sx={{ p: 2 }}>
+                <Button
+                    onClick={handleExportClick}
+                    startIcon={<FileDownloadIcon />}
+                >
+                    Export
+                </Button>
+                <Menu
+                    anchorEl={anchorEl}
+                    open={open}
+                    onClose={handleExportClose}
+                >
+                    <MenuItem onClick={() => handleDownload('excel')}>
+                        Export as Excel
+                    </MenuItem>
+                    <MenuItem onClick={() => handleDownload('pdf')}>
+                        Export as PDF
+                    </MenuItem>
+                </Menu>
+            </Box>
+        ),
+    });
 
     return (
         <Box sx={{ height: 520, width: "100%" }}>
-            <DataGrid
-                rows={rows}
-                columns={columns}
-                disableRowSelectionOnClick
-                pagination
-                pageSizeOptions={[ 5, 10, 20 ]}
-                initialState={{
-                    pagination: {
-                        paginationModel: { pageSize: 5, page: 0 },
-                    },
-                }}
-                sx={{
-                    '& .MuiDataGrid-cell': {
-                        py: 2,
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    },
-                    '& .MuiDataGrid-row': {
-                        alignItems: 'center',
-                    },
-                    '& .MuiDataGrid-columnHeaders': {
-                        backgroundColor: '#1976D2',
-                        '& .MuiDataGrid-columnHeaderTitle': {
-                            fontWeight: 'bold',
-                        }
-                    },
-                    '& .MuiDataGrid-virtualScroller': {
-                        overflow: 'hidden'
-                    },
-                    '& .MuiDataGrid-cell:focus': {
-                        outline: 'none'
-                    },
-                    '& .MuiDataGrid-cellContent': {
-                        width: '100%',
-                        textAlign: 'center'
-                    },
-                    // Add these styles for footer alignment
-                    '& .MuiDataGrid-footerContainer': {
-                        justifyContent: 'flex-end ',
-                        alignItems: 'center',
-                        display: 'flex',
-                    },
-                    '& .MuiTablePagination-root': {
-                        display: 'flex',
-                        alignItems: 'center'
-                    },
-                    '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
-                        margin: 0
-                    },
-                    '& .MuiDataGrid-selectedRowCount': {
-                        display: 'none'
-                    }
-                }}
-            />
+            <MaterialReactTable table={table} />
         </Box>
     );
 }

@@ -1,14 +1,21 @@
-import { DataGrid } from "@mui/x-data-grid";
+import * as React from "react";
+import {
+    MaterialReactTable,
+    useMaterialReactTable,
+} from 'material-react-table';
 import { 
     Chip, 
     Stack, 
     Button,
-    Typography
+    Menu,
+    MenuItem
 } from "@mui/material";
-import { Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon, FileDownload as FileDownloadIcon } from '@mui/icons-material';
 import Box from "@mui/material/Box";
 import { useState } from "react";
 import CreateTaskForm from './CreateTaskForm';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
 
 const getStatusColor = (status) => {
     const normalizedStatus = status.toLowerCase();
@@ -31,51 +38,41 @@ const getStatusColor = (status) => {
 const getColumns = (tab) => {
     const baseColumns = [
         {
-            field: "name",
-            headerName: "Name",
-            flex: 1.5, // Increased flex
-            minWidth: 200,
-            headerAlign: "center",
+            accessorKey: "name",
+            header: "Name",
+            size: 200,
         },
         {
-            field: "frnNumber",
-            headerName: "FRN Number",
-            flex: 1,
-            minWidth: 120,
-            headerAlign: "center"
+            accessorKey: "frnNumber",
+            header: "FRN Number",
+            size: 120,
         },
         {
-            field: "ossNumber",
-            headerName: "OSS Number",
-            flex: 1,
-            minWidth: 120,
-            headerAlign: "center"
+            accessorKey: "ossNumber",
+            header: "OSS Number",
+            size: 120,
         },
         {
-            field: "openDate",
-            headerName: "Open Date",
-            flex: 1,
-            minWidth: 130,
-            headerAlign: "center"
+            accessorKey: "openDate",
+            header: "Open Date",
+            size: 130,
         }
     ];
 
     const statusColumn = {
-        field: "status",
-        headerName: "Status",
-        flex: 1,
-        minWidth: 130,
-        renderCell: (params) => (
+        accessorKey: "status",
+        header: "Status",
+        size: 130,
+        Cell: ({ cell }) => (
             <Chip
-                label={params.value}
+                label={cell.getValue()}
                 sx={{
                     fontSize: "12px",
-                    color: getStatusColor(params.value).color,
-                    backgroundColor: getStatusColor(params.value).background,
+                    color: getStatusColor(cell.getValue()).color,
+                    backgroundColor: getStatusColor(cell.getValue()).background,
                 }}
             />
         ),
-        headerAlign: "center"
     };
 
     switch(tab) {
@@ -84,91 +81,67 @@ const getColumns = (tab) => {
                 ...baseColumns,
                 statusColumn,
                 {
-                    field: "priority",
-                    headerName: "Priority",
-                    flex: 1,
-                    minWidth: 100, // Added minWidth
-                    headerAlign: "center"
+                    accessorKey: "priority",
+                    header: "Priority",
+                    size: 100,
                 },
                 {
-                    field: "caseType",
-                    headerName: "Case Type",
-                    flex: 1,
-                    minWidth: 130, // Added minWidth
-                    headerAlign: "center"
+                    accessorKey: "caseType",
+                    header: "Case Type",
+                    size: 130,
                 },
                 {
-                    field: "caseSource",
-                    headerName: "Case Source",
-                    flex: 1,
-                    minWidth: 120, // Added minWidth
-                    headerAlign: "center"
+                    accessorKey: "caseSource",
+                    header: "Case Source",
+                    size: 120,
                 }
             ];
         case 'Completed':
             return [
                 ...baseColumns,
                 {
-                    field: "priority",
-                    headerName: "Priority",
-                    flex: 1,
-                    headerAlign: "center"
+                    accessorKey: "priority",
+                    header: "Priority",
                 },
                 {
-                    field: "completedAt",
-                    headerName: "Completed At",
-                    flex: 1,
-                    headerAlign: "center"
+                    accessorKey: "completedAt",
+                    header: "Completed At",
                 }
             ];
         case 'Ongoing':
             return [
                 ...baseColumns,
                 {
-                    field: "priority",
-                    headerName: "Priority",
-                    flex: 1,
-                    headerAlign: "center"
+                    accessorKey: "priority",
+                    header: "Priority",
                 },
                 {
-                    field: "dayLefts",
-                    headerName: "Days Left",
-                    flex: 1,
-                    type: "number",
-                    headerAlign: "center"
+                    accessorKey: "dayLefts",
+                    header: "Days Left",
                 }
             ];
         case 'Delayed':
             return [
                 ...baseColumns,
                 {
-                    field: "priority",
-                    headerName: "Priority",
-                    flex: 1,
-                    headerAlign: "center"
+                    accessorKey: "priority",
+                    header: "Priority",
                 },
                 {
-                    field: "daysDelayed",
-                    headerName: "Days Delayed",
-                    flex: 1,
-                    type: "number",
-                    headerAlign: "center"
+                    accessorKey: "daysDelayed",
+                    header: "Days Delayed",
                 }
             ];
         case 'Frozen':
             return [
                 ...baseColumns,
                 {
-                    field: "priority",
-                    headerName: "Priority",
-                    flex: 1,
-                    headerAlign: "center"
+                    accessorKey: "priority",
+                    header: "Priority",
                 },
                 {
-                    field: "frozenAt",
-                    headerName: "Frozen At",
-                    flex: 1,
-                    headerAlign: "center"
+                    accessorKey: "frozenAt",
+                    header: "Frozen At",
                 }
             ];
         default:
@@ -176,7 +149,6 @@ const getColumns = (tab) => {
     }
 };
 
-// Update the rows data to include all necessary fields
 const rows = [
     {
         id: 1,
@@ -194,116 +166,179 @@ const rows = [
         caseSource: "Email"
     },
     {
-        id: 1,
-        name: "Omar Zaid Al-Malek",
-        status: "Ongoing",
-        priority: "High",
-        frnNumber: "#123",
-        ossNumber: "OSS-456",
-        openDate: "08.08.2024",
-        dayLefts: 4,
+        id: 2,
+        name: "John Doe",
+        status: "Completed",
+        priority: "Medium",
+        frnNumber: "#124",
+        ossNumber: "OSS-457",
+        openDate: "07.08.2024",
+        dayLefts: 0,
         daysDelayed: 0,
-        completedAt: "",
+        completedAt: "10.08.2024",
         frozenAt: "",
-        caseType: "Investigation",
-        caseSource: "Email"
+        caseType: "Review",
+        caseSource: "Phone"
     },
-    {
-        id: 1,
-        name: "Omar Zaid Al-Malek",
-        status: "Ongoing",
-        priority: "High",
-        frnNumber: "#123",
-        ossNumber: "OSS-456",
-        openDate: "08.08.2024",
-        dayLefts: 4,
-        daysDelayed: 0,
-        completedAt: "",
-        frozenAt: "",
-        caseType: "Investigation",
-        caseSource: "Email"
-    }, {
-        id: 1,
-        name: "Omar Zaid Al-Malek",
-        status: "Ongoing",
-        priority: "High",
-        frnNumber: "#123",
-        ossNumber: "OSS-456",
-        openDate: "08.08.2024",
-        dayLefts: 4,
-        daysDelayed: 0,
-        completedAt: "",
-        frozenAt: "",
-        caseType: "Investigation",
-        caseSource: "Email"
-    },
-    
 ];
 
 export default function Tasks({ 
     hideCreateButton, 
     showTabs,
-    containerWidth = "100%", // New prop with default value
-    tabsAlignment = "right", // New prop with default value
-    showTitle = true, // New prop with default value
-    showToolbarBorder = true // Add new prop with default value
+    containerWidth = "100%",
 }) {
     const [activeTab, setActiveTab] = useState('All');
     const [openDialog, setOpenDialog] = useState(false);
+    const [anchorEl, setAnchorEl] = React.useState(null);
+    const open = Boolean(anchorEl);
 
     const handleOpenDialog = () => setOpenDialog(true);
     const handleCloseDialog = () => setOpenDialog(false);
 
-    // Updated CustomToolbar component
-    const CustomToolbar = () => {
-        if (!showTabs) return null;
-        
-        return (
-            <Box 
-                sx={{ 
-                    p: 2,
-                    display: 'flex',
-                    justifyContent: tabsAlignment === 'right' ? 'space-between' : 'flex-start',
-                    alignItems: 'center',
-                    borderBottom: showToolbarBorder ? '1px solid #E0E0E0' : 'none',
-                    gap: 2
-                }}
-            >
-                {showTitle && (
-                    <Typography variant="h6" sx={{ color: '#374151' }}>
-                        Team Tasks
-                    </Typography>
-                )}
-                <Stack 
-                    direction="row" 
-                    spacing={1}
-                    sx={{
-                        ml: tabsAlignment === 'left' && !showTitle ? 0 : 'auto'
-                    }}
-                >
-                    {['All', 'Completed', 'Ongoing', 'Delayed', 'Frozen'].map((tab) => (
-                        <Button
-                            key={tab}
-                            variant={activeTab === tab ? "contained" : "outlined"}
-                            onClick={() => setActiveTab(tab)}
-                            size="small"
-                            sx={{
-                                backgroundColor: activeTab === tab ? getStatusColor(tab).background : 'transparent',
-                                color: getStatusColor(tab).color,
-                                borderColor: getStatusColor(tab).color,
-                                '&:hover': {
-                                    backgroundColor: getStatusColor(tab).background,
-                                    opacity: 0.9
-                                }
-                            }}
-                        >
-                            {tab}
-                        </Button>
-                    ))}
-                </Stack>
-            </Box>
-        );
+    const handleExportClick = (event) => {
+        setAnchorEl(event.currentTarget);
     };
+
+    const handleExportClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleDownload = (fileType) => {
+        const exportData = rows.map(row => ({
+            Name: row.name,
+            Status: row.status,
+            Priority: row.priority,
+            'FRN Number': row.frnNumber,
+            'OSS Number': row.ossNumber,
+            'Open Date': row.openDate,
+            'Days Left': row.dayLefts,
+            'Case Type': row.caseType,
+            'Case Source': row.caseSource
+        }));
+
+        if (fileType === 'pdf') {
+            const pdf = new jsPDF('landscape');
+            
+            const tableColumn = ["Name", "Status", "Priority", "FRN Number", "OSS Number", "Open Date", "Days Left", "Case Type", "Case Source"];
+            const tableRows = exportData.map(item => [
+                item.Name,
+                item.Status,
+                item.Priority,
+                item["FRN Number"],
+                item["OSS Number"],
+                item["Open Date"],
+                item["Days Left"],
+                item["Case Type"],
+                item["Case Source"]
+            ]);
+
+            pdf.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 20,
+                theme: 'grid',
+                styles: {
+                    fontSize: 8,
+                    cellPadding: 2,
+                    overflow: 'linebreak'
+                },
+                headStyles: {
+                    fillColor: [25, 118, 210],
+                    textColor: 255,
+                    fontSize: 9,
+                    fontStyle: 'bold'
+                }
+            });
+            
+            pdf.save('tasks-list.pdf');
+        } 
+        else if (fileType === 'excel') {
+            try {
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Tasks");
+                XLSX.writeFile(wb, "tasks-list.xlsx");
+            } catch (error) {
+                console.error("Error creating Excel file:", error);
+            }
+        }
+        handleExportClose();
+    };
+
+    const table = useMaterialReactTable({
+        columns: getColumns(activeTab),
+        data: rows,
+        enableTopToolbar: true,
+        enableBottomToolbar: true,
+        enablePagination: true,
+        enableColumnFilters: true,
+        initialState: {
+            pagination: { pageSize: 5, pageIndex: 0 },
+        },
+        muiTableHeadCellProps: {
+            sx: {
+                backgroundColor: '#F9FAFB',
+                color: 'black',
+                fontWeight: 'bold',
+            },
+        },
+        renderTopToolbarCustomActions: () => (
+            <Box sx={{ 
+                display: 'flex', 
+                width: '100%', 
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                p: 2,
+                
+            }}>
+                {showTabs && (
+                    <Stack direction="row" spacing={1}>
+                        {['All', 'Completed', 'Ongoing', 'Delayed', 'Frozen'].map((tab) => (
+                            <Button
+                                key={tab}
+                                variant={activeTab === tab ? "contained" : "outlined"}
+                                onClick={() => setActiveTab(tab)}
+                                size="small"
+                                sx={{
+                                    backgroundColor: activeTab === tab ? getStatusColor(tab).background : 'transparent',
+                                    color: getStatusColor(tab).color,
+                                    borderColor: getStatusColor(tab).color,
+                                    '&:hover': {
+                                        backgroundColor: getStatusColor(tab).background,
+                                        opacity: 0.9
+                                    }
+                                }}
+                            >
+                                {tab}
+                            </Button>
+                        ))}
+                    </Stack>
+                )}
+
+                <Box>
+                    <Button
+                        onClick={handleExportClick}
+                        startIcon={<FileDownloadIcon />}
+                        sx={{ mt: -3}}
+                    >
+                        Export
+                    </Button>
+                    <Menu
+                        anchorEl={anchorEl}
+                        open={open}
+                        onClose={handleExportClose}
+                    >
+                        <MenuItem onClick={() => handleDownload('excel')}>
+                            Export as Excel
+                        </MenuItem>
+                        <MenuItem onClick={() => handleDownload('pdf')}>
+                            Export as PDF
+                        </MenuItem>
+                    </Menu>
+                </Box>
+            </Box>
+        ),
+    });
 
     return (
         <Box sx={{ height: 520, width: containerWidth, flexGrow: 1 }}>
@@ -312,7 +347,6 @@ export default function Tasks({
                 onClose={handleCloseDialog} 
             />
 
-            {/* Create Button Section */}
             {!hideCreateButton && (
                 <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
                     <Button
@@ -335,49 +369,14 @@ export default function Tasks({
                 </Box>
             )}
 
-            {/* DataGrid with integrated tabs */}
-            <DataGrid
-                rows={rows}
-                columns={getColumns(activeTab)}
-                disableRowSelectionOnClick
-                pagination
-                pageSizeOptions={[5, 10, 20]}
-                initialState={{
-                    pagination: {
-                        paginationModel: { pageSize: 5, page: 0 },
+            <MaterialReactTable 
+                table={table}
+                muiTablePaperProps={{
+                    sx: {
+                        '& .MuiToolbar-root': {
+                            background: '#fff',
+                        },
                     },
-                }}
-                slots={{
-                    toolbar: showTabs ? CustomToolbar : null,
-                }}
-                sx={{
-                    overflowX: 'hidden',
-                    "& .MuiDataGrid-cell": {
-                        justifyContent: "center",
-                        textAlign: "center",
-                    },
-                    "& .MuiDataGrid-columnHeaders": {
-                        backgroundColor: '#F9FAFB',
-                    },
-                    "& .MuiDataGrid-row:nth-of-type(even)": {
-                        backgroundColor: '#F9FAFB',
-                    },
-                    // Add these styles for footer alignment
-                    '& .MuiDataGrid-footerContainer': {
-                        justifyContent: 'flex-end',
-                        alignItems: 'center',
-                        display: 'flex',
-                    },
-                    '& .MuiTablePagination-root': {
-                        display: 'flex',
-                        alignItems: 'center'
-                    },
-                    '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
-                        margin: 0
-                    },
-                    '& .MuiDataGrid-selectedRowCount': {
-                        display: 'none'
-                    }
                 }}
             />
         </Box>
