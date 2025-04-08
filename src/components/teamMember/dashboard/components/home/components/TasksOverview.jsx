@@ -1,31 +1,29 @@
 import * as React from 'react';
 import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from 'material-react-table';
+import {
   Box,
   Typography,
   Stack,
   Button,
   Chip
 } from "@mui/material";
-import { DataGrid } from '@mui/x-data-grid';
 import { useState } from 'react';
 
-function renderStatus(status) {
-  return <Chip label={status} style={{ backgroundColor: getStatusColor(status).background, color: getStatusColor(status).color }} size="small" />;
-}
-
-// Add the color scheme function
 const getStatusColor = (status) => {
   switch (status) {
     case "Completed":
       return { color: "green", background: "#e0f7e9" };
     case "Delayed":
       return { color: "red", background: "#fde8e8" };
-    case "On Going":  // Changed from "Ongoing" to match your tab naming
+    case "On Going":
       return { color: "orange", background: "#fff4e0" };
     case "Frozen":
       return { color: "#1976D2", background: "#E3F2FD" };
     default:
-      return { color: "#059669", background: "#ecfdf5" }; // Default for "All" tab
+      return { color: "#059669", background: "#ecfdf5" };
   }
 };
 
@@ -113,190 +111,273 @@ const rows = [
 const getColumns = (tab) => {
   const baseColumns = [
     {
-      field: 'frnNumber',
-      headerName: 'FRN Number',
-      flex: 1,
-      align: 'center',
-      headerAlign: 'center'
+      accessorKey: 'frnNumber',
+      header: 'FRN Number',
+      size: 100,
+      muiTableHeadCellProps: {
+        align: 'center',
+      },
+      muiTableBodyCellProps: {
+        align: 'center',
+      },
     },
     {
-      field: 'ossNumber',
-      headerName: 'OSS Number',
-      flex: 1,
-      align: 'center',
-      headerAlign: 'center'
+      accessorKey: 'ossNumber',
+      header: 'OSS Number',
+      size: 100,
+      muiTableHeadCellProps: {
+        align: 'center',
+      },
+      muiTableBodyCellProps: {
+        align: 'center',
+      },
     },
     {
-      field: 'status',
-      headerName: 'Status',
-      flex: 1,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: (params) => renderStatus(params.value)
+      accessorKey: 'status',
+      header: 'Status',
+      size: 100,
+      Cell: ({ cell }) => (
+        <Chip
+          label={cell.getValue()}
+          sx={{
+            fontSize: '12px',
+            color: getStatusColor(cell.getValue()).color,
+            backgroundColor: getStatusColor(cell.getValue()).background,
+          }}
+        />
+      ),
+      muiTableHeadCellProps: {
+        align: 'center',
+      },
+      muiTableBodyCellProps: {
+        align: 'center',
+      },
     },
     {
-      field: 'priority',
-      headerName: 'Priority',
-      flex: 1,
-      align: 'center',
-      headerAlign: 'center'
+      accessorKey: 'priority',
+      header: 'Priority',
+      size: 90,
+      muiTableHeadCellProps: {
+        align: 'center',
+      },
+      muiTableBodyCellProps: {
+        align: 'center',
+      },
     },
     {
-      field: 'caseType',
-      headerName: 'Case Type',
-      flex: 1,
-      align: 'center',
-      headerAlign: 'center'
+      accessorKey: 'openDate',
+      header: 'Open Date',
+      size: 100,
+      muiTableHeadCellProps: {
+        align: 'center',
+      },
+      muiTableBodyCellProps: {
+        align: 'center',
+      },
     },
-    {
-      field: 'caseSource',
-      headerName: 'Case Source',
-      flex: 1,
-      align: 'center',
-      headerAlign: 'center'
-    },
-    {
-      field: 'openDate',
-      headerName: 'Open Date',
-      flex: 1,
-      align: 'center',
-      headerAlign: 'center'
-    },
-    {
-      field: 'completedAt',
-      headerName: 'Completed At',
-      flex: 1,
-      align: 'center',
-      headerAlign: 'center'
-    },
-    {
-      field: 'dayLefts',
-      headerName: 'Days Left',
-      flex: 1,
-      align: 'center',
-      headerAlign: 'center'
-    },
-    {
-      field: 'daysDelayed',
-      headerName: 'Days Delayed',
-      flex: 1,
-      align: 'center',
-      headerAlign: 'center'
-    },
-    {
-      field: 'frozenAt',
-      headerName: 'Frozen At',
-      flex: 1,
-      align: 'center',
-      headerAlign: 'center'
-    }
   ];
 
-  switch (tab) {
-    case 'All':
-      return baseColumns.slice(0, 7);
-    case 'Completed':
-      return [ baseColumns[ 0 ], baseColumns[ 1 ], baseColumns[ 3 ], baseColumns[ 6 ], baseColumns[ 7 ] ];
-    case 'On Going':
-      return [ baseColumns[ 0 ], baseColumns[ 1 ], baseColumns[ 3 ], baseColumns[ 6 ], baseColumns[ 8 ] ];
-    case 'Delayed':
-      return [ baseColumns[ 0 ], baseColumns[ 1 ], baseColumns[ 3 ], baseColumns[ 6 ], baseColumns[ 9 ] ];
-    case 'Frozen':
-      return [ baseColumns[ 0 ], baseColumns[ 1 ], baseColumns[ 3 ], baseColumns[ 6 ], baseColumns[ 10 ] ];
-    default:
-      return [];
-  }
-};
+  const additionalColumns = {
+    'All': [
+      {
+        accessorKey: 'caseType',
+        header: 'Case Type',
+        size: 110,
+        muiTableHeadCellProps: {
+          align: 'center',
+        },
+        muiTableBodyCellProps: {
+          align: 'center',
+        },
+      },
+      {
+        accessorKey: 'caseSource',
+        header: 'Case Source',
+        size: 100,
+        muiTableHeadCellProps: {
+          align: 'center',
+        },
+        muiTableBodyCellProps: {
+          align: 'center',
+        },
+      },
+    ],
+    'Completed': [
+      {
+        accessorKey: 'completedAt',
+        header: 'Completed At',
+        size: 130,
+        muiTableHeadCellProps: {
+          align: 'center',
+        },
+        muiTableBodyCellProps: {
+          align: 'center',
+        },
+      },
+    ],
+    'On Going': [
+      {
+        accessorKey: 'dayLefts',
+        header: 'Days Left',
+        size: 100,
+        muiTableHeadCellProps: {
+          align: 'center',
+        },
+        muiTableBodyCellProps: {
+          align: 'center',
+        },
+      },
+    ],
+    'Delayed': [
+      {
+        accessorKey: 'daysDelayed',
+        header: 'Days Delayed',
+        size: 120,
+        muiTableHeadCellProps: {
+          align: 'center',
+        },
+        muiTableBodyCellProps: {
+          align: 'center',
+        },
+      },
+    ],
+    'Frozen': [
+      {
+        accessorKey: 'frozenAt',
+        header: 'Frozen At',
+        size: 120,
+        muiTableHeadCellProps: {
+          align: 'center',
+        },
+        muiTableBodyCellProps: {
+          align: 'center',
+        },
+      },
+    ],
+  };
 
-// Add IDs to rows
-const rowsWithIds = rows.map((row, index) => ({
-  id: index,
-  ...row
-}));
+  return [ ...baseColumns, ...(additionalColumns[ tab ] || []) ];
+};
 
 function TasksOverview() {
   const [ activeTab, setActiveTab ] = useState('All');
+  const [ filteredData, setFilteredData ] = React.useState(rows);
 
-  return (
-    <Box sx={{ mt: 4, width: '750px' }}>
-      <Typography variant="h6" sx={{ mb: 3 }}>Tasks Overview</Typography>
-      <Box sx={{
+  React.useEffect(() => {
+    if (activeTab === 'All') {
+      setFilteredData(rows);
+    } else {
+      setFilteredData(rows.filter(row => row.status === activeTab));
+    }
+  }, [ activeTab ]);
+
+  const table = useMaterialReactTable({
+    columns: getColumns(activeTab),
+    data: filteredData,
+    enableTopToolbar: true,
+    enableBottomToolbar: true,
+    enablePagination: true,
+    enableColumnFilters: true,
+    enableFullScreenToggle: false,
+    enableDensityToggle: false,
+    enableColumnResizing: false,
+    enableHiding: true,
+    initialState: {
+      pagination: { pageSize: 5, pageIndex: 0 },
+    },
+    muiTableHeadCellProps: {
+      sx: {
+        backgroundColor: '#F9FAFB',
+        fontWeight: 'bold',
+      },
+    },
+    renderTopToolbarCustomActions: () => (
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{
+          p: '8px 0',
+          width: '100%',
+          overflowX: 'auto',
+          '::-webkit-scrollbar': { display: 'none' },
+        }}
+      >
+        {[ 'All', 'Completed', 'On Going', 'Delayed', 'Frozen' ].map((tab) => (
+          <Button
+            key={tab}
+            variant={activeTab === tab ? "contained" : "outlined"}
+            onClick={() => setActiveTab(tab)}
+            size="small"
+            sx={{
+              backgroundColor: activeTab === tab ? getStatusColor(tab).background : 'transparent',
+              color: getStatusColor(tab).color,
+              borderColor: getStatusColor(tab).color,
+              '&:hover': {
+                backgroundColor: getStatusColor(tab).background,
+                opacity: 0.9
+              },
+              margin: '15px 5px',
+              ':first-of-type': {
+                marginLeft: '15px'
+              }
+            }}
+          >
+            {tab}
+          </Button>
+        ))}
+      </Stack>
+    ),
+    muiTablePaperProps: {
+      elevation: 0,
+      sx: {
         border: '1px solid #e0e0e0',
         borderRadius: '4px',
-        overflow: 'hidden'
-      }}>
-        <Stack
-          direction="row"
-          sx={{
-            borderBottom: '1px solid #e0e0e0',
-            backgroundColor: '#f9fafb',
-          }}
-        >
-          {[ 'All', 'Completed', 'On Going', 'Delayed', 'Frozen' ].map((status) => {
-            const colors = getStatusColor(status);
-            return (
-              <Button
-                key={status}
-                variant="text"
-                onClick={() => setActiveTab(status)}
-                sx={{
-                  py: 1.5,
-                  px: 3,
-                  borderRadius: 0,
-                  borderBottom: activeTab === status ? `2px solid ${colors.color}` : '2px solid transparent',
-                  backgroundColor: activeTab === status ? colors.background : 'transparent',
-                  color: activeTab === status ? colors.color : 'inherit',
-                  '&:hover': {
-                    backgroundColor: activeTab === status ? colors.background : 'rgba(0, 0, 0, 0.04)',
-                  },
-                }}
-              >
-                {status}
-              </Button>
-            );
-          })}
-        </Stack>
-        <DataGrid
-          rows={rowsWithIds}
-          columns={getColumns(activeTab)}
-          pagination
-          pageSizeOptions={[ 5, 10, 20 ]}
-          initialState={{
-            pagination: {
-              paginationModel: { pageSize: 5, page: 0 },
-            },
-          }}
-          disableSelectionOnClick
-          disableColumnMenu
-          autoHeight
-          sx={{
+        width: '100%',
+      },
+    },
+    muiTableContainerProps: {
+      sx: {
+        border: 'none',
+        maxWidth: '100%',
+      },
+    },
+  });
+
+  return (
+    <Box 
+      sx={{ 
+        mt: 4, 
+        width: '100%', 
+        maxWidth: '800px',
+      }}
+    >
+      <Typography variant="h6" sx={{ mb: 3 }}>Tasks Overview</Typography>
+      <MaterialReactTable
+        table={table}
+        muiTablePaperProps={{
+          elevation: 0,
+          sx: {
+            border: '1px solid #e0e0e0',
+            borderRadius: '4px',
+          },
+        }}
+        muiTableContainerProps={{
+          sx: {
             border: 'none',
-            '& .MuiDataGrid-cell': {
-              borderBottom: '1px solid #f0f0f0',
-            },
-            '& .MuiDataGrid-columnHeaders': {
-              backgroundColor: '#ffffff',
-              borderBottom: '1px solid #e0e0e0',
-            },
-            // Add these styles for footer alignment
-            '& .MuiDataGrid-footerContainer': {
-              justifyContent: 'flex-end',
-              alignItems: 'center',
-              display: 'flex',
-            },
-            '& .MuiTablePagination-root': {
-              display: 'flex',
-              alignItems: 'center'
-            },
-            '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
-              margin: 0
-            },
-            '& .MuiDataGrid-selectedRowCount': {
-              display: 'none'
-            }
-          }}
-        />
-      </Box>
+          },
+        }}
+        muiTopToolbarProps={{
+          sx: {
+            backgroundColor: '#f9fafb',
+            borderBottom: '1px solid #e0e0e0',
+          },
+        }}
+        muiBottomToolbarProps={{
+          sx: {
+            borderTop: '1px solid #e0e0e0',
+          },
+        }}
+      />
     </Box>
   );
 }
