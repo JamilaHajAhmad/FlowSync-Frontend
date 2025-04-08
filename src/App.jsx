@@ -22,7 +22,7 @@ import Requests from './components/teamLeader/dashboard/components/Requests';
 import EditProfile from './components/common/EditProfile';
 import ChangePW from './components/common/ChangePW';
 import Analytics from './components/teamLeader/dashboard/components/Analytics';
-import Layout from './components/teamLeader/analytics/layout/layout';
+import Layout from './components/teamLeader/analytics/layout/Layout';
 import Bar from './components/teamLeader/analytics/bar/Bar';
 import HeatMap from './components/teamLeader/analytics/heatmap/HeatMap';
 import Line from './components/teamLeader/analytics/line/Line';
