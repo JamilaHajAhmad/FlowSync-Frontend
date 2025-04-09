@@ -1,12 +1,13 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useContext, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
     LightModeOutlined,
     DarkModeOutlined,
     NotificationsNoneOutlined,
     SettingsOutlined,
     Search as SearchIcon,
-    Menu as MenuIcon
+    Menu as MenuIcon,
+    Clear as ClearIcon
 } from '@mui/icons-material';
 import { 
     useTheme, 
@@ -18,14 +19,16 @@ import {
     AppBar,
     Toolbar,
     Badge,
-    Menu
+    Menu,
+    ClickAwayListener
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import logo from '../../assets/images/logo.png';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import { NotificationContext } from "./notification/NotificationContext.js";
-import { useState, useContext } from 'react';
 import NotificationList from './notification/NotificationList';
+import SearchResults from './search/SearchResults';
+import { searchItems as searchablePages } from './search/data.js'; 
 
 const Search = styled('div')(({ theme }) => ({
     position: 'relative',
@@ -39,8 +42,11 @@ const Search = styled('div')(({ theme }) => ({
     width: '100%',
     [theme.breakpoints.up('sm')]: {
         marginLeft: theme.spacing(3),
-        width: 'auto',
+        width: '400px', // Increased from auto
     },
+    [theme.breakpoints.up('md')]: {
+        width: '500px', // Even wider on larger screens
+    }
 }));
 
 const SearchIconWrapper = styled('div')(({ theme }) => ({
@@ -59,12 +65,26 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
     '& .MuiInputBase-input': {
         padding: theme.spacing(1, 1, 1, 0),
         paddingLeft: `calc(1em + ${theme.spacing(4)})`,
+        paddingRight: '48px', // Make room for clear icon
         transition: theme.transitions.create('width'),
         width: '100%',
-        [theme.breakpoints.up('md')]: {
-            width: '20ch',
-        },
     },
+}));
+
+const ClearButton = styled(IconButton)(({ theme }) => ({
+    position: 'absolute',
+    right: 8,
+    top: '50%',
+    transform: 'translateY(-50%)',
+    color: theme.palette.mode === 'dark' 
+        ? 'rgba(255, 255, 255, 0.7)' 
+        : 'rgba(0, 0, 0, 0.54)',
+    padding: 6,
+    '&:hover': {
+        color: theme.palette.mode === 'dark' 
+            ? 'rgba(255, 255, 255, 0.9)' 
+            : 'rgba(0, 0, 0, 0.87)',
+    }
 }));
 
 const StyledAppBar = styled(AppBar, {
@@ -94,6 +114,90 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
     const theme = useTheme();
     const { notifications } = useContext(NotificationContext);
     const [anchorEl, setAnchorEl] = useState(null);
+    const navigate = useNavigate();
+
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedIndex, setSelectedIndex] = useState(0);
+    const [showResults, setShowResults] = useState(false);
+
+
+    const searchItems = searchablePages; 
+    const searchResults = useMemo(() => {
+        if (!searchTerm) return [];
+        
+        return searchItems.filter(item => {
+            const searchLower = searchTerm.toLowerCase();
+            return (
+                item.title.toLowerCase().includes(searchLower) ||
+                item.description?.toLowerCase().includes(searchLower)
+            );
+        });
+    }, [searchItems, searchTerm]);
+
+    const handleSearchKeyDown = (e) => {
+        // Only handle keyboard navigation when we have results and they're visible
+        if (searchResults.length && showResults) {
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    setSelectedIndex(prev => {
+                        const next = prev + 1;
+                        // Loop back to start if we reach the end
+                        return next >= searchResults.length ? 0 : next;
+                    });
+                    break;
+
+                case 'ArrowUp':
+                    e.preventDefault();
+                    setSelectedIndex(prev => {
+                        const next = prev - 1;
+                        // Loop to end if we're at the start
+                        return next < 0 ? searchResults.length - 1 : next;
+                    });
+                    break;
+
+                case 'Enter':
+                    e.preventDefault();
+                    if (searchResults[selectedIndex]) {
+                        navigate(searchResults[selectedIndex].path);
+                        setShowResults(false);
+                        setSearchTerm('');
+                        e.target.blur(); // Remove focus from search input
+                    }
+                    break;
+
+                case 'Escape':
+                    e.preventDefault();
+                    setShowResults(false);
+                    setSearchTerm('');
+                    e.target.blur(); // Remove focus from search input
+                    break;
+
+                case 'Tab':
+                    // Prevent default tab behavior when results are shown
+                    if (showResults) {
+                        e.preventDefault();
+                        setSelectedIndex(prev => {
+                            if (e.shiftKey) {
+                                // Shift+Tab goes backwards
+                                return prev <= 0 ? searchResults.length - 1 : prev - 1;
+                            }
+                            // Regular tab goes forwards
+                            return prev >= searchResults.length - 1 ? 0 : prev + 1;
+                        });
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+        } else if (e.key === 'Escape') {
+            // Allow Escape to clear even when no results
+            setShowResults(false);
+            setSearchTerm('');
+            e.target.blur();
+        }
+    };
 
     const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -161,8 +265,44 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                         </SearchIconWrapper>
                         <StyledInputBase
                             placeholder="Search…"
+                            value={searchTerm}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                setShowResults(true);
+                                setSelectedIndex(0);
+                            }}
+                            onKeyDown={handleSearchKeyDown}
+                            onFocus={() => setShowResults(true)}
                             inputProps={{ 'aria-label': 'search' }}
                         />
+                        {searchTerm && (
+                            <ClearButton
+                                aria-label="clear search"
+                                onClick={() => {
+                                    setSearchTerm('');
+                                    setShowResults(false);
+                                }}
+                                size="small"
+                            >
+                                <ClearIcon fontSize="small" />
+                            </ClearButton>
+                        )}
+                        {showResults && searchTerm && (
+                            <ClickAwayListener onClickAway={() => setShowResults(false)}>
+                                <Box sx={{ position: 'relative', width: '100%' }}>
+                                    <SearchResults
+                                        results={searchResults}
+                                        searchTerm={searchTerm}
+                                        selectedIndex={selectedIndex}
+                                        onSelect={(item) => {
+                                            navigate(item.path);
+                                            setShowResults(false);
+                                            setSearchTerm('');
+                                        }}
+                                    />
+                                </Box>
+                            </ClickAwayListener>
+                        )}
                     </Search>
 
                     <Stack direction="row" spacing={-0.5}>

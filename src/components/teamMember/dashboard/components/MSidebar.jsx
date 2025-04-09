@@ -10,7 +10,7 @@ import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Avatar, Typography, Box } from '@mui/material';
 import defaultImg from '../../../../assets/images/default.jpg';
 import { ExitToApp as ExitToAppIcon } from '@mui/icons-material';
@@ -87,9 +87,9 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 );
 
 const links = [
-    { "text": "Dashboard", "icon": <HomeOutlinedIcon />, "path": "/member-dashboard" },
-    { "text": "Tasks", "icon": <AssignmentOutlinedIcon />, "path": "/member-tasks" },
-    { "text": "Calendar", "icon": <CalendarMonthOutlinedIcon />, "path": "/member-calendar" },
+    { "text": "Dashboard", "icon": <HomeOutlinedIcon />, "path": "/dashboard" },
+    { "text": "Tasks", "icon": <AssignmentOutlinedIcon />, "path": "/tasks" },
+    { "text": "Calendar", "icon": <CalendarMonthOutlinedIcon />, "path": "/calendar" },
     { "text": "Profile", "icon": <AccountCircleOutlinedIcon />, "path": "/profile" },
     { "text": "FAQs", "icon": <QuestionMarkIcon />, "path": "/faq" },
     { "text": "Feedback & Support", "icon": <SupportAgentIcon />, "path": "/feedback&support" }
@@ -98,7 +98,8 @@ const links = [
 
 export default function MSidebar({ open }) {
     const navigate = useNavigate();
-
+    const location = useLocation();
+    
     return (
         <Drawer variant="permanent" open={open} className='sidebar'>
             <Box sx={{ 
@@ -151,39 +152,55 @@ export default function MSidebar({ open }) {
 
                 {/* Main Navigation */}
                 <List sx={{ flexGrow: 1, overflow: 'hidden' }}>
-                    {links.map((item) => (
-                        <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
-                            <ListItemButton
-                                onClick={() => navigate(item.path)}
-                                sx={{
-                                    minHeight: 48,
-                                    justifyContent: open ? 'initial' : 'center',
-                                    px: 2.5,
-                                    '&:hover': {
-                                        backgroundColor: 'rgba(255, 255, 255, 0.08)'
-                                    }
-                                }}
-                            >
-                                <ListItemIcon
+                    {links.map((link) => {
+                        const active = location.pathname === link.path; // Check if active
+                        return (
+                            <ListItem key={link.text} disablePadding sx={{ display: 'block' }}>
+                                <ListItemButton
                                     sx={{
-                                        minWidth: 0,
-                                        mr: open ? 3 : 'auto',
-                                        justifyContent: 'center',
-                                        color: 'white'
+                                        minHeight: 48,
+                                        justifyContent: open ? 'initial' : 'center',
+                                        px: 2.5,
+                                        // Active state styles
+                                        ...(active && {
+                                            backgroundColor: 'white',
+                                            borderRadius: '20px',
+                                            borderTopRightRadius: !open ? 0 : '0px',
+                                            borderBottomRightRadius: !open ? 0 : '0px',
+                                            '&:hover': {
+                                                backgroundColor: 'white', // Keep white on hover
+                                            },
+                                        }),
+                                        '&:hover': {
+                                            backgroundColor: active ? 'white' : 'rgba(255, 255, 255, 0.08)',
+                                        },
                                     }}
+                                    onClick={() => navigate(link.path)}
                                 >
-                                    {item.icon}
-                                </ListItemIcon>
-                                <ListItemText 
-                                    primary={item.text} 
-                                    sx={{ 
-                                        opacity: open ? 1 : 0,
-                                        color: 'white'
-                                    }} 
-                                />
-                            </ListItemButton>
-                        </ListItem>
-                    ))}
+                                    <ListItemIcon
+                                        sx={{
+                                            minWidth: 0,
+                                            mr: open ? 3 : 'auto',
+                                            justifyContent: 'center',
+                                            color: active ? '#064e3b' : 'white',
+                                            '& .MuiSvgIcon-root': { 
+                                                color: active ? '#064e3b' : 'inherit',
+                                            }
+                                        }}
+                                    >
+                                        {link.icon}
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary={link.text}
+                                        sx={{
+                                            opacity: open ? 1 : 0,
+                                            color: active ? '#064e3b' : 'white',
+                                        }}
+                                    />
+                                </ListItemButton>
+                            </ListItem>
+                        );
+                    })}
                 </List>
 
                 {/* Sign Out Button */}
