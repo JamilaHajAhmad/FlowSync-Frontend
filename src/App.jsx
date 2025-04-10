@@ -30,7 +30,6 @@ import Pie from './components/teamLeader/analytics/pie/Pie';
 import Stream from './components/teamLeader/analytics/stream/Stream';
 import Stacked from './components/teamLeader/analytics/stacked/Stacked';
 import NotificationsPage from './components/common/notification/NotificationsPage';
-import ChatbotButton from './components/common/chat/ChatbotButton';
 import FAQ from './components/teamMember/dashboard/components/FAQ';
 import FeedbackSupport from './components/teamMember/dashboard/components/FeedbackSupport';
 
@@ -68,7 +67,6 @@ const App = () => {
                     <Route path="/feedback&support" element={<FeedbackSupport />} />
                 </Routes>
                 <ToastContainer />
-                <ChatbotButton />
                 {/* Add any other components that should be present on all pages */}
             </BrowserRouter>
         </NotificationProvider>
