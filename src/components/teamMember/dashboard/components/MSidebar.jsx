@@ -87,8 +87,8 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 );
 
 const links = [
-    { "text": "Dashboard", "icon": <HomeOutlinedIcon />, "path": "/dashboard" },
-    { "text": "Tasks", "icon": <AssignmentOutlinedIcon />, "path": "/tasks" },
+    { "text": "Dashboard", "icon": <HomeOutlinedIcon />, "path": "/member-dashboard" },
+    { "text": "Tasks", "icon": <AssignmentOutlinedIcon />, "path": "/member-tasks" },
     { "text": "Calendar", "icon": <CalendarMonthOutlinedIcon />, "path": "/calendar" },
     { "text": "Profile", "icon": <AccountCircleOutlinedIcon />, "path": "/profile" },
     { "text": "FAQs", "icon": <QuestionMarkIcon />, "path": "/faq" },

@@ -94,9 +94,9 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 );
 
 const links = [
-    { text: "Dashboard", icon: <HomeOutlined />, path: "/dashboard" },
+    { text: "Dashboard", icon: <HomeOutlined />, path: "/leader-dashboard" },
     { text: "Requests", icon: <AddTaskIcon />, path: "/requests" },
-    { text: "Tasks", icon: <AssignmentOutlined />, path: "/tasks" },
+    { text: "Tasks", icon: <AssignmentOutlined />, path: "/team-tasks" },
     { text: "Team Members", icon: <GroupOutlined />, path: "/team" },
     { text: "Calendar", icon: <CalendarMonthOutlined />, path: "/calendar" },
     { text: "Profile", icon: <AccountCircleOutlined />, path: "/profile" },
