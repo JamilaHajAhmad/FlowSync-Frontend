@@ -42,13 +42,13 @@ const App = () => {
                     <Route path="/register" element={<Register />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/forgot-password" element={<ForgetPassword />} />
-                    <Route path="/dashboard" element={<Home />} />
-                    <Route path="/tasks" element={<Tasks />} />
+                    <Route path="/leader-dashboard" element={<Home />} />
+                    <Route path="/team-tasks" element={<Tasks />} />
                     <Route path="/team" element={<Members />} />
                     <Route path="/calendar" element={<Calendar />} />
                     <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/dashboard" element={<MHome />} />
-                    <Route path="/tasks" element={<MTasks />} />
+                    <Route path="/member-dashboard" element={<MHome />} />
+                    <Route path="/member-tasks" element={<MTasks />} />
                     <Route path="/calendar" element={<MCalendar />} />
                     <Route path="/freeze-task" element={<FreezeTask />} />
                     <Route path="/settings" element={<Settings />} />
