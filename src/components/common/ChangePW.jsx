@@ -1,11 +1,18 @@
+import React from "react";
 import { useState } from "react";
 import { Box, Button, Paper, TextField, Typography, LinearProgress, CssBaseline, InputAdornment, IconButton } from "@mui/material";
 import { styled, ThemeProvider, createTheme } from "@mui/material/styles";
 import { motion as Motion } from "framer-motion";
-import { Eye, EyeOff, Lock, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Lock } from "lucide-react";
 import { Typewriter } from 'react-simple-typewriter';
 import zxcvbn from 'zxcvbn';
 import logo from "../../assets/images/logo.png";
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import { decodeToken } from '../../utils';
 
 const theme = createTheme({
     palette: {
@@ -32,7 +39,7 @@ const theme = createTheme({
 const PasswordStrengthBar = styled(LinearProgress)(({ theme, strength }) => ({
     height: 8,
     borderRadius: 4,
-    backgroundColor: theme.palette.grey[ 200 ],
+    backgroundColor: theme.palette.grey[200],
     '& .MuiLinearProgress-bar': {
         backgroundColor:
             strength === 0 ? '#EF4444' :
@@ -73,51 +80,91 @@ const StyledTextField = styled(TextField)(({ theme, isError }) => ({
     }
 }));
 
+const validationSchema = Yup.object({
+    currentPassword: Yup.string()
+        .required('Current password is required'),
+    newPassword: Yup.string()
+        .required('New password is required')
+        .min(8, 'Password must be at least 8 characters')
+        .notOneOf([Yup.ref('currentPassword')], 'New password must be different from current password'),
+    confirmNewPassword: Yup.string()
+        .required('Please confirm your new password')
+        .oneOf([Yup.ref('newPassword')], 'Passwords must match')
+});
+
 const ChangePW = () => {
-    const [ formData, setFormData ] = useState({
-        currentPassword: "",
-        newPassword: "",
-        confirmNewPassword: ""
-    });
-    const [ showPassword, setShowPassword ] = useState({
+    const navigate = useNavigate();
+    const [showPassword, setShowPassword] = useState({
         current: false,
         new: false,
         confirm: false
     });
-    const [ strength, setStrength ] = useState(0);
-    const [ error, setError ] = useState("");
-    const [ passwordMatch, setPasswordMatch ] = useState(true);
+    const [strength, setStrength] = useState(0);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [ name ]: value }));
-        setError("");
+    const formik = useFormik({
+        initialValues: {
+            currentPassword: '',
+            newPassword: '',
+            confirmNewPassword: ''
+        },
+        validationSchema,
+        onSubmit: async (values, { setSubmitting }) => {
+            try {
+                const token = localStorage.getItem('authToken');
+                if (!token) {
+                    toast.error('Authentication token not found');
+                    navigate('/login');
+                    return;
+                }
 
-        if (name === 'newPassword') {
-            const result = zxcvbn(value);
+                // Decode token to get user information
+                const decodedToken = decodeToken(token);
+                if (!decodedToken) {
+                    toast.error('Invalid authentication token');
+                    navigate('/login');
+                    return;
+                }
+
+                const response = await axios.post(
+                    'https://localhost:55914/change-password',
+                    {
+                        currentPassword: values.currentPassword,
+                        newPassword: values.newPassword,
+                        confirmNewPassword: values.confirmNewPassword
+                    },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+                if (response.status === 200) {
+                    toast.success('Password updated successfully!');
+                    formik.resetForm();
+                    // Use role from decoded token for navigation
+                    const redirectPath = decodedToken.role === 'Leader' ? '/leader-dashboard' : '/member-dashboard';
+                    navigate(redirectPath);
+                }
+            } catch (error) {
+                console.error('Error updating password:', error);
+                const errorMessage = error.response.data || 'Failed to update password';
+                toast.error(errorMessage);
+            } finally {
+                setSubmitting(false);
+            }
+        }
+    });
+
+    React.useEffect(() => {
+        if (formik.values.newPassword) {
+            const result = zxcvbn(formik.values.newPassword);
             setStrength(result.score);
-            // Check password match when new password changes
-            setPasswordMatch(value === formData.confirmNewPassword);
         }
-
-        if (name === 'confirmNewPassword') {
-            // Check password match when confirm password changes
-            setPasswordMatch(value === formData.newPassword);
-        }
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (formData.newPassword !== formData.confirmNewPassword) {
-            setError("Passwords do not match");
-            return;
-        }
-        // Add API call logic here
-        console.log("Password changed:", formData);
-    };
+    }, [formik.values.newPassword]);
 
     const togglePasswordVisibility = (field) => {
-        setShowPassword(prev => ({ ...prev, [ field ]: !prev[ field ] }));
+        setShowPassword(prev => ({ ...prev, [field]: !prev[field] }));
     };
 
     return (
@@ -157,7 +204,7 @@ const ChangePW = () => {
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
                                 <Typewriter
-                                    words={[ 'Keep your account secure by updating your password regularly' ]}
+                                    words={['Keep your account secure by updating your password regularly']}
                                     cursor={false}
                                     typeSpeed={50}
                                     loop={1}
@@ -165,22 +212,26 @@ const ChangePW = () => {
                             </Typography>
                         </Box>
 
-                        <form onSubmit={handleSubmit}>
+                        <form onSubmit={formik.handleSubmit}>
                             <Box display="flex" flexDirection="column" gap={2}>
                                 {[
-                                    { name: 'currentPassword', label: 'Current Password', show: showPassword.current, field: 'current' },
-                                    { name: 'newPassword', label: 'New Password', show: showPassword.new, field: 'new' },
+                                    {
+                                        name: 'currentPassword',
+                                        label: 'Current Password',
+                                        show: showPassword.current,
+                                        field: 'current'
+                                    },
+                                    {
+                                        name: 'newPassword',
+                                        label: 'New Password',
+                                        show: showPassword.new,
+                                        field: 'new'
+                                    },
                                     {
                                         name: 'confirmNewPassword',
                                         label: 'Confirm Password',
                                         show: showPassword.confirm,
-                                        field: 'confirm',
-                                        error: !passwordMatch && formData.confirmNewPassword.length > 0,
-                                        sx: {
-                                            '& .MuiOutlinedInput-root': {
-                                                borderColor: (!passwordMatch && formData.confirmNewPassword) ? 'error.main' : undefined,
-                                            }
-                                        }
+                                        field: 'confirm'
                                     }
                                 ].map((field) => (
                                     <StyledTextField
@@ -189,21 +240,20 @@ const ChangePW = () => {
                                         name={field.name}
                                         label={field.label}
                                         type={field.show ? 'text' : 'password'}
-                                        value={formData[ field.name ]}
-                                        onChange={handleChange}
+                                        value={formik.values[field.name]}
+                                        onChange={formik.handleChange}
+                                        onBlur={formik.handleBlur}
+                                        error={formik.touched[field.name] && Boolean(formik.errors[field.name])}
+                                        helperText={formik.touched[field.name] && formik.errors[field.name]}
                                         required
-                                        error={field.error}
-                                        sx={field.sx}
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">
                                                     <Lock
                                                         size={20}
-                                                        color={
-                                                            field.name === 'confirmNewPassword' && !passwordMatch && formData.confirmNewPassword.length > 0
-                                                                ? '#EF4444'  // red color for error
-                                                                : theme.palette.primary.main
-                                                        }
+                                                        color={formik.touched[field.name] && formik.errors[field.name]
+                                                            ? '#EF4444'
+                                                            : theme.palette.primary.main}
                                                     />
                                                 </InputAdornment>
                                             ),
@@ -218,11 +268,10 @@ const ChangePW = () => {
                                                 </InputAdornment>
                                             )
                                         }}
-                                        isError={field.error}
                                     />
                                 ))}
 
-                                {formData.newPassword && (
+                                {formik.values.newPassword && (
                                     <Box>
                                         <PasswordStrengthBar
                                             variant="determinate"
@@ -241,37 +290,6 @@ const ChangePW = () => {
                                     </Box>
                                 )}
 
-                                {!passwordMatch && formData.confirmNewPassword && (
-                                    <Typography
-                                        color="error"
-                                        variant="body2"
-                                        sx={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 1,
-                                            mt: 1
-                                        }}
-                                    >
-                                        <AlertCircle size={16} />
-                                        Passwords do not match
-                                    </Typography>
-                                )}
-
-                                {error && (
-                                    <Typography
-                                        color="error"
-                                        variant="body2"
-                                        sx={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 1
-                                        }}
-                                    >
-                                        <AlertCircle size={16} />
-                                        {error}
-                                    </Typography>
-                                )}
-
                                 <Motion.div
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
@@ -281,6 +299,7 @@ const ChangePW = () => {
                                         variant="contained"
                                         fullWidth
                                         size="large"
+                                        disabled={formik.isSubmitting || !formik.isValid}
                                         sx={{
                                             mt: 2,
                                             height: 48,
@@ -288,7 +307,7 @@ const ChangePW = () => {
                                             fontSize: '1rem'
                                         }}
                                     >
-                                        Update Password
+                                        {formik.isSubmitting ? 'Updating...' : 'Update Password'}
                                     </Button>
                                 </Motion.div>
                             </Box>
