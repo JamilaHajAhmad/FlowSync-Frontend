@@ -130,7 +130,7 @@ const ChangePW = () => {
                     {
                         currentPassword: values.currentPassword,
                         newPassword: values.newPassword,
-                        confirmNewPassword: values.confirmNewPassword
+                        confirmPassword: values.confirmNewPassword
                     },
                     {
                         headers: {
