@@ -73,16 +73,16 @@ const Register = () => {
         console.log('Form submitted:', apiValues);
         const response = await axios.post('https://localhost:55914/register', apiValues);
         
-        // Show different messages based on role
+        // Show different messages and navigate based on role
         if (values.role === 'teamLeader') {
           toast.success('Registration successful! Please check your email to verify your account.');
+          navigate('/login');
         } else {
           toast.success('Registration successful! Your request is waiting for team leader approval.');
+          navigate('/'); // Navigate to landing page for team members
         }
 
         console.log('Registration response:', response.data);
-        // Redirect to login page after successful registration
-        navigate('/login');
       } catch (err) {
         console.error('Error registering user:', err.response.data.detail);
         toast.error(err.response.data.detail || 'An error occurred');
@@ -209,7 +209,7 @@ const Register = () => {
             {formik.isSubmitting ? 'Signing up...' : 'Sign Up'}
           </button>
           
-          <p className="login-option">
+          <p className="login-option" style={{ color: 'black' }}>
             Already have an account? <Link className="link" to="/login">Log in</Link>
           </p>
         </form>
