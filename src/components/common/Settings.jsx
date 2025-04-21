@@ -24,6 +24,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import logo from "../../assets/images/logo.png";
 import { toast } from "react-toastify";
+import { handleLogout } from "../../utils";
 
 const Settings = () => {
     const navigate = useNavigate();
@@ -188,7 +189,7 @@ const Settings = () => {
                     <Button
                         startIcon={<ExitToApp color="error" />}
                         color="error"
-                        onClick={() => navigate("/logout")}
+                        onClick={() => handleLogout()}
                         sx={{ textTransform: "capitalize" }}
                     >
                         Log out

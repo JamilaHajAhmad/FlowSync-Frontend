@@ -16,6 +16,7 @@ import defaultImg from '../../../../assets/images/default.jpg';
 import { ExitToApp as ExitToAppIcon } from '@mui/icons-material';
 import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
+import { handleLogout } from '../../../../utils';
 
 const drawerWidth = 260;
 
@@ -215,7 +216,7 @@ export default function MSidebar({ open }) {
                                     backgroundColor: 'rgba(255, 255, 255, 0.08)'
                                 }
                             }}
-                            onClick={() => navigate('/')}
+                            onClick={() => handleLogout()}
                         >
                             <ListItemIcon
                                 sx={{

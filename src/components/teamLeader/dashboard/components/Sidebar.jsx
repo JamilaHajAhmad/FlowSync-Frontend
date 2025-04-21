@@ -23,6 +23,7 @@ import {
     styled
 } from '@mui/material';
 import defaultImg from '../../../../assets/images/default.jpg';
+import { handleLogout } from '../../../../utils';
 
 const drawerWidth = 260;
 
@@ -223,7 +224,7 @@ export default function Sidebar({ open }) {
                                     backgroundColor: 'rgba(255, 255, 255, 0.08)'
                                 }
                             }}
-                            onClick={() => navigate('/')}
+                            onClick={() => handleLogout()}
                         >
                             <ListItemIcon
                                 sx={{
