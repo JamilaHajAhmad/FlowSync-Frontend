@@ -1,6 +1,7 @@
 import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ProtectedRouter } from './routing/protectedRouter';
 import { ToastContainer } from 'react-toastify';
 import NotificationProvider from "./components/common/notification/NotificationProvider";
 import 'react-toastify/dist/ReactToastify.css';
@@ -32,45 +33,50 @@ import Stacked from './components/teamLeader/analytics/stacked/Stacked';
 import NotificationsPage from './components/common/notification/NotificationsPage';
 import FAQ from './components/teamMember/dashboard/components/FAQ';
 import FeedbackSupport from './components/teamMember/dashboard/components/FeedbackSupport';
+import ChatbotButton from './components/common/chat/ChatbotButton';
+import ResetPassword from './components/auth/ResetPassword/ResetPassword';
 
 const App = () => {
     return (
         <NotificationProvider>
             <BrowserRouter>
                 <Routes>
+                    {/* Public routes */}
                     <Route path="/" element={<Landing />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/forgot-password" element={<ForgetPassword />} />
-                    <Route path="/leader-dashboard" element={<Home />} />
-                    <Route path="/team-tasks" element={<Tasks />} />
-                    <Route path="/team" element={<Members />} />
-                    <Route path="/calendar" element={<Calendar />} />
-                    <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/member-dashboard" element={<MHome />} />
-                    <Route path="/member-tasks" element={<MTasks />} />
-                    <Route path="/calendar" element={<MCalendar />} />
-                    <Route path="/freeze-task" element={<FreezeTask />} />
-                    <Route path="/settings" element={<Settings />} />
-                    <Route path="/requests" element={<Requests />} />
-                    <Route path="/settings/edit-profile" element={<EditProfile />} />
-                    <Route path="/settings/Change-password" element={<ChangePW />} />
-                    <Route path="/analytics" element={<Analytics />} />
-                    <Route path="/analytics/bar" element={<Layout children={<Bar />} />} />
-                    <Route path="/analytics/line" element={<Layout children={<Line />} />} />
-                    <Route path="/analytics/pie" element={<Layout children={<Pie />} />} />
-                    <Route path="/analytics/stream" element={<Layout children={<Stream />} />} />
-                    <Route path="/analytics/stacked" element={<Layout children={<Stacked />} />} />
-                    <Route path="/analytics/heatmap" element={<Layout children={<HeatMap />} />} />
-                    <Route path="/notifications" element={<NotificationsPage />}  />
-                    <Route path="/faq" element={<FAQ />} />
-                    <Route path="/feedback&support" element={<FeedbackSupport />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+
+                    {/* Protected routes */}
+                    <Route path="/leader-dashboard" element={<ProtectedRouter><Home /></ProtectedRouter>} />
+                    <Route path="/team-tasks" element={<ProtectedRouter><Tasks /></ProtectedRouter>} />
+                    <Route path="/team" element={<ProtectedRouter><Members /></ProtectedRouter>} />
+                    <Route path="/calendar" element={<ProtectedRouter><Calendar /></ProtectedRouter>} />
+                    <Route path="/profile" element={<ProtectedRouter><ProfilePage /></ProtectedRouter>} />
+                    <Route path="/member-dashboard" element={<ProtectedRouter><MHome /></ProtectedRouter>} />
+                    <Route path="/member-tasks" element={<ProtectedRouter><MTasks /></ProtectedRouter>} />
+                    <Route path="/freeze-task" element={<ProtectedRouter><FreezeTask /></ProtectedRouter>} />
+                    <Route path="/settings" element={<ProtectedRouter><Settings /></ProtectedRouter>} />
+                    <Route path="/requests" element={<ProtectedRouter><Requests /></ProtectedRouter>} />
+                    <Route path="/settings/edit-profile" element={<ProtectedRouter><EditProfile /></ProtectedRouter>} />
+                    <Route path="/settings/change-password" element={<ProtectedRouter><ChangePW /></ProtectedRouter>} />
+                    <Route path="/analytics" element={<ProtectedRouter><Analytics /></ProtectedRouter>} />
+                    <Route path="/analytics/bar" element={<ProtectedRouter><Layout children={<Bar />} /></ProtectedRouter>} />
+                    <Route path="/analytics/line" element={<ProtectedRouter><Layout children={<Line />} /></ProtectedRouter>} />
+                    <Route path="/analytics/pie" element={<ProtectedRouter><Layout children={<Pie />} /></ProtectedRouter>} />
+                    <Route path="/analytics/stream" element={<ProtectedRouter><Layout children={<Stream />} /></ProtectedRouter>} />
+                    <Route path="/analytics/stacked" element={<ProtectedRouter><Layout children={<Stacked />} /></ProtectedRouter>} />
+                    <Route path="/analytics/heatmap" element={<ProtectedRouter><Layout children={<HeatMap />} /></ProtectedRouter>} />
+                    <Route path="/notifications" element={<ProtectedRouter><NotificationsPage /></ProtectedRouter>} />
+                    <Route path="/faq" element={<ProtectedRouter><FAQ /></ProtectedRouter>} />
+                    <Route path="/feedback&support" element={<ProtectedRouter><FeedbackSupport /></ProtectedRouter>} />
                 </Routes>
                 <ToastContainer />
-                {/* Add any other components that should be present on all pages */}
             </BrowserRouter>
+            <ChatbotButton />
         </NotificationProvider>
     );
-}
+};
 
 export default App;
