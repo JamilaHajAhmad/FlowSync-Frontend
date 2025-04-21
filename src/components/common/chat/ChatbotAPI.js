@@ -1,35 +1,25 @@
-const API_KEY = import.meta.env.VITE_REACT_APP_OPENAI_API_KEY; // Ensure this is set in your Vite environment variables
-const API_URL = "https://api.openai.com/v1/chat/completions";
+const API_KEY = import.meta.env.VITE_REACT_APP_OPENAI_API_KEY;
 
-export const sendMessageToAI = async (message) => {
-    // First, check if API key exists
-    if (!API_KEY) {
-        console.error("OpenAI API key is missing");
-        return "Configuration error: API key is missing";
-    }
-
+export const sendMessageToAI = async (userMessage) => {
     try {
-        const response = await fetch(API_URL, {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${API_KEY.trim()}` // Added trim() to remove any whitespace
+                "Authorization": `Bearer ${API_KEY}`,
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "gpt-4o", // Changed from gpt-4 to more widely available model
-                messages: [
+                "model": "deepseek/deepseek-r1:free",
+                "messages": [
                     {
-                        role: "system",
-                        content: "You are a helpful assistant for FlowSync, a project management application. You can help users with tasks, team management, and general workflow questions."
-                    },
-                    {
-                        role: "user",
-                        content: message
+                        "role": "user",
+                        "content": userMessage 
                     }
                 ],
-                temperature: 0.7,
-                max_tokens: 150
-            }),
+                "temperature": 0.7,
+                "max_tokens": 1000,
+                "format": "markdown"
+            })
         });
 
         if (!response.ok) {
@@ -39,9 +29,36 @@ export const sendMessageToAI = async (message) => {
         }
 
         const data = await response.json();
-        return data.choices[0].message.content;
+        // Return an array containing the message object
+        return [{
+            type: 'bot',
+            content: data.choices[0]?.message?.content?.toString() || '', // Ensure content is a string
+            id: Date.now().toString(),
+            timestamp: new Date().toISOString(),
+            likes: 0,
+            dislikes: 0
+        }];
     } catch (error) {
         console.error("Error details:", error);
-        return "Sorry, I couldn't process your request. Please try again later.";
+        return [{
+            type: 'bot',
+            content: "Sorry, I couldn't process your request. Please try again later.",
+            id: Date.now().toString(),
+            timestamp: new Date().toISOString(),
+            likes: 0,
+            dislikes: 0
+        }];
     }
+};
+
+// Add sound effects
+export const chatSounds = {
+    messageSent: new Audio('../../../../public/sounds/message-send.mp3'),
+    messageReceived: new Audio('../../../../public/sounds/message-received.mp3'),
+};
+
+// Text-to-speech function
+export const speakMessage = (text) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(utterance);
 };
