@@ -34,29 +34,8 @@ export const decodeToken = (token) => {
     }
 };
 
-export const isAuthorized = () => {
-    try {
-        const token = localStorage.getItem('authToken');
-        const user = JSON.parse(localStorage.getItem('user'));
-
-        if (!token || !user) {
-            return false;
-        }
-
-        // Decode token to check if it's still valid
-        const decodedToken = decodeToken(token);
-        if (!decodedToken) {
-            return false;
-        }
-
-        // Verify that token data matches stored user data
-        return (
-            decodedToken.id === user.id &&
-            decodedToken.email === user.email &&
-            decodedToken.role === user.role
-        );
-    } catch (error) {
-        console.error('Authorization check failed:', error);
-        return false;
-    }
-};
+export const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    window.location.href = '/';
+}
