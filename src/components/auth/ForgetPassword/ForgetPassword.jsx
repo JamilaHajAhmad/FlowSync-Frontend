@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import axios from 'axios';
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./ForgetPassword.css";
@@ -8,27 +11,39 @@ import { motion as Motion } from "framer-motion";
 import { forgetPasswordMotion } from "../../../variants";
 
 const ForgetPassword = () => {
-    const [email, setEmail] = useState("");
 
-    const handleChange = (e) => {
-        setEmail(e.target.value);
-    };
+    // Validation Schema
+    const validationSchema = Yup.object({
+        email: Yup.string()
+            .required('Email is required')
+            .email('Invalid email format')
+    });
 
-    const validateEmail = (email) => {
-        const emailPattern = /^[a-zA-Z0-9._%+-]+@dubaipolice\.gov\.ae$/;
-        return emailPattern.test(email);
-    };
+    const formik = useFormik({
+        initialValues: {
+            email: ''
+        },
+        validationSchema,
+        onSubmit: async (values, { setSubmitting }) => {
+            try {
+                const response = await axios.post(
+                    'https://localhost:55914/forgot-password',
+                    { email: values.email }
+                );
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (!validateEmail(email)) {
-            toast.error("Invalid email");
-            return;
+                if (response.status === 200) {
+                    toast.success('Password reset link has been sent to your email');
+                }
+            } catch (error) {
+                console.error('Error sending reset link:', error);
+                const errorMessage = error.response?.data?.message
+                    || 'Failed to send reset link. Please try again.';
+                toast.error(errorMessage);
+            } finally {
+                setSubmitting(false);
+            }
         }
-
-        console.log("Password reset link sent to", email);
-        toast.success("Password reset link sent!");
-    };
+    });
 
     return (
         <Motion.div
@@ -39,15 +54,37 @@ const ForgetPassword = () => {
         >
             <div className="forget-password-left">
                 <img src={logo} alt="FlowSync" className="forget-password-logo" />
-                <h2 className="forget-password-title">Reset Your Password</h2>
+                <h2 className="forget-password-title">Forgot Your Password</h2>
                 <p className="forget-password-subtitle">Enter your email to receive a password reset link</p>
             </div>
             <div className="forget-password-right">
-                <form onSubmit={handleSubmit} className="forget-password-form">
+                <form onSubmit={formik.handleSubmit} className="forget-password-form">
                     <h2 className="form-title">Forgot Password ?</h2>
-                    <input type="email" name="email" placeholder="E-mail" value={email} onChange={handleChange} className="forget-password-input" required />
-                    <input type="submit" value="Send" className="forget-password-button"/>
-                    <p className="login-option">Remembered your password? <Link to="/login" className="link">Log in</Link></p>
+                    
+                    <input 
+                        type="email" 
+                        name="email" 
+                        placeholder="E-mail" 
+                        {...formik.getFieldProps('email')}
+                        className={`forget-password-input ${
+                            formik.touched.email && formik.errors.email ? 'error' : ''
+                        }`}
+                    />
+                    {formik.touched.email && formik.errors.email && (
+                        <div className="error-message">{formik.errors.email}</div>
+                    )}
+
+                    <button 
+                        type="submit" 
+                        className="forget-password-button"
+                        disabled={formik.isSubmitting}
+                    >
+                        {formik.isSubmitting ? 'Sending...' : 'Send'}
+                    </button>
+
+                    <p className="login-option" style={{ color: 'black' }}>
+                        Remembered your password? <Link to="/login" className="link">Log in</Link>
+                    </p>
                 </form>
             </div>
         </Motion.div>
