@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import {
@@ -24,6 +24,7 @@ import { Close as CloseIcon } from '@mui/icons-material';
 import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
 import { createTask } from "../../../../services/taskService";
+import { getEmployeesWithTasks } from '../../../../services/employeeService';
 
 const caseSources = [
   "جبل علي",
@@ -71,8 +72,30 @@ const validationSchema = Yup.object({
 });
 
 const CreateTaskForm = ({ open, onClose }) => {
-  const token = localStorage.getItem('authToken');
-  const [loading, setLoading] = useState(false);
+    const token = localStorage.getItem('authToken');
+    const [loading, setLoading] = useState(false);
+    const [employees, setEmployees] = useState([]);
+    const [employeesLoading, setEmployeesLoading] = useState(true);
+    const [employeesError, setEmployeesError] = useState(null);
+
+    // Add useEffect to fetch employees
+    useEffect(() => {
+        const fetchEmployees = async () => {
+            try {
+                setEmployeesLoading(true);
+                const data = await getEmployeesWithTasks(token);
+                console.log(data.data);
+                setEmployees(data.data);
+            } catch (error) {
+                setEmployeesError(error.message);
+                toast.error('Failed to load employees');
+            } finally {
+                setEmployeesLoading(false);
+            }
+        };
+
+        fetchEmployees();
+    }, [token]);
 
   const formik = useFormik({
     initialValues: {
@@ -88,7 +111,8 @@ const CreateTaskForm = ({ open, onClose }) => {
     onSubmit: async (values) => {
       try {
         setLoading(true);
-        await createTask(values, token);
+        const response = await createTask(values, token);
+        console.log(response);
         toast.success('Task created successfully');
         onClose();
         formik.resetForm();
@@ -99,12 +123,6 @@ const CreateTaskForm = ({ open, onClose }) => {
       }
     },
   });
-
-  const employees = [
-    { id: 1, name: "John Doe", ongoingTasks: 3 },
-    { id: 2, name: "Jane Smith", ongoingTasks: 1 },
-    { id: 3, name: "Michael Brown", ongoingTasks: 5 },
-  ];
 
   return (
     <Dialog
@@ -215,12 +233,21 @@ const CreateTaskForm = ({ open, onClose }) => {
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               label="Select Employee"
+              disabled={employeesLoading}
             >
-              {employees.map((emp) => (
-                <MenuItem key={emp.id} value={emp.name}>
-                  {emp.name} ({emp.ongoingTasks} tasks)
-                </MenuItem>
-              ))}
+              {employeesLoading ? (
+                <MenuItem disabled>Loading employees...</MenuItem>
+              ) : employeesError ? (
+                <MenuItem disabled>Error loading employees</MenuItem>
+              ) : Array.isArray(employees) && employees.length > 0 ? (
+                employees.map((emp) => (
+                  <MenuItem key={emp.id} value={emp.id}>
+                    {emp.fullName} ({emp.ongoingTasks} tasks)
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled>No employees available</MenuItem>
+              )}
             </Select>
             {formik.touched.employee && formik.errors.employee && (
               <Typography color="error" variant="caption" sx={{ mt: 1 }}>
