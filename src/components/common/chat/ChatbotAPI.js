@@ -53,8 +53,8 @@ export const sendMessageToAI = async (userMessage) => {
 
 // Add sound effects
 export const chatSounds = {
-    messageSent: new Audio('../../../../public/sounds/message-send.mp3'),
-    messageReceived: new Audio('../../../../public/sounds/message-received.mp3'),
+    messageSent: new Audio('/sounds/message-send.mp3'),
+    messageReceived: new Audio('/sounds/message-received.mp3'),
 };
 
 // Text-to-speech function
