@@ -361,7 +361,7 @@ const ChatbotWindow = ({ open }) => {
                                                     onClick={() => handleReaction(msg.id, 'like')}
                                                     sx={{ 
                                                         padding: 0.5,
-                                                        color: msg.likes > 0 ? '#059669' : 'inherit'
+                                                        color: msg.likes > 0 ? '#059669' : '#94a3b8' // Updated default color
                                                     }}
                                                 >
                                                     <ThumbUp sx={{ fontSize: 14 }} />
@@ -373,7 +373,7 @@ const ChatbotWindow = ({ open }) => {
                                                     onClick={() => handleReaction(msg.id, 'dislike')}
                                                     sx={{ 
                                                         padding: 0.5,
-                                                        color: msg.dislikes > 0 ? '#dc2626' : 'inherit'
+                                                        color: msg.dislikes > 0 ? '#dc2626' : '#94a3b8' // Updated default color
                                                     }}
                                                 >
                                                     <ThumbDown sx={{ fontSize: 14 }} />
@@ -387,7 +387,10 @@ const ChatbotWindow = ({ open }) => {
                                                 <IconButton 
                                                     size="small"
                                                     onClick={() => handleCopy(msg.id, msg.content)}
-                                                    sx={{ padding: 0.5 }}
+                                                    sx={{ 
+                                                        padding: 0.5,
+                                                        color: '#94a3b8' // Added light grey color
+                                                    }}
                                                 >
                                                     <ContentCopy sx={{ fontSize: 14 }} />
                                                 </IconButton>
@@ -398,7 +401,7 @@ const ChatbotWindow = ({ open }) => {
                                                     onClick={() => handleSpeech(msg.id, msg.content)}
                                                     sx={{ 
                                                         padding: 0.5,
-                                                        color: speakingMessageId === msg.id ? '#dc2626' : 'inherit'
+                                                        color: speakingMessageId === msg.id ? '#dc2626' : '#94a3b8' // Updated default color
                                                     }}
                                                 >
                                                     {speakingMessageId === msg.id ? (
