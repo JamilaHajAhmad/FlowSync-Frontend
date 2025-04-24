@@ -1,9 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, TextField, Button, Typography, Avatar, Select, MenuItem, Grid, Paper, IconButton, CssBaseline, FormControl, InputLabel } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { styled, ThemeProvider } from '@mui/material/styles';
 import logo from '../../assets/images/logo.png';
 import { useTheme } from '@mui/material';
+import { getProfile, updateProfile } from "../../services/profileService";
+import { toast } from "react-toastify";
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 
 // Custom styled components
 const StyledTextField = styled(TextField)(() => ({
@@ -50,31 +54,86 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
     background: theme.palette.mode === 'dark' ? '#1F2937' : '#ffffff',
 }));
 
+const validationSchema = Yup.object({
+    firstName: Yup.string()
+        .min(3, 'First name must be at least 3 characters'),
+    lastName: Yup.string()
+        .min(3, 'Last name must be at least 3 characters'),
+    email: Yup.string()
+        .email('Invalid email format'),
+    dateOfBirth: Yup.date()
+        .max(new Date(), 'Date of birth cannot be in the future'),
+    phone: Yup.string()
+        .matches(/^[0-9+\-\s()]*$/, 'Invalid phone number format')
+        .min(8, 'Phone number must be at least 8 digits'),
+    major: Yup.string(),
+    status: Yup.string(),
+    address: Yup.string()
+        .max(200, 'Address must be less than 200 characters'),
+    bio: Yup.string()
+        .max(500, 'Bio must be less than 500 characters')
+});
+
 const EditProfile = () => {
-    const [formData, setFormData] = useState({
-        firstName: "Charlene",
-        lastName: "Reed",
-        email: "charlenereed@gmail.com",
-        dateOfBirth: "1990-01-25",
-        address: "San Jose, California",
-        bio: "Passionate developer and tech enthusiast.",
-        phone: "+1 123 456 7890",
-        major: "Computer Science",
-        status: "On Duty"
+    const [ loading, setLoading ] = useState(false);
+
+    const formik = useFormik({
+        initialValues: {
+            firstName: "",
+            lastName: "",
+            email: "",
+            dateOfBirth: "",
+            address: "",
+            bio: "",
+            phone: "",
+            major: "",
+            status: "On Duty"
+        },
+        validationSchema,
+        onSubmit: async (values) => {
+            setLoading(true);
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await updateProfile(values, token);
+                console.log('Profile updated successfully:', response);
+                toast.success('Profile updated successfully');
+            } catch (error) {
+                toast.error(error.response?.data?.message || 'Failed to update profile');
+                console.error('Error updating profile:', error);
+            } finally {
+                setLoading(false);
+            }
+        }
     });
 
-    const handleChange = (event) => {
-        const { name, value } = event.target;
-        setFormData(prevData => ({
-            ...prevData,
-            [name]: value
-        }));
-    };
+    // Update useEffect to set formik values
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await getProfile(token);
+                console.log('Profile fetched successfully:', response);
+                const profileData = response.data;
 
-    const handleSubmit = (event) => {
-        event.preventDefault();
-        console.log('Form Data:', formData);
-    };
+                formik.setValues({
+                    firstName: profileData.firstName || "",
+                    lastName: profileData.lastName || "",
+                    email: profileData.email || "",
+                    dateOfBirth: profileData.dateOfBirth?.split('T')[0] || "",
+                    address: profileData.address || "",
+                    bio: profileData.bio || "",
+                    phone: profileData.phone || "",
+                    major: profileData.major || "",
+                    status: profileData.status || "On Duty"
+                });
+            } catch (error) {
+                toast.error('Failed to load profile data');
+                console.error('Error fetching profile:', error);
+            }
+        };
+
+        fetchProfile();
+    }, []); // Empty dependency array
 
     const theme = useTheme();
 
@@ -143,7 +202,7 @@ const EditProfile = () => {
                         </Box>
 
                         {/* Profile Form */}
-                        <form onSubmit={handleSubmit} style={{ flexGrow: 1 }}>
+                        <form onSubmit={formik.handleSubmit} style={{ flexGrow: 1 }}>
                             <Grid container spacing={3}>
                                 {/* First Name */}
                                 <Grid item xs={12} sm={6}>
@@ -151,8 +210,11 @@ const EditProfile = () => {
                                         fullWidth
                                         label="First Name"
                                         name="firstName"
-                                        value={formData.firstName}
-                                        onChange={handleChange}
+                                        value={formik.values.firstName}
+                                        onChange={formik.handleChange}
+                                        onBlur={formik.handleBlur}
+                                        error={formik.touched.firstName && Boolean(formik.errors.firstName)}
+                                        helperText={formik.touched.firstName && formik.errors.firstName}
                                         InputLabelProps={{ shrink: true }}
                                     />
                                 </Grid>
@@ -163,8 +225,11 @@ const EditProfile = () => {
                                         fullWidth
                                         label="Last Name"
                                         name="lastName"
-                                        value={formData.lastName}
-                                        onChange={handleChange}
+                                        value={formik.values.lastName}
+                                        onChange={formik.handleChange}
+                                        onBlur={formik.handleBlur}
+                                        error={formik.touched.lastName && Boolean(formik.errors.lastName)}
+                                        helperText={formik.touched.lastName && formik.errors.lastName}
                                         InputLabelProps={{ shrink: true }}
                                     />
                                 </Grid>
@@ -176,8 +241,11 @@ const EditProfile = () => {
                                         label="Email"
                                         name="email"
                                         type="email"
-                                        value={formData.email}
-                                        onChange={handleChange}
+                                        value={formik.values.email}
+                                        onChange={formik.handleChange}
+                                        onBlur={formik.handleBlur}
+                                        error={formik.touched.email && Boolean(formik.errors.email)}
+                                        helperText={formik.touched.email && formik.errors.email}
                                         InputLabelProps={{ shrink: true }}
                                     />
                                 </Grid>
@@ -189,8 +257,11 @@ const EditProfile = () => {
                                         label="Date of Birth"
                                         name="dateOfBirth"
                                         type="date"
-                                        value={formData.dateOfBirth}
-                                        onChange={handleChange}
+                                        value={formik.values.dateOfBirth}
+                                        onChange={formik.handleChange}
+                                        onBlur={formik.handleBlur}
+                                        error={formik.touched.dateOfBirth && Boolean(formik.errors.dateOfBirth)}
+                                        helperText={formik.touched.dateOfBirth && formik.errors.dateOfBirth}
                                         InputLabelProps={{ shrink: true }}
                                     />
                                 </Grid>
@@ -201,10 +272,10 @@ const EditProfile = () => {
                                         fullWidth
                                         label="Address"
                                         name="address"
-                                        value={formData.address}
-                                        onChange={handleChange}
+                                        value={formik.values.address}
+                                        onChange={formik.handleChange}
                                         placeholder="Enter your address"
-                                        InputLabelProps={{ 
+                                        InputLabelProps={{
                                             shrink: true,
                                             sx: {
                                                 bgcolor: 'background.paper'
@@ -219,10 +290,10 @@ const EditProfile = () => {
                                         fullWidth
                                         label="Phone"
                                         name="phone"
-                                        value={formData.phone}
-                                        onChange={handleChange}
+                                        value={formik.values.phone}
+                                        onChange={formik.handleChange}
                                         placeholder="Enter your phone"
-                                        InputLabelProps={{ 
+                                        InputLabelProps={{
                                             shrink: true,
                                             sx: {
                                                 bgcolor: 'background.paper'
@@ -231,15 +302,18 @@ const EditProfile = () => {
                                     />
                                 </Grid>
 
-                               
+
                                 <Grid item xs={12} sm={6}>
                                     <StyledTextField
                                         fullWidth
                                         label="Major"
                                         name="major"
                                         type="text"
-                                        value={formData.major}
-                                        onChange={handleChange}
+                                        value={formik.values.major}
+                                        onChange={formik.handleChange}
+                                        onBlur={formik.handleBlur}
+                                        error={formik.touched.major && Boolean(formik.errors.major)}
+                                        helperText={formik.touched.major && formik.errors.major}
                                         InputLabelProps={{ shrink: true }}
                                     />
                                 </Grid>
@@ -266,28 +340,34 @@ const EditProfile = () => {
                                         <StyledSelect
                                             labelId="status-label"
                                             name="status"
-                                            value={formData.status}
-                                            onChange={handleChange}
-                                            label="Status"
+                                            value={formik.values.status}
+                                            onChange={formik.handleChange}
+                                            onBlur={formik.handleBlur}
+                                            error={formik.touched.status && Boolean(formik.errors.status)}
                                         >
-                                            <MenuItem value="On Duty">On Duty</MenuItem>
-                                            <MenuItem value="Temporarily Leave">Temporarily Leave</MenuItem>
-                                            <MenuItem value="Annual Leave">Annual Leave</MenuItem>
+                                            <MenuItem value={0}>On Duty</MenuItem>
+                                            <MenuItem value={1}>Annual Leave</MenuItem>
+                                            <MenuItem value={2}>Temporarily Leave</MenuItem>
                                         </StyledSelect>
+                                        {formik.touched.status && formik.errors.status && (
+                                            <Typography color="error" variant="caption">
+                                                {formik.errors.status}
+                                            </Typography>
+                                        )}
                                     </FormControl>
                                 </Grid>
-                                 {/* Bio (Full Width) */}
-                                 <Grid item xs={12}>
+                                {/* Bio (Full Width) */}
+                                <Grid item xs={12}>
                                     <StyledTextField
                                         fullWidth
                                         multiline
                                         rows={3}
                                         label="Bio"
                                         name="bio"
-                                        value={formData.bio}
-                                        onChange={handleChange}
+                                        value={formik.values.bio}
+                                        onChange={formik.handleChange}
                                         placeholder="Write about yourself..."
-                                        InputLabelProps={{ 
+                                        InputLabelProps={{
                                             shrink: true,
                                             sx: {
                                                 bgcolor: 'background.paper'
@@ -300,8 +380,20 @@ const EditProfile = () => {
 
                             {/* Save Button */}
                             <Box mt={4} textAlign="right">
-                                <Button type="submit" variant="contained" size="large" sx={{ bgcolor: '#059669', '&:hover': { bgcolor: '#047857' } }}>
-                                    Save Changes
+                                <Button
+                                    type="submit"
+                                    variant="contained"
+                                    size="large"
+                                    disabled={loading || !formik.isValid || !formik.dirty}
+                                    sx={{
+                                        bgcolor: '#059669',
+                                        '&:hover': { bgcolor: '#047857' },
+                                        '&.Mui-disabled': {
+                                            bgcolor: '#82c4b3'
+                                        }
+                                    }}
+                                >
+                                    {loading ? "Saving..." : "Save Changes"}
                                 </Button>
                             </Box>
                         </form>
