@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Box,
@@ -12,10 +12,13 @@ import {
   Tab,
   Button,
   Paper,
+  CircularProgress,
   styled
 } from '@mui/material';
 import { Edit, Business, CalendarToday, Work, Security, NotificationsActive, DeviceHub, Lock } from '@mui/icons-material';
 import backgroundImg from '../../../assets/images/profile.jpg';
+import { getProfile } from '../../../services/profileService';
+import { toast } from 'react-toastify';
 
 // Custom styled components
 const ProfileHeader = styled(Box)({
@@ -116,42 +119,102 @@ const getStatusColor = (status) => {
   }
 };
 
+const convertNullToText = (value) => {
+  return value || 'Not added yet';
+};
 
-const profileData = {
-  firstName: 'John',
-  lastName: 'Doe',
-  phone: '932-555-4247',
-  email: 'janedoe@gmail.com',
-  password: '••••••••••',
-  role: 'Team Leader',
-  address: 'New York, USA',
-  joinDate: 'January 2023',
-  major: 'Computer Science',
-  dateOfBirth: '1995-05-15',
-  status: 'On Duty',
-  bio: 'Passionate developer with expertise in React and Node.js. Love building scalable applications and solving complex problems.',
-  details: [
-    {
-      label: 'Major',
-      value: 'Computer Science',
-      icon: <Business sx={{ fontSize: 18, color: '#4caf50' }} />
-    },
-    {
-      label: 'Join Date',
-      value: 'January 2023',
-      icon: <CalendarToday sx={{ fontSize: 18, color: '#4caf50' }} />
-    },
-    {
-      label: 'Status',
-      value: 'On Duty',
-      icon: <Work sx={{ fontSize: 18, color: '#4caf50' }} />,
-      useStatusColor: true
-    }
-  ]
+const getStatusText = (statusNumber) => {
+  const statusMap = {
+    0: 'On Duty',
+    1: 'Annual Leave',
+    2: 'Temporarily Leave'
+  };
+  return statusMap[statusNumber] || 'Unknown Status';
+};
+
+const getRoleText = (roleNumber) => {
+  const roleMap = {
+    0: 'Team Leader',
+    1: 'Team Member'
+  };
+  return roleMap[roleNumber] || 'Unknown Role';
 };
 
 const Profile = () => {
-  const [ tabValue, setTabValue ] = useState(0);
+  const [tabValue, setTabValue] = useState(0);
+  const [profileData, setProfileData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        const response = await getProfile(token);
+        const profileData = response.data;
+
+        setProfileData({
+          ...profileData,
+          // Convert null values
+          firstName: convertNullToText(profileData.firstName),
+          lastName: convertNullToText(profileData.lastName),
+          email: convertNullToText(profileData.email),
+          phone: convertNullToText(profileData.phone),
+          address: convertNullToText(profileData.address),
+          bio: convertNullToText(profileData.bio),
+          major: convertNullToText(profileData.major),
+          dateOfBirth: convertNullToText(profileData.dateOfBirth),
+          // Convert status and role
+          status: getStatusText(profileData.status),
+          role: getRoleText(profileData.role),
+          details: [
+            {
+              label: 'Major',
+              value: convertNullToText(profileData.major),
+              icon: <Business sx={{ fontSize: 18, color: '#4caf50' }} />
+            },
+            {
+              label: 'Join Date',
+              value: profileData.joinDate ? new Date(profileData.joinDate).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long'
+              }) : 'Not added yet',
+              icon: <CalendarToday sx={{ fontSize: 18, color: '#4caf50' }} />
+            },
+            {
+              label: 'Status',
+              value: getStatusText(profileData.status),
+              icon: <Work sx={{ fontSize: 18, color: '#4caf50' }} />,
+              useStatusColor: true
+            }
+          ]
+        });
+      } catch (error) {
+        toast.error('Failed to load profile data');
+        console.error('Error fetching profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  // Add loading state handling
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <CircularProgress sx={{ color: '#4caf50' }} />
+      </Box>
+    );
+  }
+
+  if (!profileData) {
+    return (
+      <Box sx={{ textAlign: 'center', py: 4 }}>
+        <Typography color="error">Failed to load profile data</Typography>
+      </Box>
+    );
+  }
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -309,7 +372,7 @@ const Profile = () => {
                     <InfoField
                       fullWidth
                       variant="outlined"
-                      value={`63+ ${profileData.phone}`}
+                      value={`${profileData.phone}`}
                       InputProps={{ readOnly: true }}
                     />
 

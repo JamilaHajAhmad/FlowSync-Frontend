@@ -4,8 +4,10 @@ import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
 import Topbar from '../Topbar';
 import Sidebar from '../../teamLeader/dashboard/components/Sidebar';
+import MSidebar from '../../teamMember/dashboard/components/MSidebar';
 import getDesignTokens from '../../../theme';
 import Profile from './Profile';
+import { decodeToken } from '../../../utils';
 
 const DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
@@ -18,24 +20,44 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 
 
 export default function MiniDrawer() {
-    const [ open, setOpen ] = React.useState(false);
+    const [open, setOpen] = React.useState(false);
+    const [userRole, setUserRole] = React.useState(null);
+
+    React.useEffect(() => {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            const decoded = decodeToken(token);
+            setUserRole(decoded.role);
+        }
+    }, []);
 
     const handleDrawerOpen = () => {
         setOpen(!open);
     };
 
-    const [ mode, setMode ] = React.useState(
+    const [mode, setMode] = React.useState(
         localStorage.getItem("currentMode") ? 
         localStorage.getItem("currentMode") :
-        "light");
-    const theme = React.useMemo(() => createTheme(getDesignTokens(mode)), [ mode ]);
+        "light"
+    );
+    
+    const theme = React.useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
+
+    const renderSidebar = () => {
+        if (userRole === 'Leader') { // Leader role
+            return <Sidebar open={open} />;
+        } else if (userRole === 'Member') { // Member role
+            return <MSidebar open={open} />;
+        }
+        return null;
+    };
 
     return (
         <ThemeProvider theme={theme}>
             <Box sx={{ display: 'flex' }}>
                 <CssBaseline />
                 <Topbar open={open} handleDrawerOpen={handleDrawerOpen} setMode={setMode} />
-                <Sidebar open={open} />
+                {renderSidebar()}
                 <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
                     <DrawerHeader />
                     <Profile />
