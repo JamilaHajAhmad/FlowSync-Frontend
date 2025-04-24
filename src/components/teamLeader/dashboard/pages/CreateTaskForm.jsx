@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 import {
   Box,
   TextField,
@@ -21,33 +23,81 @@ import {
 import { Close as CloseIcon } from '@mui/icons-material';
 import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
+import { createTask } from "../../../../services/taskService";
 
 const caseSources = [
-  "Email Inquiry",
-  "Phone Call",
-  "Walk-in Client",
-  "Online Portal",
-  "Internal Request",
-  "Partner Referral",
-  "Social Media",
-  "Website Form",
-  "Client Meeting",
-  "Branch Office",
-  "Corporate HQ",
-  "Field Agent",
-  "Support Ticket",
-  "Customer Service",
-  "External Audit"
+  "جبل علي",
+  "الرفاعة",
+  "الراشدية",
+  "البرشاء",
+  "بردبي",
+  "لهباب",
+  "الفقع",
+  "الموانئ",
+  "القصيص",
+  "المرقبات",
+  "نايف",
+  "الخوانيج",
+  "حتا",
+  "أمن المطارات",
+  "النيابة العامة",
+  "بلدية دبي",
+  "جمارك دبي",
+  "رأس الخيمة",
+  "أم القيوين",
+  "عجمان",
+  "أبوظبي",
+  "الفجيرة",
+  "الشارقة",
+  "الطب الشرعي",
+  "وزارة الدفاع"
 ];
 
+const validationSchema = Yup.object({
+  title: Yup.string()
+    .required('Task title is required')
+    .min(3, 'Title must be at least 3 characters'),
+  frnNumber: Yup.string()
+    .required('FRN Number is required'),
+  ossNumber: Yup.string()
+    .required('OSS Number is required'),
+  priority: Yup.string()
+    .required('Priority is required'),
+  employee: Yup.string()
+    .required('Employee selection is required'),
+  caseType: Yup.string(),
+  caseSource: Yup.string()
+    .required('Case source is required'),
+});
+
 const CreateTaskForm = ({ open, onClose }) => {
-  const [ formData, setFormData ] = useState({
-    frnNumber: "",
-    ossNumber: "",
-    priority: "Regular",
-    employee: "",
-    caseType: "",
-    caseSource: "",
+  const token = localStorage.getItem('authToken');
+  const [loading, setLoading] = useState(false);
+
+  const formik = useFormik({
+    initialValues: {
+      title: '',
+      frnNumber: '',
+      ossNumber: '',
+      priority: 'Regular',
+      employee: '',
+      caseType: '',
+      caseSource: '',
+    },
+    validationSchema,
+    onSubmit: async (values) => {
+      try {
+        setLoading(true);
+        await createTask(values, token);
+        toast.success('Task created successfully');
+        onClose();
+        formik.resetForm();
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Failed to create task');
+      } finally {
+        setLoading(false);
+      }
+    },
   });
 
   const employees = [
@@ -55,25 +105,6 @@ const CreateTaskForm = ({ open, onClose }) => {
     { id: 2, name: "Jane Smith", ongoingTasks: 1 },
     { id: 3, name: "Michael Brown", ongoingTasks: 5 },
   ];
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [ e.target.name ]: e.target.value });
-  };
-
-  const handleCaseSourceChange = (event, newValue) => {
-    setFormData({ ...formData, caseSource: newValue || "" });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.frnNumber || !formData.ossNumber || !formData.employee || !formData.caseType || !formData.caseSource) {
-      toast.error("All fields are required!");
-      return;
-    }
-    console.log("Task Created:", formData);
-    toast.success("Task created successfully");
-    onClose();
-  };
 
   return (
     <Dialog
@@ -112,36 +143,46 @@ const CreateTaskForm = ({ open, onClose }) => {
         </IconButton>
       </DialogTitle>
 
-      <DialogContent
-        sx={{
-          p: 3,
-          pt: 3
-        }}
-      >
+      <DialogContent sx={{ p: 3, pt: 3 }}>
         <Box
           component="form"
-          onSubmit={handleSubmit}
+          onSubmit={formik.handleSubmit}
           sx={{
             '& .MuiFormControl-root': { mt: 3 },
             '& .MuiTextField-root': { mt: 3 },
           }}
         >
           <TextField
+            label="Task Title"
+            name="title"
+            fullWidth
+            value={formik.values.title}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.touched.title && Boolean(formik.errors.title)}
+            helperText={formik.touched.title && formik.errors.title}
+          />
+
+          <TextField
             label="FRN Number"
             name="frnNumber"
             fullWidth
-            required
-            value={formData.frnNumber}
-            onChange={handleChange}
+            value={formik.values.frnNumber}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.touched.frnNumber && Boolean(formik.errors.frnNumber)}
+            helperText={formik.touched.frnNumber && formik.errors.frnNumber}
           />
 
           <TextField
             label="OSS Number"
             name="ossNumber"
             fullWidth
-            required
-            value={formData.ossNumber}
-            onChange={handleChange}
+            value={formik.values.ossNumber}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.touched.ossNumber && Boolean(formik.errors.ossNumber)}
+            helperText={formik.touched.ossNumber && formik.errors.ossNumber}
           />
 
           <Box sx={{ mt: 4, mb: 1 }}>
@@ -153,8 +194,8 @@ const CreateTaskForm = ({ open, onClose }) => {
           <RadioGroup
             row
             name="priority"
-            value={formData.priority}
-            onChange={handleChange}
+            value={formik.values.priority}
+            onChange={formik.handleChange}
             sx={{ gap: 2 }}
           >
             <FormControlLabel value="Regular" control={<Radio color="success" />} label="Regular" />
@@ -162,18 +203,18 @@ const CreateTaskForm = ({ open, onClose }) => {
             <FormControlLabel value="Urgent" control={<Radio color="error" />} label="Urgent" />
           </RadioGroup>
 
-          <FormControl fullWidth>
+          <FormControl 
+            fullWidth
+            error={formik.touched.employee && Boolean(formik.errors.employee)}
+          >
             <InputLabel id="employee-label">Select Employee</InputLabel>
             <Select
               labelId="employee-label"
               name="employee"
-              value={formData.employee}
-              onChange={handleChange}
-              required
+              value={formik.values.employee}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
               label="Select Employee"
-              sx={{
-                '& .MuiSelect-select': { py: 1.5 },
-              }}
             >
               {employees.map((emp) => (
                 <MenuItem key={emp.id} value={emp.name}>
@@ -181,27 +222,37 @@ const CreateTaskForm = ({ open, onClose }) => {
                 </MenuItem>
               ))}
             </Select>
+            {formik.touched.employee && formik.errors.employee && (
+              <Typography color="error" variant="caption" sx={{ mt: 1 }}>
+                {formik.errors.employee}
+              </Typography>
+            )}
           </FormControl>
 
           <TextField
             label="Case Type"
             name="caseType"
             fullWidth
-            required
-            value={formData.caseType}
-            onChange={handleChange}
-          >
-          </TextField>
+            value={formik.values.caseType}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.touched.caseType && Boolean(formik.errors.caseType)}
+            helperText={formik.touched.caseType && formik.errors.caseType}
+          />
 
           <Autocomplete
             options={caseSources}
-            value={formData.caseSource}
-            onChange={handleCaseSourceChange}
+            value={formik.values.caseSource}
+            onChange={(_, newValue) => {
+              formik.setFieldValue('caseSource', newValue || '');
+            }}
+            onBlur={formik.handleBlur}
             renderInput={(params) => (
               <TextField
                 {...params}
                 label="Case Source"
-                required
+                error={formik.touched.caseSource && Boolean(formik.errors.caseSource)}
+                helperText={formik.touched.caseSource && formik.errors.caseSource}
               />
             )}
             fullWidth
@@ -209,17 +260,11 @@ const CreateTaskForm = ({ open, onClose }) => {
         </Box>
       </DialogContent>
 
-      <DialogActions
-        sx={{
-          p: 3,
-          bgcolor: '#f8fafc',
-          borderTop: '1px solid #e2e8f0',
-          gap: 1
-        }}
-      >
+      <DialogActions>
         <Button
           onClick={onClose}
           variant="outlined"
+          disabled={loading}
           sx={{
             color: '#64748b',
             borderColor: '#64748b',
@@ -233,8 +278,10 @@ const CreateTaskForm = ({ open, onClose }) => {
           Cancel
         </Button>
         <Button
-          onClick={handleSubmit}
+          type="submit"
           variant="contained"
+          disabled={loading}
+          onClick={formik.handleSubmit}
           sx={{
             bgcolor: '#059669',
             px: 3,
@@ -243,7 +290,7 @@ const CreateTaskForm = ({ open, onClose }) => {
             }
           }}
         >
-          Create Task
+          {loading ? "Creating..." : "Create Task"}
         </Button>
       </DialogActions>
     </Dialog>
