@@ -1,88 +1,139 @@
 import * as React from "react";
-import {
-    MaterialReactTable,
-    useMaterialReactTable,
-} from 'material-react-table';
-import { Box, Button, Tabs, Tab, Stack, Menu, MenuItem } from "@mui/material";
+import { MaterialReactTable, useMaterialReactTable } from 'material-react-table';
+import { Box, Button, Tabs, Tab, Stack, Menu, MenuItem, CircularProgress } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { NotificationContext } from "../../../common/notification/NotificationContext";
-
-const initialRequests = {
-    signup: [
-        {
-            id: 101,
-            type: 'signup',
-            name: "Omar Zaid",
-            email: "omar@example.com",
-            date: "2024-03-20",
-        },
-        {
-            id: 102,
-            type: 'signup',
-            name: "Omar Zaid",
-            email: "omar@example.com",
-            date: "2024-03-20",
-        },
-        // ...more signup requests with unique IDs
-    ],
-    freeze: [
-        {
-            id: 201,
-            type: 'freeze',
-            name: "Lina Khaled",
-            email: "lina@example.com",
-            date: "2024-03-21",
-            frn: "TASK-123",
-            reason: "Medical Leave"
-        },
-        {
-            id: 202,
-            type: 'freeze',
-            name: "Lina Khaled",
-            email: "lina@example.com",
-            date: "2024-03-21",
-            frn: "TASK-123",
-            reason: "Medical Leave"
-        },
-        // ...more freeze requests with unique IDs
-    ],
-    completion: [
-        {
-            id: 301,
-            type: 'completion',
-            name: "Ahmad Hassan",
-            email: "ahmad@example.com",
-            date: "2024-03-22",
-            frn: "TASK-123"
-        },
-        {
-            id: 302,
-            type: 'completion',
-            name: "Ahmad Hassan",
-            email: "ahmad@example.com",
-            date: "2024-03-22",
-            frn: "TASK-123"
-        },
-        // ...more completion requests with unique IDs
-    ]
-};
+import { getAllSignupRequests, approveSignupRequest, rejectSignupRequest } from "../../../../services/signupRequests";
+import { getAllFreezeRequests, approveFreezeRequest, rejectFreezeRequest } from "../../../../services/freezeRequests";
+import { getAllCompletionRequests, approveCompletionRequest, rejectCompletionRequest } from "../../../../services/completionRequests";
 
 const Requests = () => {
     const { addNotification } = useContext(NotificationContext);
     const [currentTab, setCurrentTab] = useState(0);
-    const [requests, setRequests] = useState(initialRequests);
+    const [requests, setRequests] = useState({
+        signup: [],
+        freeze: [],
+        completion: []
+    });
+    const [isLoading, setIsLoading] = useState(true);
     const [anchorEl, setAnchorEl] = React.useState(null);
     const open = Boolean(anchorEl);
 
-    const handleTabChange = (event, newValue) => {
-        setCurrentTab(newValue);
+    const token = localStorage.getItem('authToken');
+
+    const fetchRequests = async (type) => {
+        try {
+            setIsLoading(true);
+            let response;
+            switch (type) {
+                case 'signup':
+                    response = await getAllSignupRequests();
+                    console.log(response.data);
+                    break;
+                case 'freeze':
+                    response = await getAllFreezeRequests();
+                    break;
+                case 'completion':
+                    response = await getAllCompletionRequests();
+                    break;
+                default:
+                    return;
+            }
+            setRequests(prev => ({
+                ...prev,
+                [type]: response.data
+            }));
+        } catch (error) {
+            console.error(`Error fetching ${type} requests:`, error);
+            toast.error(`Failed to fetch ${type} requests`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleApprove = async (id, type) => {
+        try {
+            switch (type) {
+                case 'signup':
+                    await approveSignupRequest(id, token);
+                    break;
+                case 'freeze':
+                    await approveFreezeRequest(id);
+                    break;
+                case 'completion':
+                    await approveCompletionRequest(id);
+                    break;
+                default:
+                    return;
+            }
+            
+            const request = requests[type].find(req => req.id === id);
+            setRequests(prev => ({
+                ...prev,
+                [type]: prev[type].filter(request => request.id !== id)
+            }));
+
+            const notificationData = {
+                id: Date.now(),
+                type: 'success',
+                title: `${type.charAt(0).toUpperCase() + type.slice(1)} Request Approved`,
+                message: getNotificationMessage(type, request),
+                time: new Date().toLocaleTimeString(),
+                read: false
+            };
+
+            addNotification(notificationData);
+            toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} request approved successfully!`);
+        } catch (error) {
+            console.error('Error approving request:', error);
+            toast.error(error.reponse.data.detail || 'Failed to approve request');
+        }
+    };
+
+    const handleReject = async (id, type) => {
+        try {
+            switch (type) {
+                case 'signup':
+                    await rejectSignupRequest(id, token);
+                    break;
+                case 'freeze':
+                    await rejectFreezeRequest(id);
+                    break;
+                case 'completion':
+                    await rejectCompletionRequest(id);
+                    break;
+                default:
+                    return;
+            }
+            
+            const request = requests[type].find(req => req.id === id);
+            setRequests(prev => ({
+                ...prev,
+                [type]: prev[type].filter(request => request.id !== id)
+            }));
+
+            const notificationData = {
+                id: Date.now(),
+                type: 'error',
+                title: `${type.charAt(0).toUpperCase() + type.slice(1)} Request Rejected`,
+                message: getNotificationMessage(type, request),
+                time: new Date().toLocaleTimeString(),
+                read: false
+            };
+
+            addNotification(notificationData);
+            toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} request rejected.`);
+        } catch (error) {
+            console.error('Error rejecting request:', error);
+            toast.error(error.response.data.detail || 'Failed to reject request');
+        }
     };
 
     const handleExportClick = (event) => {
@@ -96,9 +147,9 @@ const Requests = () => {
     const handleDownload = (fileType) => {
         const currentType = Object.keys(requests)[currentTab];
         const exportData = requests[currentType].map(row => ({
-            Name: row.name,
+            Name: row.MemberName,
             Email: row.email,
-            Date: row.date,
+            Date: row.RequestedAt,
             ...(row.frn && { FRN: row.frn }),
             ...(row.reason && { Reason: row.reason })
         }));
@@ -142,20 +193,26 @@ const Requests = () => {
         handleExportClose();
     };
 
+    useEffect(() => {
+        const requestTypes = ['signup', 'freeze', 'completion'];
+        const currentType = requestTypes[currentTab];
+        fetchRequests(currentType);
+    }, [currentTab]);
+
     const getColumns = (type) => {
         const baseColumns = [
             {
-                accessorKey: "name",
+                accessorKey: "memberName", // Updated to match database field
                 header: "Name",
                 size: 150,
             },
             {
-                accessorKey: "email",
+                accessorKey: "email", // Updated to match database field
                 header: "Email",
                 size: 200,
             },
             {
-                accessorKey: "date",
+                accessorKey: "requestedAt", // Updated to match database field
                 header: "Request Date",
                 size: 130,
             },
@@ -165,22 +222,27 @@ const Requests = () => {
             signup: [],
             freeze: [
                 {
-                    accessorKey: "frn",
+                    accessorKey: "Freeze_FRNNumber", // Updated to match database field
                     header: "FRN",
                     size: 120,
                 },
                 {
-                    accessorKey: "reason",
+                    accessorKey: "Reason", // Updated to match database field
                     header: "Reason",
                     size: 150,
                 },
             ],
             completion: [
                 {
-                    accessorKey: "frn",
+                    accessorKey: "Complete_FRNNumber", // Updated to match database field
                     header: "FRN",
                     size: 120,
-                }
+                },
+                {
+                    accessorKey: "notes", // Updated to match database field
+                    header: "Notes",
+                    size: 150,
+                },
             ]
         };
 
@@ -218,46 +280,6 @@ const Requests = () => {
         ];
     };
 
-    const handleApprove = (id, type) => {
-        const request = requests[type].find(req => req.id === id);
-        setRequests(prev => ({
-            ...prev,
-            [type]: prev[type].filter(request => request.id !== id)
-        }));
-
-        const notificationData = {
-            id: Date.now(),
-            type: 'success',
-            title: `${type.charAt(0).toUpperCase() + type.slice(1)} Request Approved`,
-            message: getNotificationMessage(type, request),
-            time: new Date().toLocaleTimeString(),
-            read: false
-        };
-
-        addNotification(notificationData);
-        toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} request approved successfully!`);
-    };
-
-    const handleReject = (id, type) => {
-        const request = requests[type].find(req => req.id === id);
-        setRequests(prev => ({
-            ...prev,
-            [type]: prev[type].filter(request => request.id !== id)
-        }));
-
-        const notificationData = {
-            id: Date.now(),
-            type: 'error',
-            title: `${type.charAt(0).toUpperCase() + type.slice(1)} Request Rejected`,
-            message: getNotificationMessage(type, request),
-            time: new Date().toLocaleTimeString(),
-            read: false
-        };
-
-        addNotification(notificationData);
-        toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} request rejected.`);
-    };
-
     const getNotificationMessage = (type, request) => {
         switch (type) {
             case 'signup':
@@ -284,7 +306,22 @@ const Requests = () => {
         muiTableHeadCellProps: {
             sx: {
                 backgroundColor: '#F9FAFB',
+                color: '#111827', // Dark text color for headers
                 fontWeight: 'bold',
+            },
+        },
+        muiTableBodyProps: {
+            sx: {
+                '& .MuiTableCell-root': {
+                    color: '#374151', // Dark text color for body cells
+                },
+            },
+        },
+        muiTablePaperProps: {
+            sx: {
+                '& .MuiToolbar-root': {
+                    background: '#fff',
+                },
             },
         },
         renderTopToolbarCustomActions: () => (
@@ -310,13 +347,16 @@ const Requests = () => {
                 </Menu>
             </Box>
         ),
+        state: {
+            isLoading: isLoading,
+        },
     });
 
     return (
         <Box p={3}>
             <Tabs
                 value={currentTab}
-                onChange={handleTabChange}
+                onChange={(_, newValue) => setCurrentTab(newValue)}
                 sx={{
                     mb: 3,
                     '& .MuiTab-root': {
@@ -337,16 +377,22 @@ const Requests = () => {
             </Tabs>
 
             <Box sx={{ height: 400, width: "100%" }}>
-                <MaterialReactTable
-                    table={table}
-                    muiTablePaperProps={{
-                        sx: {
-                            '& .MuiToolbar-root': {
-                                background: '#fff',
+                {isLoading ? (
+                    <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                        <CircularProgress sx={{ color: '#059669' }} />
+                    </Box>
+                ) : (
+                    <MaterialReactTable
+                        table={table}
+                        muiTablePaperProps={{
+                            sx: {
+                                '& .MuiToolbar-root': {
+                                    background: '#fff',
+                                },
                             },
-                        },
-                    }}
-                />
+                        }}
+                    />
+                )}
             </Box>
         </Box>
     );
