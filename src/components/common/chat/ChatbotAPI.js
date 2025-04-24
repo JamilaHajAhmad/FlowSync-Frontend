@@ -1,4 +1,4 @@
-const API_KEY = import.meta.env.VITE_REACT_APP_OPENAI_API_KEY;
+const API_KEY = import.meta.env.VITE_API_KEY;
 
 export const sendMessageToAI = async (userMessage) => {
     try {
