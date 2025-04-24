@@ -8,6 +8,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } 
 import { toast } from 'react-toastify';
 import './Calendar.css';
 import { useTheme } from '@mui/material';
+import { decodeToken } from '../../../utils';
 
 export default function Calendar() {
     const theme = useTheme();
@@ -17,40 +18,60 @@ export default function Calendar() {
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [newEventTitle, setNewEventTitle] = useState('');
     const [newEventTime, setNewEventTime] = useState('');
+    const [userId, setUserId] = useState(null);
+
+    const cleanupLocalStorage = () => {
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('events') && !key.includes('events_')) {
+                localStorage.removeItem(key);
+            }
+            if (key === 'events_undefined') {
+                localStorage.removeItem(key);
+            }
+        });
+    };
 
     useEffect(() => {
-        if (currentEvents.length > 0) {
-            const simplifiedEvents = currentEvents.map(({ id, title, start, end, allDay }) => ({
-                id,
-                title,
-                start,
-                end,
-                allDay,
-            }));
-            localStorage.setItem("events", JSON.stringify(simplifiedEvents));
-        }
-    }, [ currentEvents ]);
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            const decoded = decodeToken(token);
+            const currentUserId = decoded.id;
+            setUserId(currentUserId);
 
-    useEffect(() => {
-        const savedEvents = localStorage.getItem("events");
-        if (savedEvents) {
-            try {
-                const parsedEvents = JSON.parse(savedEvents);
-                if (Array.isArray(parsedEvents)) {
-                    setCurrentEvents(parsedEvents);
+            cleanupLocalStorage();
+
+            setCurrentEvents([]);
+
+            const savedEvents = localStorage.getItem(`events_${currentUserId}`);
+            if (savedEvents) {
+                try {
+                    const parsedEvents = JSON.parse(savedEvents);
+                    const userEvents = parsedEvents.filter(event => event.userId === currentUserId);
+                    setCurrentEvents(userEvents);
+                } catch (error) {
+                    console.error("Error parsing localStorage events:", error);
+                    setCurrentEvents([]);
                 }
-            } catch (error) {
-                console.error("Error parsing localStorage events:", error);
-                setCurrentEvents([]); // Reset if JSON is corrupted
             }
         }
+        
+        return () => {
+            setCurrentEvents([]);
+            setUserId(null);
+        };
     }, []);
+
+    useEffect(() => {
+        if (currentEvents.length >= 0 && userId) {
+            const userEvents = currentEvents.filter(event => event.userId === userId);
+            localStorage.setItem(`events_${userId}`, JSON.stringify(userEvents));
+        }
+    }, [currentEvents, userId]);
 
     function handleDateSelect(selectInfo) {
         const selectedDate = new Date(selectInfo.start);
         const today = new Date();
         
-        // Reset hours, minutes, seconds, and milliseconds for accurate date comparison
         today.setHours(0, 0, 0, 0);
         selectedDate.setHours(0, 0, 0, 0);
 
@@ -63,7 +84,6 @@ export default function Calendar() {
         setSelectedEvent(selectInfo);
     }
 
-    // Add this helper function to check for event overlap
     function checkEventOverlap(newStart, newEnd, existingEvents, excludeEventId = null) {
         const start = new Date(newStart);
         const end = new Date(newEnd);
@@ -78,9 +98,7 @@ export default function Calendar() {
         });
     }
 
-    // Modify the handleAddEvent function
     function handleAddEvent() {
-        // Validate required fields
         if (!newEventTitle.trim()) {
             toast.error('Event title is required');
             return;
@@ -94,16 +112,13 @@ export default function Calendar() {
         let calendarApi = selectedEvent.view.calendar;
         calendarApi.unselect();
 
-        // Create date object from selected date and time
         const startDate = new Date(selectedEvent.startStr);
         const [hours, minutes] = newEventTime.split(':');
         startDate.setHours(parseInt(hours), parseInt(minutes));
 
-        // Create end date (1 hour after start by default)
         const endDate = new Date(startDate);
         endDate.setHours(endDate.getHours() + 1);
 
-        // Check for overlap
         if (checkEventOverlap(startDate, endDate, currentEvents)) {
             toast.error('Cannot add event: Time slot is already occupied');
             return;
@@ -115,37 +130,64 @@ export default function Calendar() {
             start: startDate.toISOString(),
             end: endDate.toISOString(),
             allDay: false,
+            userId: userId
         };
-        setCurrentEvents(prevEvents => [...prevEvents, newEvent]);
         
+        setCurrentEvents(prevEvents => [...prevEvents, newEvent]);
         setIsAddEventModalOpen(false);
         setNewEventTitle('');
         setNewEventTime('');
     }
 
     function handleEventClick(clickInfo) {
+        if (isPastDate(clickInfo.event.start)) {
+            toast.info("Cannot modify past events");
+            return;
+        }
         setSelectedEvent(clickInfo.event);
         setIsConfirmModalOpen(true);
     }
 
     function handleConfirmDelete() {
+        if (selectedEvent.extendedProps.userId !== userId) {
+            toast.error('Cannot delete events from other users');
+            setIsConfirmModalOpen(false);
+            return;
+        }
+
         selectedEvent.remove();
 
-        // Update currentEvents state
         const updatedEvents = currentEvents.filter(event => event.id !== selectedEvent.id);
         setCurrentEvents(updatedEvents);
 
-        // Update localStorage
-        localStorage.setItem("events", JSON.stringify(updatedEvents));
+        localStorage.setItem(`events_${userId}`, JSON.stringify(updatedEvents));
 
         setIsConfirmModalOpen(false);
     }
 
-    // Modify handleEventDrop to check for overlap when dragging
+    const isPastDate = (date) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const checkDate = new Date(date);
+        checkDate.setHours(0, 0, 0, 0);
+        return checkDate < today;
+    };
+
     function handleEventDrop(dropInfo) {
         const { event } = dropInfo;
         
-        // Check for overlap
+        if (event.extendedProps.userId !== userId) {
+            dropInfo.revert();
+            toast.error('Cannot modify events from other users');
+            return;
+        }
+
+        if (isPastDate(event.start)) {
+            dropInfo.revert();
+            toast.error('Cannot move event to past dates');
+            return;
+        }
+
         if (checkEventOverlap(event.start, event.end, currentEvents, event.id)) {
             dropInfo.revert();
             toast.error('Cannot move event: Time slot is already occupied');
@@ -166,26 +208,27 @@ export default function Calendar() {
         );
     }
 
-    // Modify handleEventResize to check for overlap when resizing
     function handleEventResize(resizeInfo) {
         const { event } = resizeInfo;
 
-        // Check for overlap
+        if (event.extendedProps.userId !== userId) {
+            resizeInfo.revert();
+            toast.error('Cannot modify events from other users');
+            return;
+        }
+
         if (checkEventOverlap(event.start, event.end, currentEvents, event.id)) {
             resizeInfo.revert();
             toast.error('Cannot resize event: Would overlap with existing event');
             return;
         }
 
-        // Get the start and end dates
         const startDate = new Date(event.start);
         const endDate = new Date(event.end);
-        endDate.setDate(endDate.getDate() - 1); // Adjust end date
+        endDate.setDate(endDate.getDate() - 1);
 
-        // Check if the event is a single day event
         const isSingleDay = startDate.toDateString() === endDate.toDateString();
 
-        // Create a formatted end date only if it spans multiple days
         const formattedEndDate = !isSingleDay && event.end ?
             ` - ${formatDate(endDate, { year: 'numeric', month: 'short', day: 'numeric' })}` : '';
 
@@ -204,29 +247,29 @@ export default function Calendar() {
                 : evt
         );
 
-        // Update state
         setCurrentEvents(updatedEvents);
 
-        // Update localStorage
-        localStorage.setItem(localStorage.getItem("events"), JSON.stringify(updatedEvents));
+        localStorage.setItem(`events_${userId}`, JSON.stringify(updatedEvents));
     }
 
     function dayCellClassNames(info) {
         const today = new Date();
-        const cellDate = info.date;
+        const cellDate = new Date(info.date);
         
-        // Reset hours for accurate comparison
         today.setHours(0, 0, 0, 0);
         cellDate.setHours(0, 0, 0, 0);
         
-        // Check if date is in past
-        const isPast = cellDate < today;
-        // Check if the date is today
-        const isToday = cellDate.getDate() === today.getDate() &&
-                        cellDate.getMonth() === today.getMonth() &&
-                        cellDate.getFullYear() === today.getFullYear();
+        const classes = [];
         
-        return `${isToday ? 'current-day' : ''} ${isPast ? 'past-date' : ''}`;
+        if (cellDate < today) {
+            classes.push('past-date');
+        }
+        
+        if (cellDate.getTime() === today.getTime()) {
+            classes.push('current-day');
+        }
+        
+        return classes;
     }
 
     return (
@@ -244,26 +287,44 @@ export default function Calendar() {
                     }}
                     initialView='dayGridMonth'
                     editable={true}
+                    eventStartEditable={true}
+                    eventDurationEditable={true}
+                    eventResizableFromStart={true}
+                    
+                    slotMinTime="00:00:00"
+                    slotMaxTime="24:00:00"
+                    eventConstraint={{
+                        startTime: new Date().toISOString()
+                    }}
+                    validRange={{
+                        start: new Date().toISOString().split('T')[0]
+                    }}
                     selectable={true}
                     selectMirror={true}
                     dayMaxEvents={true}
+                    weekends={true}
+                    initialEvents={currentEvents}
                     select={handleDateSelect}
-                    eventContent={renderEventContent} // custom render function
+                    eventContent={renderEventContent}
                     eventClick={handleEventClick}
-                    eventDrop={handleEventDrop} // handle event drop
-                    eventResize={handleEventResize} // handle event resize
-                    eventResizableFromStart={true}
+                    eventDrop={handleEventDrop}
+                    eventResize={handleEventResize}
+                    dayCellClassNames={dayCellClassNames}
                     eventClassNames='fc-event'
-                    dayCellClassNames={dayCellClassNames} // Add custom class name for current day
+                    eventDisplay="block"
+                    eventTimeFormat={{
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        meridiem: 'short'
+                    }}
                     height="100%"
                     events={currentEvents}
                     selectConstraint={{
-                        start: new Date().toISOString().split('T')[0] // Today's date
+                        start: new Date().toISOString().split('T')[0]
                     }}
                 />
             </div>
 
-            {/* Add Event Dialog */}
             <Dialog
                 open={isAddEventModalOpen}
                 onClose={() => setIsAddEventModalOpen(false)}
@@ -278,9 +339,9 @@ export default function Calendar() {
                         padding: '1.5rem',
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                        width: '500px', // Increased width for a rectangular shape
+                        width: '500px',
                         maxWidth: '90vw',
-                        height: 'auto', // Adjust height dynamically based on content
+                        height: 'auto',
                     },
                 }}
             >
@@ -345,7 +406,6 @@ export default function Calendar() {
                 </DialogActions>
             </Dialog>
 
-            {/* Confirm Delete Dialog */}
             <Dialog
                 open={isConfirmModalOpen}
                 onClose={() => setIsConfirmModalOpen(false)}
@@ -360,9 +420,9 @@ export default function Calendar() {
                         padding: '1rem',
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                        width: '500px', // Increased width for a rectangular shape
+                        width: '500px',
                         maxWidth: '90vw',
-                        height: 'auto', // Adjust height dynamically based on content
+                        height: 'auto',
                     },
                 }}
             >
@@ -405,7 +465,6 @@ export default function Calendar() {
     );
 }
 
-// Add this helper function before renderEventContent
 function formatEventTime(timeText) {
     if (!timeText) return '';
     return timeText
@@ -414,7 +473,6 @@ function formatEventTime(timeText) {
         .toLowerCase();
 }
 
-// Update the renderEventContent function
 function renderEventContent(eventInfo) {
     const formattedTime = formatEventTime(eventInfo.timeText);
     return (
