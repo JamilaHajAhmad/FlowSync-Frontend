@@ -24,6 +24,7 @@ import {
 } from '@mui/material';
 import defaultImg from '../../../../assets/images/default.jpg';
 import { handleLogout } from '../../../../utils';
+import { decodeToken } from '../../../../utils';
 
 const drawerWidth = 260;
 
@@ -108,6 +109,11 @@ export default function Sidebar({ open }) {
 
     const navigate = useNavigate();
     const location = useLocation();
+    const token = localStorage.getItem('authToken');
+    const decodedToken = decodeToken(token);
+    const userRole = decodedToken?.role;
+    const user = localStorage.getItem('user');
+    const userName = user ? JSON.parse(user).displayName : 'User';
 
     return (
         <Drawer variant="permanent" open={open}>
@@ -146,7 +152,7 @@ export default function Sidebar({ open }) {
                                     lineHeight: 1.2
                                 }}
                             >
-                                John Doe
+                                {userName}
                             </Typography>
                             <Typography
                                 sx={{
@@ -155,7 +161,7 @@ export default function Sidebar({ open }) {
                                     opacity: 0.8
                                 }}
                             >
-                                Team Leader
+                                Team {userRole}
                             </Typography>
                         </Box>
                     )}

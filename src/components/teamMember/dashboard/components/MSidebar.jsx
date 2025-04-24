@@ -17,6 +17,7 @@ import { ExitToApp as ExitToAppIcon } from '@mui/icons-material';
 import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 import { handleLogout } from '../../../../utils';
+import { decodeToken } from '../../../../utils';
 
 const drawerWidth = 260;
 
@@ -100,16 +101,21 @@ const links = [
 export default function MSidebar({ open }) {
     const navigate = useNavigate();
     const location = useLocation();
-    
+    const token = localStorage.getItem('token');
+    const decodedToken = decodeToken(token);
+    const userRole = decodedToken?.role;
+    const user = localStorage.getItem('user');
+    const userName = user ? JSON.parse(user).displayName : 'User';
+
     return (
         <Drawer variant="permanent" open={open} className='sidebar'>
-            <Box sx={{ 
+            <Box sx={{
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column'
             }}>
-                <Box 
-                    sx={{ 
+                <Box
+                    sx={{
                         p: 2,
                         display: 'flex',
                         alignItems: 'center',
@@ -128,24 +134,24 @@ export default function MSidebar({ open }) {
                     />
                     {open && (
                         <Box sx={{ ml: 2 }}>
-                            <Typography 
-                                sx={{ 
+                            <Typography
+                                sx={{
                                     color: "white",
                                     fontSize: '0.95rem',
                                     fontWeight: 600,
                                     lineHeight: 1.2
                                 }}
                             >
-                                John Doe
+                                {userName}
                             </Typography>
-                            <Typography 
-                                sx={{ 
+                            <Typography
+                                sx={{
                                     color: "whitesmoke",
                                     fontSize: '0.8rem',
                                     opacity: 0.8
                                 }}
                             >
-                                Team Member
+                                Team {userRole}
                             </Typography>
                         </Box>
                     )}
@@ -184,7 +190,7 @@ export default function MSidebar({ open }) {
                                             mr: open ? 3 : 'auto',
                                             justifyContent: 'center',
                                             color: active ? '#064e3b' : 'white',
-                                            '& .MuiSvgIcon-root': { 
+                                            '& .MuiSvgIcon-root': {
                                                 color: active ? '#064e3b' : 'inherit',
                                             }
                                         }}
@@ -228,15 +234,15 @@ export default function MSidebar({ open }) {
                             >
                                 <ExitToAppIcon />
                             </ListItemIcon>
-                            <ListItemText 
-                                primary="Sign Out" 
-                                sx={{ 
+                            <ListItemText
+                                primary="Sign Out"
+                                sx={{
                                     opacity: open ? 1 : 0,
                                     color: 'white',
                                     '& .MuiTypography-root': {
                                         fontWeight: 600
                                     }
-                                }} 
+                                }}
                             />
                         </ListItemButton>
                     </ListItem>
