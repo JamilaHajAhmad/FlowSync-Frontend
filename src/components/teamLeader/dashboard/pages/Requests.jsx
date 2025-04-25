@@ -1,6 +1,6 @@
 import * as React from "react";
 import { MaterialReactTable, useMaterialReactTable } from 'material-react-table';
-import { Box, Button, Tabs, Tab, Stack, Menu, MenuItem, CircularProgress } from "@mui/material";
+import { Box, Button, Tabs, Tab, Stack, Menu, MenuItem, CircularProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -25,7 +25,14 @@ const Requests = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [anchorEl, setAnchorEl] = React.useState(null);
     const open = Boolean(anchorEl);
-
+    const [confirmDialog, setConfirmDialog] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        actionType: '',
+        requestId: null,
+        requestType: ''
+    });
     const token = localStorage.getItem('authToken');
 
     const fetchRequests = async (type) => {
@@ -34,21 +41,29 @@ const Requests = () => {
             let response;
             switch (type) {
                 case 'signup':
-                    response = await getAllSignupRequests();
+                    response = await getAllSignupRequests(token);
                     console.log(response.data);
                     break;
                 case 'freeze':
-                    response = await getAllFreezeRequests();
+                    response = await getAllFreezeRequests(token);
+                    console.log(response.data);
                     break;
                 case 'completion':
-                    response = await getAllCompletionRequests();
+                    response = await getAllCompletionRequests(token);
+                    console.log(response.data);
                     break;
                 default:
                     return;
             }
+
+            // Filter out any requests that have been approved or rejected
+            const pendingRequests = response.data.filter(request => 
+                request.requestStatus === 'Pending' // Assuming 0 is pending status
+            );
+
             setRequests(prev => ({
                 ...prev,
-                [type]: response.data
+                [type]: pendingRequests
             }));
         } catch (error) {
             console.error(`Error fetching ${type} requests:`, error);
@@ -60,79 +75,101 @@ const Requests = () => {
 
     const handleApprove = async (id, type) => {
         try {
+            // Get fresh token before making request
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+
             switch (type) {
                 case 'signup':
                     await approveSignupRequest(id, token);
                     break;
                 case 'freeze':
-                    await approveFreezeRequest(id);
+                    await approveFreezeRequest(id, token); // Add token parameter
                     break;
                 case 'completion':
-                    await approveCompletionRequest(id);
+                    await approveCompletionRequest(id, token); // Add token parameter
                     break;
                 default:
                     return;
             }
             
+            // Update local state after successful API call
             const request = requests[type].find(req => req.id === id);
             setRequests(prev => ({
                 ...prev,
                 [type]: prev[type].filter(request => request.id !== id)
             }));
 
+            // Update notification
             const notificationData = {
                 id: Date.now(),
                 type: 'success',
                 title: `${type.charAt(0).toUpperCase() + type.slice(1)} Request Approved`,
-                message: getNotificationMessage(type, request),
+                message: getNotificationMessage(type, { ...request, status: 'approved' }),
                 time: new Date().toLocaleTimeString(),
                 read: false
             };
 
             addNotification(notificationData);
             toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} request approved successfully!`);
+            
+            // Refresh the requests list
+            fetchRequests(type);
         } catch (error) {
             console.error('Error approving request:', error);
-            toast.error(error.reponse.data.detail || 'Failed to approve request');
+            toast.error(error?.response?.data?.title || 'Failed to approve request');
         }
     };
 
     const handleReject = async (id, type) => {
         try {
+            // Get fresh token before making request
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+
             switch (type) {
                 case 'signup':
                     await rejectSignupRequest(id, token);
                     break;
                 case 'freeze':
-                    await rejectFreezeRequest(id);
+                    await rejectFreezeRequest(id, token); // Add token parameter
                     break;
                 case 'completion':
-                    await rejectCompletionRequest(id);
+                    await rejectCompletionRequest(id, token); // Add token parameter
                     break;
                 default:
                     return;
             }
             
+            // Update local state after successful API call
             const request = requests[type].find(req => req.id === id);
             setRequests(prev => ({
                 ...prev,
                 [type]: prev[type].filter(request => request.id !== id)
             }));
 
+            // Update notification
             const notificationData = {
                 id: Date.now(),
                 type: 'error',
                 title: `${type.charAt(0).toUpperCase() + type.slice(1)} Request Rejected`,
-                message: getNotificationMessage(type, request),
+                message: getNotificationMessage(type, { ...request, status: 'rejected' }),
                 time: new Date().toLocaleTimeString(),
                 read: false
             };
 
             addNotification(notificationData);
             toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} request rejected.`);
+            
+            // Refresh the requests list
+            fetchRequests(type);
         } catch (error) {
             console.error('Error rejecting request:', error);
-            toast.error(error.response.data.detail || 'Failed to reject request');
+            toast.error(error?.response?.data?.message || 'Failed to reject request');
         }
     };
 
@@ -197,6 +234,7 @@ const Requests = () => {
         const requestTypes = ['signup', 'freeze', 'completion'];
         const currentType = requestTypes[currentTab];
         fetchRequests(currentType);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentTab]);
 
     const getColumns = (type) => {
@@ -212,9 +250,17 @@ const Requests = () => {
                 size: 200,
             },
             {
-                accessorKey: "requestedAt", // Updated to match database field
+                accessorKey: "requestedAt",
                 header: "Request Date",
                 size: 130,
+                Cell: ({ cell }) => {
+                    const date = new Date(cell.getValue());
+                    return date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                }
             },
         ];
 
@@ -261,7 +307,7 @@ const Requests = () => {
                             color="success"
                             size="small"
                             startIcon={<CheckCircleIcon />}
-                            onClick={() => handleApprove(row.original.id, type)}
+                            onClick={() => handleConfirmAction(row.original.id, type, 'approve', 'Are you sure you want to approve this request?')}
                         >
                             Approve
                         </Button>
@@ -270,7 +316,7 @@ const Requests = () => {
                             color="error"
                             size="small"
                             startIcon={<CancelIcon />}
-                            onClick={() => handleReject(row.original.id, type)}
+                            onClick={() => handleConfirmAction(row.original.id, type, 'reject', 'Are you sure you want to reject this request?')}
                         >
                             Reject
                         </Button>
@@ -352,6 +398,36 @@ const Requests = () => {
         },
     });
 
+    const handleConfirmAction = (id, type, action, message) => {
+        setConfirmDialog({
+            isOpen: true,
+            title: `Confirm ${action.charAt(0).toUpperCase() + action.slice(1)}`,
+            message: message,
+            actionType: action,
+            requestId: id,
+            requestType: type
+        });
+    };
+
+    const handleConfirmClose = () => {
+        setConfirmDialog({
+            ...confirmDialog,
+            isOpen: false
+        });
+    };
+
+    const handleConfirmYes = async () => {
+        const { actionType, requestId, requestType } = confirmDialog;
+        
+        if (actionType === 'approve') {
+            await handleApprove(requestId, requestType);
+        } else {
+            await handleReject(requestId, requestType);
+        }
+        
+        handleConfirmClose();
+    };
+
     return (
         <Box p={3}>
             <Tabs
@@ -394,6 +470,54 @@ const Requests = () => {
                     />
                 )}
             </Box>
+
+            <Dialog
+                open={confirmDialog.isOpen}
+                onClose={handleConfirmClose}
+                PaperProps={{
+                    sx: {
+                        width: '400px',
+                        p: 1
+                    }
+                }}
+            >
+                <DialogTitle sx={{ color: '#111827', fontWeight: 600 }}>
+                    {confirmDialog.title}
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {confirmDialog.message}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions sx={{ p: 2, pt: 0 }}>
+                    <Button
+                        onClick={handleConfirmClose}
+                        variant="outlined"
+                        sx={{
+                            color: '#64748b',
+                            borderColor: '#64748b',
+                            '&:hover': {
+                                borderColor: '#475569',
+                                backgroundColor: 'rgba(100, 116, 139, 0.04)'
+                            }
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleConfirmYes}
+                        variant="contained"
+                        sx={{
+                            bgcolor: '#059669',
+                            '&:hover': {
+                                bgcolor: '#047857'
+                            }
+                        }}
+                    >
+                        Confirm
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };
