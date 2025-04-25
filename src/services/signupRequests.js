@@ -1,11 +1,15 @@
 import api from './api';
 
-export const getAllSignupRequests = () => {
-    return api.get('/signuprequest/all-signup-requests');
+export const getAllSignupRequests = (token) => {
+    return api.get('/signuprequest/all-signup-requests', {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
 };
 
 export const approveSignupRequest = (id, token) => {
-    return api.post(`/signuprequest/approve-member/${id}`, null, {
+    return api.post(`/signuprequest/approve-member/${id}`, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -13,7 +17,7 @@ export const approveSignupRequest = (id, token) => {
 };
 
 export const rejectSignupRequest = (id, token) => {
-    return api.post(`/signuprequest/reject-member/${id}`, null, {
+    return api.post(`/signuprequest/reject-member/${id}`, {
         headers: {
             Authorization: `Bearer ${token}`
         }

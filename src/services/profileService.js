@@ -11,7 +11,8 @@ export const getProfile = async (token) => {
 export const updateProfile = async (token, data) => {
     return api.put('/profile/edit-profile', data, {
         headers: {
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
         }
     });
 }

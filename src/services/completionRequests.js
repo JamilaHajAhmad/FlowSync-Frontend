@@ -1,13 +1,25 @@
 import api from './api';
 
-export const getAllCompletionRequests = () => {
-    return api.get('/completetaskrequests/all-complete-requests');
+export const getAllCompletionRequests = (token) => {
+    return api.get('/completetaskrequests/all-complete-requests', {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
 };
 
-export const approveCompletionRequest = (id) => {
-    return api.post(`/completetaskrequests/${id}/approve`);
+export const approveCompletionRequest = (id, token) => {
+    return api.post(`/completetaskrequests/approve/${id}`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
 };
 
-export const rejectCompletionRequest = (id) => {
-    return api.post(`/completetaskrequests/${id}/reject`);
+export const rejectCompletionRequest = (id, token) => {
+    return api.post(`/completetaskrequests/reject/${id}`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
 };
