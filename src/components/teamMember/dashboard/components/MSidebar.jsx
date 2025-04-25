@@ -101,7 +101,7 @@ const links = [
 export default function MSidebar({ open }) {
     const navigate = useNavigate();
     const location = useLocation();
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const decodedToken = decodeToken(token);
     const userRole = decodedToken?.role;
     const user = localStorage.getItem('user');
