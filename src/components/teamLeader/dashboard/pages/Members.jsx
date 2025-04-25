@@ -3,34 +3,75 @@ import {
     MaterialReactTable,
     useMaterialReactTable,
 } from 'material-react-table';
-import { Box, IconButton, Stack, Chip, Button, Menu, MenuItem, Typography } from "@mui/material";
+import { Box, IconButton, Stack, Chip, Button, Menu, MenuItem, Typography, 
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    DialogContentText
+} from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
+import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import { getAllMembers } from "../../../../services/memberService";
+import { deleteMember } from "../../../../services/memberService";
 
 export default function Members({ showActions = true }) {
-    const [rows, setRows] = React.useState(
-        Array.from({ length: 12 }, (_, i) => ({
-            id: i + 1,
-            name: `User ${i + 1}`,
-            status: i % 3 === 0 ? "On Duty" : i % 3 === 1 ? "Annual Leave" : "Temporarily Leave",
-            email: `user${i + 1}@example.com`,
-            tasks: Math.floor(Math.random() * 5)
-        }))
-    );
+    const [rows, setRows] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [deleteDialog, setDeleteDialog] = useState({
+        open: false,
+        memberId: null,
+        memberName: ''
+    });
 
-    const handleDelete = (id) => {
-        setRows((prevRows) => prevRows.filter((row) => row.id !== id));
+    useEffect(() => {
+        const fetchMembers = async () => {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await getAllMembers(token);
+                console.log('Fetched members:', response.data);
+                const formattedMembers = response.data.map(member => ({
+                    id: member.id,
+                    name: member.fullName,
+                    status: member.status,
+                    email: member.email,
+                    tasks: member.ongoingTasks
+                }));
+                setRows(formattedMembers);
+            } catch (error) {
+                console.error('Error fetching members:', error);
+                toast.error('Failed to load members');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchMembers();
+    }, []);
+
+    const handleDelete = async (id) => {
+        try {
+            const token = localStorage.getItem('authToken');
+            await deleteMember(id, token); // You'll need to create this service function
+            setRows((prevRows) => prevRows.filter((row) => row.id !== id));
+            toast.success('Member removed successfully');
+        } catch (error) {
+            console.error('Error deleting member:', error);
+            toast.error('Failed to remove member');
+        }
     };
 
     const getStatusColor = (status) => {
         switch (status) {
-            case "On Duty":
+            case "OnDuty":
                 return { color: "green", background: "#e0f7e9" };
-            case "Annual Leave":
+            case "AnnualLeave":
                 return { color: "red", background: "#fde8e8" };
-            case "Temporarily Leave":
+            case "TemporarilyLeave":
                 return { color: "orange", background: "#fff4e0" };
             default:
                 return {};
@@ -72,13 +113,13 @@ export default function Members({ showActions = true }) {
         {
             accessorKey: "actions",
             header: "Actions",
-            enableColumnFilter: false, // Disable filtering for actions column
+            enableColumnFilter: false,
             Cell: ({ row }) => {
                 return showActions ? (
                     <Stack direction="row" spacing={1}>
                         <IconButton
                             size="small"
-                            onClick={() => handleDelete(row.original.id)}
+                            onClick={() => handleDeleteClick(row.original.id, row.original.name)}
                             sx={{ color: 'error.main' }}
                         >
                             <CloseIcon fontSize="small" />
@@ -152,6 +193,7 @@ export default function Members({ showActions = true }) {
         handleExportClose();
     };
 
+    // Update table configuration
     const table = useMaterialReactTable({
         columns,
         data: rows,
@@ -162,6 +204,7 @@ export default function Members({ showActions = true }) {
         initialState: {
             pagination: { pageSize: 5, pageIndex: 0 },
         },
+        state: { isLoading: loading },
         muiTableHeadCellProps: {
             sx: {
                 backgroundColor: 'white',
@@ -193,9 +236,85 @@ export default function Members({ showActions = true }) {
         ),
     });
 
+    const handleDeleteClick = (id, name) => {
+        setDeleteDialog({
+            open: true,
+            memberId: id,
+            memberName: name
+        });
+    };
+
+    const handleDeleteCancel = () => {
+        setDeleteDialog({
+            open: false,
+            memberId: null,
+            memberName: ''
+        });
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (deleteDialog.memberId) {
+            try {
+                await handleDelete(deleteDialog.memberId);
+                handleDeleteCancel(); // Close the dialog after successful deletion
+            } catch (error) {
+                console.error('Error in delete confirmation:', error);
+                // Error is already handled in handleDelete function
+            }
+        }
+    };
+
     return (
         <Box sx={{ height: 520, width: "100%" }}>
             <MaterialReactTable table={table} />
+            <Dialog
+                open={deleteDialog.open}
+                onClose={handleDeleteCancel}
+                PaperProps={{
+                    sx: {
+                        width: '400px',
+                        p: 1
+                    }
+                }}
+            >
+                <DialogTitle sx={{ color: '#111827', fontWeight: 600 }}>
+                    Confirm Delete
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Are you sure you want to remove {deleteDialog.memberName} from the team?
+                        This action cannot be undone.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions sx={{ p: 2, pt: 0 }}>
+                    <Button
+                        onClick={handleDeleteCancel}
+                        variant="outlined"
+                        sx={{
+                            color: '#64748b',
+                            borderColor: '#64748b',
+                            '&:hover': {
+                                borderColor: '#475569',
+                                backgroundColor: 'rgba(100, 116, 139, 0.04)'
+                            }
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleDeleteConfirm}
+                        variant="contained"
+                        color="error"
+                        sx={{
+                            '&:hover': {
+                                bgcolor: '#dc2626'
+                            }
+                        }}
+                    >
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }
