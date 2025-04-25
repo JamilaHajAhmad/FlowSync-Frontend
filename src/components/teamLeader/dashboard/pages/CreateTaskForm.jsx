@@ -27,31 +27,31 @@ import { createTask } from "../../../../services/taskService";
 import { getEmployeesWithTasks } from '../../../../services/employeeService';
 
 const caseSources = [
-  "جبل علي",
-  "الرفاعة",
-  "الراشدية",
-  "البرشاء",
-  "بردبي",
-  "لهباب",
-  "الفقع",
-  "الموانئ",
-  "القصيص",
-  "المرقبات",
-  "نايف",
-  "الخوانيج",
-  "حتا",
-  "أمن المطارات",
-  "النيابة العامة",
-  "بلدية دبي",
-  "جمارك دبي",
-  "رأس الخيمة",
-  "أم القيوين",
-  "عجمان",
-  "أبوظبي",
-  "الفجيرة",
-  "الشارقة",
-  "الطب الشرعي",
-  "وزارة الدفاع"
+  'JebelAli',          
+  'AlRaffa',              
+  'AlRashidiya',          
+  'AlBarsha',             
+  'BurDubai',            
+  'Lahbab',               
+  'AlFuqaa',              
+  'Ports',                
+  'AlQusais',             
+  'AlMuraqqabat',         
+  'Naif',                 
+  'AlKhawanij',        
+  'Hatta',                
+  'AirportSecurity',      
+  'PublicProsecution',    
+  'DubaiMunicipality',    
+  'DubaiCustoms',         
+  'RasAlKhaimah',         
+  'UmmAlQuwain',      
+  'Ajman',                
+  'AbuDhabi',             
+  'Fujairah',             
+  'Sharjah',              
+  'Forensics',            
+  'MinistryOfDefense'     
 ];
 
 const validationSchema = Yup.object({
@@ -64,7 +64,7 @@ const validationSchema = Yup.object({
     .required('OSS Number is required'),
   priority: Yup.string()
     .required('Priority is required'),
-  employee: Yup.string()
+  selectedMemberId: Yup.string()
     .required('Employee selection is required'),
   caseType: Yup.string(),
   caseSource: Yup.string()
@@ -97,27 +97,45 @@ const CreateTaskForm = ({ open, onClose }) => {
         fetchEmployees();
     }, [token]);
 
+  const mapPriorityToEnum = (priority) => {
+    switch(priority) {
+      case 'Regular': return '0';
+      case 'Important': return '1';
+      case 'Urgent': return '2';
+      default: return '0';
+    }
+  };
+
   const formik = useFormik({
     initialValues: {
       title: '',
       frnNumber: '',
       ossNumber: '',
-      priority: 'Regular',
-      employee: '',
+      priority: 'Regular', 
       caseType: '',
       caseSource: '',
+      selectedMemberId: '',
+      type: 'Opened',
     },
     validationSchema,
     onSubmit: async (values) => {
       try {
         setLoading(true);
-        const response = await createTask(values, token);
-        console.log(response);
+        const payload = {
+          ...values,
+          priority: mapPriorityToEnum(values.priority),
+          caseSource: values.caseSource,
+          type: 'Opened'
+        };
+        
+        const response = await createTask(payload, token);
+        console.log('Task created:', response);
         toast.success('Task created successfully');
         onClose();
         formik.resetForm();
       } catch (error) {
-        toast.error(error.response?.data?.message || 'Failed to create task');
+        console.error('Error creating task:', error);
+        toast.error(error.response?.data?.title || 'Failed to create task');
       } finally {
         setLoading(false);
       }
@@ -209,6 +227,8 @@ const CreateTaskForm = ({ open, onClose }) => {
             </Typography>
           </Box>
 
+          
+
           <RadioGroup
             row
             name="priority"
@@ -216,9 +236,9 @@ const CreateTaskForm = ({ open, onClose }) => {
             onChange={formik.handleChange}
             sx={{ gap: 2 }}
           >
-            <FormControlLabel value="Regular" control={<Radio color="success" />} label="Regular" />
-            <FormControlLabel value="Important" control={<Radio color="warning" />} label="Important" />
-            <FormControlLabel value="Urgent" control={<Radio color="error" />} label="Urgent" />
+            <FormControlLabel value="0" control={<Radio color="success" />} label="Regular" />
+            <FormControlLabel value="1" control={<Radio color="warning" />} label="Important" />
+            <FormControlLabel value="2" control={<Radio color="error" />} label="Urgent" />
           </RadioGroup>
 
           <FormControl 
@@ -228,8 +248,8 @@ const CreateTaskForm = ({ open, onClose }) => {
             <InputLabel id="employee-label">Select Employee</InputLabel>
             <Select
               labelId="employee-label"
-              name="employee"
-              value={formik.values.employee}
+              name="selectedMemberId"
+              value={formik.values.selectedMemberId}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               label="Select Employee"
@@ -249,9 +269,9 @@ const CreateTaskForm = ({ open, onClose }) => {
                 <MenuItem disabled>No employees available</MenuItem>
               )}
             </Select>
-            {formik.touched.employee && formik.errors.employee && (
+            {formik.touched.selectedMemberId && formik.errors.selectedMemberId && (
               <Typography color="error" variant="caption" sx={{ mt: 1 }}>
-                {formik.errors.employee}
+                {formik.errors.selectedMemberId}
               </Typography>
             )}
           </FormControl>
@@ -278,6 +298,7 @@ const CreateTaskForm = ({ open, onClose }) => {
               <TextField
                 {...params}
                 label="Case Source"
+                name="caseSource"
                 error={formik.touched.caseSource && Boolean(formik.errors.caseSource)}
                 helperText={formik.touched.caseSource && formik.errors.caseSource}
               />

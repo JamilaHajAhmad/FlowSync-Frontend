@@ -12,10 +12,12 @@ import {
 } from "@mui/material";
 import { Add as AddIcon, FileDownload as FileDownloadIcon } from '@mui/icons-material';
 import Box from "@mui/material/Box";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CreateTaskForm from './CreateTaskForm';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
+import { getAllTasks } from '../../../../services/taskService';
+import { toast } from 'react-toastify';
 
 const getStatusColor = (status) => {
     const normalizedStatus = status.toLowerCase();
@@ -24,7 +26,7 @@ const getStatusColor = (status) => {
             return { color: "green", background: "#e0f7e9" };
         case "delayed":
             return { color: "red", background: "#fde8e8" };
-        case "ongoing":
+        case "opened":
             return { color: "orange", background: "#fff4e0" };
         case "frozen":
             return { color: "#1976D2", background: "#E3F2FD" };
@@ -108,7 +110,7 @@ const getColumns = (tab) => {
                     header: "Completed At",
                 }
             ];
-        case 'Ongoing':
+        case 'Opened':
             return [
                 ...baseColumns,
                 {
@@ -149,45 +151,14 @@ const getColumns = (tab) => {
     }
 };
 
-const rows = [
-    {
-        id: 1,
-        name: "Omar Zaid Al-Malek",
-        status: "Ongoing",
-        priority: "High",
-        frnNumber: "#123",
-        ossNumber: "OSS-456",
-        openDate: "08.08.2024",
-        dayLefts: 4,
-        daysDelayed: 0,
-        completedAt: "",
-        frozenAt: "",
-        caseType: "Investigation",
-        caseSource: "Email"
-    },
-    {
-        id: 2,
-        name: "John Doe",
-        status: "Completed",
-        priority: "Medium",
-        frnNumber: "#124",
-        ossNumber: "OSS-457",
-        openDate: "07.08.2024",
-        dayLefts: 0,
-        daysDelayed: 0,
-        completedAt: "10.08.2024",
-        frozenAt: "",
-        caseType: "Review",
-        caseSource: "Phone"
-    },
-];
-
 export default function Tasks({ 
     hideCreateButton, 
     showTabs,
     containerWidth = "100%",
 }) {
     const [activeTab, setActiveTab] = useState('All');
+    const [tasks, setTasks] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [openDialog, setOpenDialog] = useState(false);
     const [anchorEl, setAnchorEl] = React.useState(null);
     const open = Boolean(anchorEl);
@@ -204,16 +175,16 @@ export default function Tasks({
     };
 
     const handleDownload = (fileType) => {
-        const exportData = rows.map(row => ({
-            Name: row.name,
-            Status: row.status,
-            Priority: row.priority,
-            'FRN Number': row.frnNumber,
-            'OSS Number': row.ossNumber,
-            'Open Date': row.openDate,
-            'Days Left': row.dayLefts,
-            'Case Type': row.caseType,
-            'Case Source': row.caseSource
+        const exportData = tasks.map(task => ({
+            Name: task.name,
+            Status: task.status,
+            Priority: task.priority,
+            'FRN Number': task.frnNumber,
+            'OSS Number': task.ossNumber,
+            'Open Date': task.openDate,
+            'Days Left': task.dayLefts,
+            'Case Type': task.caseType,
+            'Case Source': task.caseSource
         }));
 
         if (fileType === 'pdf') {
@@ -265,9 +236,53 @@ export default function Tasks({
         handleExportClose();
     };
 
+    // Add useEffect to fetch tasks
+    useEffect(() => {
+        const fetchTasks = async () => {
+            try {
+                setLoading(true);
+                const token = localStorage.getItem('authToken');
+                const type = activeTab === 'All' ? '' : activeTab.toLowerCase();
+                const response = await getAllTasks(token, type);
+                console.log('Tasks fetched:', response.data);
+                
+                // Transform API response to match table structure
+                const formattedTasks = response.data.map(task => ({
+                    id: task.id,
+                    name: task.memberName,
+                    status: task.status,
+                    priority: task.priority,
+                    frnNumber: task.frnNumber,
+                    ossNumber: task.ossNumber,
+                    openDate: new Date(task.openDate).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                    }),
+                    dayLefts: task.dayLefts,
+                    daysDelayed: task.daysDelayed,
+                    completedAt: task.completedAt ? new Date(task.completedAt).toLocaleDateString('en-US') : '',
+                    frozenAt: task.frozenAt ? new Date(task.frozenAt).toLocaleDateString('en-US') : '',
+                    caseType: task.caseType,
+                    caseSource: task.caseSource
+                }));
+
+                setTasks(formattedTasks);
+            } catch (error) {
+                console.error('Error fetching tasks:', error);
+                toast.error('Failed to load tasks');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTasks();
+    }, [activeTab]); // Fetch when tab changes
+
+    // Update table configuration
     const table = useMaterialReactTable({
         columns: getColumns(activeTab),
-        data: rows,
+        data: tasks,
         enableTopToolbar: true,
         enableBottomToolbar: true,
         enablePagination: true,
@@ -275,6 +290,7 @@ export default function Tasks({
         initialState: {
             pagination: { pageSize: 5, pageIndex: 0 },
         },
+        state: { isLoading: loading },
         muiTableHeadCellProps: {
             sx: {
                 backgroundColor: '#F9FAFB',
@@ -293,7 +309,7 @@ export default function Tasks({
             }}>
                 {showTabs && (
                     <Stack direction="row" spacing={1}>
-                        {['All', 'Completed', 'Ongoing', 'Delayed', 'Frozen'].map((tab) => (
+                        {['All', 'Completed', 'Opened', 'Delayed', 'Frozen'].map((tab) => (
                             <Button
                                 key={tab}
                                 variant={activeTab === tab ? "contained" : "outlined"}
