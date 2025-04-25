@@ -56,22 +56,29 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 
 const validationSchema = Yup.object({
     firstName: Yup.string()
-        .min(3, 'First name must be at least 3 characters'),
+        .min(3, 'First name must be at least 3 characters')
+        .nullable(),
     lastName: Yup.string()
-        .min(3, 'Last name must be at least 3 characters'),
+        .min(3, 'Last name must be at least 3 characters')
+        .nullable(),
     email: Yup.string()
-        .email('Invalid email format'),
+        .email('Invalid email format')
+        .nullable(),
     dateOfBirth: Yup.date()
-        .max(new Date(), 'Date of birth cannot be in the future'),
+        .max(new Date(), 'Date of birth cannot be in the future')
+        .nullable(),
     phone: Yup.string()
         .matches(/^[0-9+\-\s()]*$/, 'Invalid phone number format')
-        .min(8, 'Phone number must be at least 8 digits'),
-    major: Yup.string(),
-    status: Yup.string(),
-    address: Yup.string()
+        .min(8, 'Phone number must be at least 8 digits')
+        .nullable(),
+    major: Yup.string().nullable(),
+    status: Yup.string().nullable(),
+    address: Yup.string().nullable()
         .max(200, 'Address must be less than 200 characters'),
     bio: Yup.string()
         .max(500, 'Bio must be less than 500 characters')
+        .nullable()
+        .notRequired()
 });
 
 const EditProfile = () => {
@@ -87,18 +94,20 @@ const EditProfile = () => {
             bio: "",
             phone: "",
             major: "",
-            status: "On Duty"
+            status: "OnDuty",
+            pictureURL: null
         },
         validationSchema,
         onSubmit: async (values) => {
             setLoading(true);
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await updateProfile(values, token);
+                const response = await updateProfile({ dto: values }, token);
                 console.log('Profile updated successfully:', response);
                 toast.success('Profile updated successfully');
             } catch (error) {
-                toast.error(error.response?.data?.message || 'Failed to update profile');
+                console.error('Error updating profile:', error);
+                toast.error(error.response?.data?.title || 'Failed to update profile');
                 console.error('Error updating profile:', error);
             } finally {
                 setLoading(false);
@@ -124,7 +133,8 @@ const EditProfile = () => {
                     bio: profileData.bio || "",
                     phone: profileData.phone || "",
                     major: profileData.major || "",
-                    status: profileData.status || "On Duty"
+                    status: profileData.status || "OnDuty",
+                    pictureURL: profileData.pictureURL || null
                 });
             } catch (error) {
                 toast.error('Failed to load profile data');
@@ -133,6 +143,7 @@ const EditProfile = () => {
         };
 
         fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Empty dependency array
 
     const theme = useTheme();
@@ -345,9 +356,9 @@ const EditProfile = () => {
                                             onBlur={formik.handleBlur}
                                             error={formik.touched.status && Boolean(formik.errors.status)}
                                         >
-                                            <MenuItem value={0}>On Duty</MenuItem>
-                                            <MenuItem value={1}>Annual Leave</MenuItem>
-                                            <MenuItem value={2}>Temporarily Leave</MenuItem>
+                                            <MenuItem value="OnDuty">On Duty</MenuItem>
+                                            <MenuItem value="Annuallyleave">Annual leave</MenuItem>
+                                            <MenuItem value="Temporarilyleave">Temporarily leave</MenuItem>
                                         </StyledSelect>
                                         {formik.touched.status && formik.errors.status && (
                                             <Typography color="error" variant="caption">

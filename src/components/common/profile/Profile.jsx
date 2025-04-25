@@ -97,18 +97,18 @@ const InfoField = styled(TextField)({
 });
 
 const ActionButton = styled(Button)({
-  backgroundColor: '#4caf50',
+  backgroundColor: '#064e3b',
   color: 'white',
   borderRadius: '30px',
   padding: '10px 25px',
   boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
   '&:hover': {
-    backgroundColor: '#4caf50',
+    backgroundColor: '#064e3b',
   }
 });
 const getStatusColor = (status) => {
   switch (status) {
-    case "On Duty":
+    case "OnDuty":
       return { color: "green", background: "#e0f7e9" };
     case "Annual Leave":
       return { color: "red", background: "#fde8e8" };
@@ -123,23 +123,6 @@ const convertNullToText = (value) => {
   return value || 'Not added yet';
 };
 
-const getStatusText = (statusNumber) => {
-  const statusMap = {
-    0: 'On Duty',
-    1: 'Annual Leave',
-    2: 'Temporarily Leave'
-  };
-  return statusMap[statusNumber] || 'Unknown Status';
-};
-
-const getRoleText = (roleNumber) => {
-  const roleMap = {
-    0: 'Team Leader',
-    1: 'Team Member'
-  };
-  return roleMap[roleNumber] || 'Unknown Role';
-};
-
 const Profile = () => {
   const [tabValue, setTabValue] = useState(0);
   const [profileData, setProfileData] = useState(null);
@@ -151,6 +134,7 @@ const Profile = () => {
         const token = localStorage.getItem('authToken');
         const response = await getProfile(token);
         const profileData = response.data;
+        console.log('Profile data:', profileData);
 
         setProfileData({
           ...profileData,
@@ -163,9 +147,10 @@ const Profile = () => {
           bio: convertNullToText(profileData.bio),
           major: convertNullToText(profileData.major),
           dateOfBirth: convertNullToText(profileData.dateOfBirth),
+          picture: profileData.pictureURL || '/path/to/default-avatar.jpg', // Default avatar if not provided
           // Convert status and role
-          status: getStatusText(profileData.status),
-          role: getRoleText(profileData.role),
+          status: profileData.status,
+          role: `Team ${profileData.role}`,
           details: [
             {
               label: 'Major',
@@ -174,7 +159,8 @@ const Profile = () => {
             },
             {
               label: 'Join Date',
-              value: profileData.joinDate ? new Date(profileData.joinDate).toLocaleDateString('en-US', {
+              value: profileData.joinedAt ? new Date(profileData.joinedAt).toLocaleDateString('en-US', {
+                day: 'numeric',
                 year: 'numeric',
                 month: 'long'
               }) : 'Not added yet',
@@ -182,7 +168,7 @@ const Profile = () => {
             },
             {
               label: 'Status',
-              value: getStatusText(profileData.status),
+              value: profileData.status,
               icon: <Work sx={{ fontSize: 18, color: '#4caf50' }} />,
               useStatusColor: true
             }
@@ -228,7 +214,8 @@ const Profile = () => {
           <SidebarCard>
             <Box sx={{ position: 'relative', textAlign: 'center', pt: 4, pb: 3, mb: 4 }}>
               <Avatar
-                src="/path/to/avatar.jpg"
+                src={profileData.picture}
+                alt={`${profileData.firstName} ${profileData.lastName}`}
                 sx={{
                   width: 120,
                   height: 120,
