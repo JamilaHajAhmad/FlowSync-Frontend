@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
       port: 3001,
     },
     define: {
-      'process.env.VITE_REACT_APP_OPENAI_API_KEY': JSON.stringify(env.VITE_REACT_APP_OPENAI_API_KEY)
+      'process.env.VITE_API_KEY': JSON.stringify(env.VITE_API_KEY)
     }
   }
 });
