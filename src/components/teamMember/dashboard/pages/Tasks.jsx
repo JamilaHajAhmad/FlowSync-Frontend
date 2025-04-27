@@ -1,13 +1,17 @@
-import { Box, Typography, Card, Dialog, DialogTitle, DialogContent, DialogActions, Button, Chip, Grid } from "@mui/material";
+import { Box, Typography, Card, Dialog, DialogTitle, DialogContent, DialogActions, Button, Chip, Grid, CircularProgress } from "@mui/material";
 import { Schedule, CalendarToday, ErrorOutline, CheckCircleOutline } from "@mui/icons-material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FreezeTaskForm from './FreezeTaskForm';
-import { DndContext, DragOverlay, closestCorners } from '@dnd-kit/core';
+import { DndContext, DragOverlay, closestCorners, useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import UnfreezeTaskForm from './UnfreezeTaskForm';
 import CompleteTaskForm from './CompleteTaskForm';
+import { useTaskTimer } from '../../../../hooks/useTaskTimer';
+import { getMemberTasks } from '../../../../services/taskService';
+import { toast } from 'react-toastify';
+import React from 'react';
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -24,51 +28,6 @@ const getStatusColor = (status) => {
   }
 };
 
-const rows = [
-  { 
-    id: 1, 
-    title: "Implement new feature",
-    status: "Opened", 
-    frnNumber: "#123", 
-    ossNumber: "OSS-001",
-    openDate: "08.08.2024", 
-    dayLefts: 5,
-    priority: "High",
-    progress: "75%",
-    description: "Implement new feature"
-  },
-  { 
-    id: 2, 
-    title: "Review client feedback",
-    status: "Frozen", 
-    frnNumber: "#124", 
-    ossNumber: "OSS-002",
-    openDate: "07.08.2024", 
-    dayLefts: 10,
-    priority: "Medium",
-    frozenAt: "15.08.2024",
-    freezingReason: "Waiting for client feedback"
-  },
-  { id: 3, title: "Fix bugs", status: "Delayed", frnNumber: "#125", openDate: "06.08.2024", dayLefts: 2 },
-  { id: 4, title: "Release new version", status: "Completed", frnNumber: "#126", openDate: "05.08.2024", dayLefts: 0, completedDate: "10.08.2024" },
- 
-  
-
-  { 
-    id: 10, 
-    title: "Implement new feature",
-    status: "Opened", 
-    frnNumber: "#123", 
-    ossNumber: "OSS-001",
-    openDate: "08.08.2024", 
-    dayLefts: 5,
-    priority: "High",
-    progress: "75%",
-    description: "Implement new feature"
-  },
-  
-];
-
 const statusColumns = ["Opened", "Frozen", "Delayed", "Completed"];
 
 const isMovementAllowed = (source, destination) => {
@@ -84,7 +43,7 @@ const isMovementAllowed = (source, destination) => {
   return !invalidMoves[source]?.includes(destination);
 };
 
-const TaskCard = ({ task }) => {
+const TaskCard = ({ task, isDragging }) => {
   const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
   
   const {
@@ -93,14 +52,20 @@ const TaskCard = ({ task }) => {
     setNodeRef,
     transform,
     transition,
-  } = useSortable({ id: task.id.toString() });
+  } = useSortable({ 
+    id: task.frnNumber.toString(),
+    data: {
+      type: 'task',
+      task: task
+    }
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    opacity: isDragging ? 0.5 : 1,
   };
 
-  // Add renderCardInfo function
   const renderCardInfo = () => (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
@@ -141,10 +106,33 @@ const TaskCard = ({ task }) => {
           </Box>
         )}
       </Box>
+
+      {task.hasPendingFreezeRequest && (
+        <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Chip
+            size="small"
+            label="Pending Freeze"
+            sx={{
+              backgroundColor: '#E3F2FD',
+              color: '#1976D2',
+              '& .MuiChip-label': {
+                fontWeight: 500
+              },
+              borderRadius: '4px'
+            }}
+          />
+          {task.freezeRequestedAt && (
+            <Typography variant="caption" color="text.secondary">
+              Requested: {new Date(task.freezeRequestedAt).toLocaleDateString()}
+            </Typography>
+          )}
+        </Box>
+      )}
     </Box>
   );
 
-  // Add renderDialogContent function
+  const { formattedTime, timeRemaining } = useTaskTimer(task);
+
   const renderDialogContent = () => (
     <Box sx={{ py: 1 }}>
       <Typography variant="h6" gutterBottom>
@@ -260,6 +248,50 @@ const TaskCard = ({ task }) => {
           </Grid>
         )}
       </Grid>
+
+      <Grid item xs={12}>
+        <Typography variant="body2" color="text.secondary">
+          Time Remaining
+        </Typography>
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 2, 
+          alignItems: 'center',
+          color: timeRemaining.status === 'critical' ? '#d32f2f' : 
+                timeRemaining.status === 'warning' ? '#ed6c02' : '#059669'
+        }}>
+          <Typography variant="h6">
+            {`${formattedTime.days}d ${formattedTime.hours}h ${formattedTime.minutes}m ${formattedTime.seconds}s`}
+          </Typography>
+          {timeRemaining.isDelayed && (
+            <ErrorOutline color="error" />
+          )}
+        </Box>
+      </Grid>
+
+      {task.hasPendingFreezeRequest && (
+        <Grid item xs={12}>
+          <Box sx={{ 
+            mt: 2, 
+            p: 2, 
+            bgcolor: '#E3F2FD', 
+            borderRadius: 1,
+            border: '1px solid #1976D2'
+          }}>
+            <Typography variant="subtitle2" color="#1976D2">
+              Pending Freeze Request
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Requested on: {new Date(task.freezeRequestedAt).toLocaleString()}
+            </Typography>
+            {task.freezingReason && (
+              <Typography variant="body2" color="text.secondary" mt={1}>
+                Reason: {task.freezingReason}
+              </Typography>
+            )}
+          </Box>
+        </Grid>
+      )}
     </Box>
   );
 
@@ -274,7 +306,6 @@ const TaskCard = ({ task }) => {
           '&:hover': { boxShadow: 3 }
         }}
       >
-        {/* Drag Handle Area */}
         <Box
           {...attributes}
           {...listeners}
@@ -298,12 +329,11 @@ const TaskCard = ({ task }) => {
           ⋮⋮
         </Box>
 
-        {/* Clickable Content Area */}
         <Box 
           onClick={() => setOpenDetailsDialog(true)}
           sx={{ 
             cursor: 'pointer',
-            pr: 4 // Make space for drag handle
+            pr: 4
           }}
         >
           {renderCardInfo()}
@@ -339,21 +369,161 @@ const TaskCard = ({ task }) => {
   );
 };
 
+const DroppableColumn = ({ status, children }) => {
+  const { setNodeRef } = useDroppable({
+    id: status,
+    data: {
+      type: 'column',
+      status
+    }
+  });
+
+  return (
+    <Box
+      ref={setNodeRef}
+      sx={{
+        flex: 1,
+        minWidth: '280px',
+        backgroundColor: '#f5f5f5',
+        borderRadius: 2,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        overflow: 'hidden',
+        borderTop: `3px solid ${getStatusColor(status).color}`,
+      }}
+    >
+      <Typography
+        variant="h6"
+        sx={{
+          p: 2,
+          color: getStatusColor(status).color,
+          textAlign: 'center',
+          fontWeight: 600,
+          borderRadius: '4px',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {status} ({React.Children.count(children)})
+      </Typography>
+
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          px: 2,
+          pb: 2,
+          '&::-webkit-scrollbar': {
+            width: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            backgroundColor: 'rgba(0,0,0,0.05)',
+            borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: 'rgba(0,0,0,0.15)',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: 'rgba(0,0,0,0.25)',
+            },
+          },
+          '@media (hover: none)': {
+            '&::-webkit-scrollbar': {
+              display: 'none',
+            },
+          },
+        }}
+      >
+        {children}
+      </Box>
+    </Box>
+  );
+};
+
 const Tasks = () => {
-  const [tasksList, setTasksList] = useState(rows);
+  const [tasksList, setTasksList] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState(null);
   const [openFreezeDialog, setOpenFreezeDialog] = useState(false);
   const [openUnfreezeDialog, setOpenUnfreezeDialog] = useState(false);
   const [openCompleteDialog, setOpenCompleteDialog] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [pendingStatusChange, setPendingStatusChange] = useState(null);
+  
+  useEffect(() => {
+    const fetchAllTasks = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          toast.error('Authentication token not found');
+          return;
+        }
+
+        const taskPromises = [
+          getMemberTasks(token, 'Opened'),
+          getMemberTasks(token, 'Completed'),
+          getMemberTasks(token, 'Delayed'),
+          getMemberTasks(token, 'Frozen')
+        ];
+
+        const results = await Promise.all(taskPromises);
+        
+        const formatTasks = (tasks) => tasks.map(task => ({
+          ...task,
+          openDate: new Date(task.openDate).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          }),
+          completedDate: task.completedDate ? new Date(task.completedDate).toLocaleDateString('en-US') : null,
+          frozenAt: task.frozenDate ? new Date(task.frozenDate).toLocaleDateString('en-US') : null,
+          dayLefts: task.dayLefts || 0,
+          daysDelayed: task.daysDelayed || 0,
+          // Preserve the pending freeze state from the API response
+          hasPendingFreezeRequest: task.hasPendingFreezeRequest,
+          freezeRequestedAt: task.freezeRequestedAt,
+          freezingReason: task.freezingReason
+        }));
+
+        const allTasks = [
+          ...formatTasks(results[0].data).map(task => ({ ...task, status: 'Opened' })),
+          ...formatTasks(results[1].data).map(task => ({ ...task, status: 'Completed' })),
+          ...formatTasks(results[2].data).map(task => ({ ...task, status: 'Delayed' })),
+          ...formatTasks(results[3].data).map(task => ({ ...task, status: 'Frozen' }))
+        ];
+
+        setTasksList(allTasks);
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+        toast.error('Failed to load tasks');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllTasks();
+  }, []);
+
+  if (loading) {
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: 'calc(100vh - 32px)' 
+      }}>
+        <CircularProgress sx={{ color: '#059669' }} />
+      </Box>
+    );
+  }
 
   const handleDragStart = (event) => {
     const { active } = event;
     setActiveId(active.id);
 
-    // Find and set the task being dragged
-    const draggedTask = tasksList.find(task => task.id.toString() === active.id);
+    const draggedTask = tasksList.find(task => task.frnNumber.toString() === active.id);
     if (draggedTask) {
       setSelectedTask(draggedTask);
     }
@@ -361,54 +531,145 @@ const Tasks = () => {
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
-    
-    if (!over) return;
 
-    const activeTask = tasksList.find(task => task.id.toString() === active.id);
-    const overContainer = over.data.current?.sortable?.containerId || over.id;
-
-    // Check if movement is allowed
-    if (!isMovementAllowed(activeTask.status, overContainer)) {
-      return;
+    if (!over) {
+        setActiveId(null);
+        return;
     }
 
-    // Only show action dialogs when dragging, not when clicking
-    if (activeTask.status !== overContainer) {
-      setPendingStatusChange(overContainer);
+    const activeTask = tasksList.find(task => task.frnNumber.toString() === active.id);
+    
+    // Get the status based on the drop target type
+    const overStatus = over.data.current?.sortable ? 
+        over.data.current.task.status : // For task-to-task drops
+        over.data.current?.status || over.id; // For column drops
 
-      if (overContainer === 'Frozen') {
-        setSelectedTask(activeTask);
-        setOpenFreezeDialog(true);
+    console.log('Drag end:', { 
+        activeTask, 
+        fromStatus: activeTask?.status, 
+        toStatus: overStatus,
+        hasPendingFreeze: activeTask?.hasPendingFreezeRequest,
+        dropType: over.data.current?.sortable ? 'task' : 'column'
+    });
+
+    if (!activeTask || activeTask.status === overStatus) {
+        setActiveId(null);
         return;
-      }
+    }
 
-      if (activeTask.status === 'Frozen' && overContainer === 'Opened') {
-        setSelectedTask(activeTask);
+    if (!isMovementAllowed(activeTask.status, overStatus)) {
+        toast.error('This movement is not allowed');
+        setActiveId(null);
+        return;
+    }
+
+    setSelectedTask(activeTask);
+    setPendingStatusChange(overStatus);
+
+    // Handle different status transitions
+    if (activeTask.status === 'Opened' && overStatus === 'Frozen') {
+        if (activeTask.hasPendingFreezeRequest) {
+            toast.warning('This task already has a pending freeze request');
+            setSelectedTask(null);
+            setPendingStatusChange(null);
+        } else {
+            setOpenFreezeDialog(true);
+        }
+    } else if (activeTask.status === 'Frozen' && overStatus === 'Opened') {
         setOpenUnfreezeDialog(true);
-        return;
-      }
-
-      if (overContainer === 'Completed') {
-        setSelectedTask(activeTask);
+    } else if (activeTask.status === 'Opened' && overStatus === 'Completed') {
         setOpenCompleteDialog(true);
-        return;
-      }
-
-      // For other status changes
-      handleTaskAction('updateStatus', { ...activeTask, status: overContainer });
     }
-    
+
     setActiveId(null);
   };
 
-  const handleTaskAction = (action, task) => {
-    if (!task || !pendingStatusChange) return;
+  const handleTaskAction = async (action, task) => {
+    if (!task) return;
 
-    const newTasks = tasksList.map(t => 
-      t.id === task.id ? { ...t, status: pendingStatusChange } : t
-    );
-    setTasksList(newTasks);
-    setPendingStatusChange(null);
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        toast.error('Authentication token not found');
+        return;
+      }
+
+      let success = false;
+      let updatedTask = { ...task };
+
+      switch (action) {
+        case 'freeze':
+          // Keep the task in Opened status with pending flag
+          updatedTask = {
+            ...task,
+            status: 'Opened',
+            hasPendingFreezeRequest: true,
+            freezingReason: task.freezingReason,
+            freezeRequestedAt: new Date().toISOString()
+          };
+          success = true;
+          toast.info('Freeze request sent for approval');
+          break;
+
+        case 'unfreeze':
+          updatedTask = {
+            ...task,
+            status: 'Opened',
+            frozenAt: null,
+            freezingReason: null,
+            hasPendingFreezeRequest: false,
+            freezeRequestedAt: null
+          };
+          success = true;
+          toast.success('Task unfrozen successfully');
+          break;
+
+        case 'complete':
+          updatedTask = {
+            ...task,
+            status: 'Completed',
+            completedDate: new Date().toLocaleDateString('en-US'),
+            completionNotes: task.completionNotes
+          };
+          success = true;
+          toast.success('Task completed successfully');
+          break;
+
+        case 'updateStatus':
+          updatedTask = {
+            ...task,
+            status: pendingStatusChange || task.status,
+            ...(pendingStatusChange === 'Delayed' && {
+              daysDelayed: task.dayLefts
+            })
+          };
+          success = true;
+          toast.info(`Task moved to ${pendingStatusChange || task.status}`);
+          break;
+
+        default:
+          toast.error('Invalid action');
+          break;
+      }
+
+      if (success) {
+        const newTasks = tasksList.map(t => 
+          t.frnNumber === task.frnNumber ? updatedTask : t
+        );
+        setTasksList(newTasks);
+
+        // Reset states
+        setSelectedTask(null);
+        setPendingStatusChange(null);
+        setOpenFreezeDialog(false);
+        setOpenUnfreezeDialog(false);
+        setOpenCompleteDialog(false);
+      }
+    } catch (error) {
+      console.error('Error handling task action:', error);
+      toast.error(error.response?.data?.message || 'Failed to update task');
+      setPendingStatusChange(null);
+    }
   };
 
   return (
@@ -419,105 +680,48 @@ const Tasks = () => {
     >
       <Box
         sx={{
-          height: 'calc(100vh - 32px)', // Full page height minus padding
+          height: 'calc(100vh - 32px)',
           display: 'flex',
           gap: 2,
           p: 2,
-          overflowX: 'hidden', // Prevent horizontal scrolling
-          overflowY: 'hidden', // Prevent outer vertical scrolling
-          width: '100%', // Ensure full width of the container
-          boxSizing: 'border-box', // Include padding and border in the element's total width and height
+          overflowX: 'hidden',
+          overflowY: 'hidden',
+          width: '100%',
+          boxSizing: 'border-box',
         }}
       >
         {statusColumns.map((status) => (
-          <Box
-            key={status}
-            sx={{
-              flex: 1,
-              minWidth: '280px', // Minimum column width
-              maxWidth: '1fr', // Allow columns to shrink and fit within the container
-              backgroundColor: '#f5f5f5',
-              borderRadius: 2,
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%', // Full height of the container
-              overflow: 'hidden', // Prevent any internal overflow
-              borderTop: `3px solid ${getStatusColor(status).color}`,
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{
-                p: 2,
-                color: getStatusColor(status).color,
-                textAlign: 'center',
-                fontWeight: 600,
-                borderRadius: '4px',
-                whiteSpace: 'nowrap', // Prevent text from wrapping or overflowing horizontally
-              }}
+          <DroppableColumn key={status} status={status}>
+            <SortableContext
+              items={tasksList
+                .filter((task) => task.status === status)
+                .map((task) => task.frnNumber.toString())}
+              strategy={verticalListSortingStrategy}
             >
-              {status}
-            </Typography>
-
-            <Box
-              sx={{
-                flex: 1,
-                overflowY: 'auto', // Allow vertical scrolling only
-                overflowX: 'hidden', // Prevent horizontal scrolling
-                px: 2,
-                pb: 2,
-                '&::-webkit-scrollbar': {
-                  width: '8px', // Scrollbar width
-                },
-                '&::-webkit-scrollbar-track': {
-                  backgroundColor: 'rgba(0,0,0,0.05)', // Scrollbar track color
-                  borderRadius: '4px', // Rounded scrollbar track
-                },
-                '&::-webkit-scrollbar-thumb': {
-                  backgroundColor: 'rgba(0,0,0,0.15)', // Scrollbar thumb color
-                  borderRadius: '4px', // Rounded scrollbar thumb
-                  '&:hover': {
-                    backgroundColor: 'rgba(0,0,0,0.25)', // Darker color on hover
-                  },
-                },
-                '@media (hover: none)': {
-                  '&::-webkit-scrollbar': {
-                    display: 'none', // Hide scrollbar on touch devices
-                  },
-                },
-              }}
-            >
-              <SortableContext
-                items={tasksList
-                  .filter((task) => task.status === status)
-                  .map((task) => task.id.toString())}
-                strategy={verticalListSortingStrategy}
-                id={status}
-              >
-                {tasksList
-                  .filter((task) => task.status === status)
-                  .map((task) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      isDragging={activeId === task.id.toString()}
-                    />
-                  ))}
-              </SortableContext>
-            </Box>
-          </Box>
+              {tasksList
+                .filter((task) => task.status === status)
+                .map((task) => (
+                  <TaskCard
+                    key={task.frnNumber}
+                    task={task}
+                    isDragging={activeId === task.frnNumber.toString()}
+                  />
+                ))}
+            </SortableContext>
+          </DroppableColumn>
         ))}
       </Box>
 
       <DragOverlay>
         {activeId ? (
           <TaskCard
-            task={tasksList.find(task => task.id.toString() === activeId)}
-            isDragging={false} // Set to false to prevent opacity change
+            task={tasksList.find(task => task.frnNumber.toString() === activeId)}
+            isDragging={true}
           />
         ) : null}
       </DragOverlay>
 
+      {/* Forms */}
       <FreezeTaskForm
         open={openFreezeDialog}
         onClose={() => {
@@ -526,11 +730,7 @@ const Tasks = () => {
           setPendingStatusChange(null);
         }}
         task={selectedTask}
-        onConfirm={(task) => {
-          handleTaskAction('freeze', task);
-          setOpenFreezeDialog(false);
-          setSelectedTask(null);
-        }}
+        onSubmitSuccess={(updatedTask) => handleTaskAction('freeze', updatedTask)}
       />
 
       <UnfreezeTaskForm
@@ -541,11 +741,7 @@ const Tasks = () => {
           setPendingStatusChange(null);
         }}
         task={selectedTask}
-        onConfirm={(task) => {
-          handleTaskAction('unfreeze', task);
-          setOpenUnfreezeDialog(false);
-          setSelectedTask(null);
-        }}
+        onSubmitSuccess={(updatedTask) => handleTaskAction('unfreeze', updatedTask)}
       />
 
       <CompleteTaskForm
@@ -556,15 +752,10 @@ const Tasks = () => {
           setPendingStatusChange(null);
         }}
         task={selectedTask}
-        onConfirm={(task) => {
-          handleTaskAction('complete', task);
-          setOpenCompleteDialog(false);
-          setSelectedTask(null);
-        }}
+        onSubmitSuccess={(updatedTask) => handleTaskAction('complete', updatedTask)}
       />
     </DndContext>
   );
 };
 
 export default Tasks;
-

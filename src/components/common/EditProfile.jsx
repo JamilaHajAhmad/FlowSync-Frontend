@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Box, TextField, Button, Typography, Avatar, Select, MenuItem, Grid, Paper, IconButton, CssBaseline, FormControl, InputLabel } from "@mui/material";
+import { Box, TextField, Button, Typography, Avatar, Select, MenuItem, Grid, Paper, IconButton, CssBaseline, FormControl, InputLabel, CircularProgress } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { styled, ThemeProvider } from '@mui/material/styles';
 import logo from '../../assets/images/logo.png';
 import { useTheme } from '@mui/material';
 import { getProfile, updateProfile } from "../../services/profileService";
+import { uploadImageToCloudinary } from '../../services/imageService';
 import { toast } from "react-toastify";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -78,11 +79,13 @@ const validationSchema = Yup.object({
     bio: Yup.string()
         .max(500, 'Bio must be less than 500 characters')
         .nullable()
-        .notRequired()
+        .notRequired(),
+    pictureURL: Yup.string().nullable(),
 });
 
 const EditProfile = () => {
     const [ loading, setLoading ] = useState(false);
+    const [imageLoading, setImageLoading] = useState(false);
 
     const formik = useFormik({
         initialValues: {
@@ -148,6 +151,59 @@ const EditProfile = () => {
 
     const theme = useTheme();
 
+    const handleImageUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+    
+        try {
+            setImageLoading(true);
+            
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+            if (!validTypes.includes(file.type)) {
+                toast.error('Please select a valid image file (JPG, JPEG, or PNG)');
+                return;
+            }
+    
+            // Validate file size (max 5MB)
+            const maxSize = 5 * 1024 * 1024;
+            if (file.size > maxSize) {
+                toast.error('Image size should be less than 5MB');
+                return;
+            }
+    
+            // Upload image using the service
+            const imageUrl = await uploadImageToCloudinary(file);
+            
+            // Update profile with new image URL
+            const token = localStorage.getItem('authToken');
+            try {
+                await updateProfile({
+                    dto: {
+                        ...formik.values,
+                        pictureURL: imageUrl
+                    }
+                }, token);
+    
+                // Update formik state only after successful backend update
+                formik.setFieldValue('pictureURL', imageUrl);
+                toast.success('Profile picture updated successfully');
+            } catch (updateError) {
+                console.error('Error updating profile with new image:', updateError);
+                toast.error(updateError.response?.data?.title || 'Failed to update profile with new image');
+                throw updateError; // Re-throw to be caught by outer catch
+            }
+        } catch (error) {
+            console.error('Error in image upload process:', error);
+            // Only show error message if not already shown for specific cases
+            if (!error.message?.includes('valid image file') && !error.message?.includes('less than 5MB')) {
+                toast.error(error.message || 'Failed to update profile picture');
+            }
+        } finally {
+            setImageLoading(false);
+        }
+    };
+
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
@@ -186,9 +242,9 @@ const EditProfile = () => {
 
                     <Box display="flex" alignItems="center" gap={3} mb={4}>
                         {/* Profile Avatar */}
-                        <Box sx={{ position: 'relative', top: -200, left: -30 }}>
+                        <Box sx={{ position: 'relative' }}>
                             <Avatar
-                                src="/profile.jpg"
+                                src={formik.values.pictureURL || "/profile.jpg"}
                                 sx={{
                                     width: 100,
                                     height: 100,
@@ -196,20 +252,38 @@ const EditProfile = () => {
                                     boxShadow: '0 0 15px rgba(5,150,105,0.3)',
                                 }}
                             />
-                            <IconButton
-                                sx={{
-                                    position: 'absolute',
-                                    bottom: 0,
-                                    right: 0,
-                                    bgcolor: '#059669',
-                                    '&:hover': {
-                                        bgcolor: '#047857'
-                                    },
-                                    color: '#fff'
-                                }}
-                            >
-                                <EditIcon />
-                            </IconButton>
+                            <input
+                                accept="image/jpeg,image/png,image/jpg"
+                                style={{ display: 'none' }}
+                                id="icon-button-file"
+                                type="file"
+                                onChange={handleImageUpload}
+                            />
+                            <label htmlFor="icon-button-file">
+                                <IconButton
+                                    component="span"
+                                    sx={{
+                                        position: 'absolute',
+                                        bottom: 0,
+                                        right: 0,
+                                        bgcolor: '#059669',
+                                        width: 32,
+                                        height: 32,
+                                        '&:hover': {
+                                            bgcolor: '#047857'
+                                        },
+                                        color: '#fff',
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                                    }}
+                                    disabled={imageLoading}
+                                >
+                                    {imageLoading ? (
+                                        <CircularProgress size={20} color="inherit" />
+                                    ) : (
+                                        <EditIcon sx={{ fontSize: 18 }} />
+                                    )}
+                                </IconButton>
+                            </label>
                         </Box>
 
                         {/* Profile Form */}

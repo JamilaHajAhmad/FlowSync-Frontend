@@ -1,3 +1,4 @@
+import React from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -8,7 +9,12 @@ import {
 } from "@mui/material";
 import { PlayCircleOutline } from "@mui/icons-material";
 
-const UnfreezeTaskForm = ({ open, onClose, task, onConfirm }) => {
+const UnfreezeTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
+    const handleConfirm = () => {
+        onSubmitSuccess(task);
+        onClose();
+    };
+
     return (
         <Dialog
             open={open}
@@ -36,6 +42,7 @@ const UnfreezeTaskForm = ({ open, onClose, task, onConfirm }) => {
                 <PlayCircleOutline color="primary" />
                 Unfreeze Task
             </DialogTitle>
+
             <DialogContent
                 sx={{
                     padding: '24px',
@@ -48,10 +55,12 @@ const UnfreezeTaskForm = ({ open, onClose, task, onConfirm }) => {
                 <Typography variant="subtitle1" gutterBottom>
                     Are you sure you want to unfreeze task <strong>{task?.frnNumber}</strong>?
                 </Typography>
+
                 <Typography variant="body2" color="text.secondary">
                     This action will move the task back to the "Ongoing" status.
                 </Typography>
             </DialogContent>
+
             <DialogActions
                 sx={{
                     padding: '16px 24px',
@@ -66,8 +75,9 @@ const UnfreezeTaskForm = ({ open, onClose, task, onConfirm }) => {
                 >
                     Cancel
                 </Button>
+
                 <Button
-                    onClick={() => onConfirm(task)}
+                    onClick={handleConfirm}
                     variant="contained"
                     color="primary"
                 >

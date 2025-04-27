@@ -45,6 +45,11 @@ const getColumns = (tab) => {
             size: 200,
         },
         {
+            accessorKey: "title",
+            header: "Task Title",
+            size: 100,
+        },
+        {
             accessorKey: "frnNumber",
             header: "FRN Number",
             size: 120,
@@ -249,7 +254,8 @@ export default function Tasks({
                 // Transform API response to match table structure
                 const formattedTasks = response.data.map(task => ({
                     id: task.id,
-                    name: task.memberName,
+                    name: task.assignedMember.fullName,
+                    title: task.title,
                     status: task.status,
                     priority: task.priority,
                     frnNumber: task.frnNumber,

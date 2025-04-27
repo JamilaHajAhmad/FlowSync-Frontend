@@ -19,7 +19,7 @@ const ChatbotButton = () => {
                     onClick={handleToggle}
                     sx={{
                         position: 'fixed',
-                        bottom: 16,
+                        bottom: 40,
                         right: 16,
                         bgcolor: '#059669',
                         '&:hover': {

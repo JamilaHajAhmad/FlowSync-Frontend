@@ -307,7 +307,7 @@ const Requests = () => {
                             color="success"
                             size="small"
                             startIcon={<CheckCircleIcon />}
-                            onClick={() => handleConfirmAction(row.original.id, type, 'approve', 'Are you sure you want to approve this request?')}
+                            onClick={() => handleConfirmAction(row.original.requestId, type, 'approve', 'Are you sure you want to approve this request?')}
                         >
                             Approve
                         </Button>
@@ -316,7 +316,7 @@ const Requests = () => {
                             color="error"
                             size="small"
                             startIcon={<CancelIcon />}
-                            onClick={() => handleConfirmAction(row.original.id, type, 'reject', 'Are you sure you want to reject this request?')}
+                            onClick={() => handleConfirmAction(row.original.requestId, type, 'reject', 'Are you sure you want to reject this request?')}
                         >
                             Reject
                         </Button>
@@ -407,6 +407,7 @@ const Requests = () => {
             requestId: id,
             requestType: type
         });
+        console.log(id, type, action);
     };
 
     const handleConfirmClose = () => {
