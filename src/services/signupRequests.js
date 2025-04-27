@@ -9,7 +9,7 @@ export const getAllSignupRequests = (token) => {
 };
 
 export const approveSignupRequest = (id, token) => {
-    return api.post(`/signuprequest/approve-member/${id}`, {
+    return api.post(`/signuprequest/approve-member/${id}`, null, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -17,7 +17,7 @@ export const approveSignupRequest = (id, token) => {
 };
 
 export const rejectSignupRequest = (id, token) => {
-    return api.post(`/signuprequest/reject-member/${id}`, {
+    return api.post(`/signuprequest/reject-member/${id}`, null, {
         headers: {
             Authorization: `Bearer ${token}`
         }

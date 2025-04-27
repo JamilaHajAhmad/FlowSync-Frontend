@@ -16,3 +16,26 @@ export const getAllTasks = (token, type = '') => {
         }
     });
 };
+
+export const getMemberTasks = async (token, type = 'Opened') => {
+    return await api.get(`/taskmanagement/member-tasks?type=${type}`, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const createFreezeRequest = async (data, token) => {
+    return await api.post(
+        '/freezetaskrequests/create-freeze-request',
+        {
+            frnNumber: data.frnNumber,
+            reason: data.reason
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }
+    );
+};
