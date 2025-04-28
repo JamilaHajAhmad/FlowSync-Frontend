@@ -97,14 +97,14 @@ const CreateTaskForm = ({ open, onClose }) => {
         fetchEmployees();
     }, [token]);
 
-  const mapPriorityToEnum = (priority) => {
-    switch(priority) {
-      case 'Regular': return 1;
-      case 'Important': return 2;
-      case 'Urgent': return 0;
-      default: return 0;
-    }
-  };
+    const mapPriorityToEnum = (priority) => {
+      switch(priority) {
+        case 'Regular': return 1;
+        case 'Important': return 2;
+        case 'Urgent': return 0;
+        default: return 0;
+      }
+    };
 
   const formik = useFormik({
     initialValues: {
@@ -236,9 +236,9 @@ const CreateTaskForm = ({ open, onClose }) => {
             onChange={formik.handleChange}
             sx={{ gap: 2 }}
           >
-            <FormControlLabel value="1" control={<Radio color="success" />} label="Regular" />
-            <FormControlLabel value="2" control={<Radio color="warning" />} label="Important" />
-            <FormControlLabel value="0" control={<Radio color="error" />} label="Urgent" />
+            <FormControlLabel value="Regular" control={<Radio color="success" />} label="Regular" />
+            <FormControlLabel value="Important" control={<Radio color="warning" />} label="Important" />
+            <FormControlLabel value="Urgent" control={<Radio color="error" />} label="Urgent" />
           </RadioGroup>
 
           <FormControl 
