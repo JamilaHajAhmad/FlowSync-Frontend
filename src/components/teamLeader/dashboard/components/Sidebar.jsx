@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     HomeOutlined,
@@ -25,6 +25,7 @@ import {
 import defaultImg from '../../../../assets/images/default.jpg';
 import { handleLogout } from '../../../../utils';
 import { decodeToken } from '../../../../utils';
+import { getProfilePicture } from '../../../../services/profileService';
 
 const drawerWidth = 260;
 
@@ -114,6 +115,25 @@ export default function Sidebar({ open }) {
     const userRole = decodedToken?.role;
     const user = localStorage.getItem('user');
     const userName = user ? JSON.parse(user).displayName : 'User';
+    const [profilePicture, setProfilePicture] = useState(null);
+
+    useEffect(() => {
+        const fetchProfilePicture = async () => {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    const pictureURL = await getProfilePicture(token);
+                    console.log('Fetched picture URL:', pictureURL); // Debug log
+                    setProfilePicture(pictureURL);
+                } catch (error) {
+                    console.error('Error fetching profile picture:', error);
+                    setProfilePicture(null);
+                }
+            }
+        };
+
+        fetchProfilePicture();
+    }, []);
 
     return (
         <Drawer variant="permanent" open={open}>
@@ -134,7 +154,12 @@ export default function Sidebar({ open }) {
                     }}
                 >
                     <Avatar
-                        src={defaultImg}
+                        src={profilePicture || defaultImg}
+                        alt={userName}
+                        onError={(e) => {
+                            console.log('Error loading profile picture, falling back to default');
+                            e.target.src = defaultImg;
+                        }}
                         sx={{
                             width: open ? 50 : 40,
                             height: open ? 50 : 40,

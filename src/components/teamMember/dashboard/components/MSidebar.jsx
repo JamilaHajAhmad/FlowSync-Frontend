@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -18,6 +18,7 @@ import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 import { handleLogout } from '../../../../utils';
 import { decodeToken } from '../../../../utils';
+import { getProfilePicture } from '../../../../services/profileService'; // Adjust the import based on your project structure
 
 const drawerWidth = 260;
 
@@ -106,6 +107,25 @@ export default function MSidebar({ open }) {
     const userRole = decodedToken?.role;
     const user = localStorage.getItem('user');
     const userName = user ? JSON.parse(user).displayName : 'User';
+    const [ profilePicture, setProfilePicture ] = useState(null);
+
+    useEffect(() => {
+        const fetchProfilePicture = async () => {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    const pictureURL = await getProfilePicture(token);
+                    console.log('Fetched picture URL:', pictureURL); // Debug log
+                    setProfilePicture(pictureURL);
+                } catch (error) {
+                    console.error('Error fetching profile picture:', error);
+                    setProfilePicture(null);
+                }
+            }
+        };
+
+        fetchProfilePicture();
+    }, []);
 
     return (
         <Drawer variant="permanent" open={open} className='sidebar'>
@@ -124,7 +144,12 @@ export default function MSidebar({ open }) {
                     }}
                 >
                     <Avatar
-                        src={defaultImg}
+                        src={profilePicture || defaultImg}
+                        alt={userName}
+                        onError={(e) => {
+                            console.log('Error loading profile picture, falling back to default');
+                            e.target.src = defaultImg;
+                        }}
                         sx={{
                             width: open ? 50 : 40,
                             height: open ? 50 : 40,
