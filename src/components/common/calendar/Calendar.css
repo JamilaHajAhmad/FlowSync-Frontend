@@ -107,12 +107,6 @@
     max-height: 200px;
     overflow-y: auto;
     padding-right: 10px;
-}
-
-.calendar-page .calendar-sidebar-section ul {
-    max-height: 200px;
-    overflow-y: auto;
-    padding-right: 10px;
     -ms-overflow-style: none; 
     scrollbar-width: none;  
 }
@@ -121,28 +115,105 @@
     display: none;
 }
 
-.fc .fc-day.past-date {
-    background-color: #f5f5f5;
-    cursor: not-allowed;
+/* Style for calendar header (days) */
+.fc .fc-col-header-cell-cushion {
+    color: #004d40;
+    font-weight: bold;
+    padding: 8px;
+    text-decoration: none !important;
 }
 
-.fc .fc-day.past-date:hover {
-    background-color: #f5f5f5 !important;
-    cursor: not-allowed;
+/* Past dates styling */
+.fc .fc-day-past {
+    cursor: not-allowed !important;
+    background-color: #f3f4f6 !important;
 }
 
-.fc .fc-day.past-date .fc-daygrid-day-number {
-    color: #999;
+.fc .fc-day-past .fc-daygrid-day-number {
+    color: #94a3b8 !important;
+    text-decoration: none !important;
 }
 
-.fc .fc-daygrid-day-number {
-    color: inherit;
-    text-decoration: none;
+.fc .fc-day-past .fc-daygrid-day-frame {
+    background-color: #f3f4f6 !important;
 }
 
-.fc .fc-day.current-day {
-    background-color: rgba(5, 150, 105, 0.1);
+/* Present date styling */
+.fc .fc-day-today {
+    background-color: #ecfdf5 !important;
 }
 
+.fc .fc-day-today .fc-daygrid-day-number {
+    background-color: #059669;
+    color: white !important;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 5px;
+    text-decoration: none !important;
+}
 
+/* Future dates styling */
+.fc .fc-day:not(.fc-day-past):not(.fc-day-today) {
+    cursor: pointer;
+    text-decoration: none !important;
+    color: #004d40 !important;
+}
 
+.fc .fc-day:not(.fc-day-past) .fc-daygrid-day-frame {
+    cursor: pointer;
+}
+
+.fc .fc-day:not(.fc-day-past):not(.fc-day-today) .fc-daygrid-day-number {
+    color: #059669 !important;
+    text-decoration: none !important;
+}
+
+/* Event resize handles */
+.fc-event {
+    position: relative;
+    cursor: pointer;
+}
+
+.fc-event .fc-event-resizer {
+    display: block;
+    position: absolute;
+    z-index: 1;
+    width: 100%;
+    height: 8px;
+    left: 0;
+}
+
+.fc-event .fc-event-resizer-start {
+    top: -4px;
+    cursor: row-resize;
+}
+
+.fc-event .fc-event-resizer-end {
+    bottom: -4px;
+    cursor: row-resize;
+}
+
+.fc-event:hover .fc-event-resizer {
+    display: block;
+}
+
+/* Visual indicator for resize handles */
+.fc-event .fc-event-resizer::before {
+    content: '';
+    display: block;
+    width: 20px;
+    height: 4px;
+    background: white;
+    border: 1px solid #059669;
+    border-radius: 2px;
+    margin: 0 auto;
+}
+
+/* Ensure events have minimum height for resizing */
+.fc-event {
+    min-height: 30px;
+}

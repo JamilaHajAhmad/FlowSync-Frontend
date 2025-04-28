@@ -7,18 +7,16 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
 import { toast } from 'react-toastify';
 import './Calendar.css';
-import { useTheme } from '@mui/material';
 import { decodeToken } from '../../../utils';
 
 export default function Calendar() {
-    const theme = useTheme();
-    const [currentEvents, setCurrentEvents] = useState([]);
-    const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
-    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-    const [selectedEvent, setSelectedEvent] = useState(null);
-    const [newEventTitle, setNewEventTitle] = useState('');
-    const [newEventTime, setNewEventTime] = useState('');
-    const [userId, setUserId] = useState(null);
+    const [ currentEvents, setCurrentEvents ] = useState([]);
+    const [ isAddEventModalOpen, setIsAddEventModalOpen ] = useState(false);
+    const [ isConfirmModalOpen, setIsConfirmModalOpen ] = useState(false);
+    const [ selectedEvent, setSelectedEvent ] = useState(null);
+    const [ newEventTitle, setNewEventTitle ] = useState('');
+    const [ newEventTime, setNewEventTime ] = useState('');
+    const [ userId, setUserId ] = useState(null);
 
     const cleanupLocalStorage = () => {
         Object.keys(localStorage).forEach(key => {
@@ -33,7 +31,8 @@ export default function Calendar() {
 
     useEffect(() => {
         const token = localStorage.getItem('authToken');
-        if (token) {
+        const user = JSON.parse(localStorage.getItem('user')); // Parse user object
+        if (token && user) {
             const decoded = decodeToken(token);
             const currentUserId = decoded.id;
             setUserId(currentUserId);
@@ -42,7 +41,7 @@ export default function Calendar() {
 
             setCurrentEvents([]);
 
-            const savedEvents = localStorage.getItem(`events_${currentUserId}`);
+            const savedEvents = localStorage.getItem(`events_${user.displayName}`);
             if (savedEvents) {
                 try {
                     const parsedEvents = JSON.parse(savedEvents);
@@ -54,24 +53,25 @@ export default function Calendar() {
                 }
             }
         }
-        
+
         return () => {
             setCurrentEvents([]);
             setUserId(null);
         };
-    }, []);
+    }, []); // Remove userId.displayName from dependencies
 
     useEffect(() => {
-        if (currentEvents.length >= 0 && userId) {
+        const user = JSON.parse(localStorage.getItem('user')); // Parse user object
+        if (currentEvents.length >= 0 && userId && user) {
             const userEvents = currentEvents.filter(event => event.userId === userId);
-            localStorage.setItem(`events_${userId}`, JSON.stringify(userEvents));
+            localStorage.setItem(`events_${user.displayName}`, JSON.stringify(userEvents));
         }
-    }, [currentEvents, userId]);
+    }, [ currentEvents, userId ]);
 
     function handleDateSelect(selectInfo) {
         const selectedDate = new Date(selectInfo.start);
         const today = new Date();
-        
+
         today.setHours(0, 0, 0, 0);
         selectedDate.setHours(0, 0, 0, 0);
 
@@ -90,7 +90,7 @@ export default function Calendar() {
 
         return existingEvents.some(event => {
             if (event.id === excludeEventId) return false;
-            
+
             const eventStart = new Date(event.start);
             const eventEnd = new Date(event.end);
 
@@ -113,7 +113,7 @@ export default function Calendar() {
         calendarApi.unselect();
 
         const startDate = new Date(selectedEvent.startStr);
-        const [hours, minutes] = newEventTime.split(':');
+        const [ hours, minutes ] = newEventTime.split(':');
         startDate.setHours(parseInt(hours), parseInt(minutes));
 
         const endDate = new Date(startDate);
@@ -132,8 +132,8 @@ export default function Calendar() {
             allDay: false,
             userId: userId
         };
-        
-        setCurrentEvents(prevEvents => [...prevEvents, newEvent]);
+
+        setCurrentEvents(prevEvents => [ ...prevEvents, newEvent ]);
         setIsAddEventModalOpen(false);
         setNewEventTitle('');
         setNewEventTime('');
@@ -175,7 +175,7 @@ export default function Calendar() {
 
     function handleEventDrop(dropInfo) {
         const { event } = dropInfo;
-        
+
         if (event.extendedProps.userId !== userId) {
             dropInfo.revert();
             toast.error('Cannot modify events from other users');
@@ -208,7 +208,16 @@ export default function Calendar() {
         );
     }
 
-    function handleEventResize(resizeInfo) {
+
+
+    const handleResizeStart = (info) => {
+        if (isPastDate(info.event.start)) {
+            info.revert();
+            toast.error('Cannot resize past events');
+        }
+    };
+
+    const handleEventResize = (resizeInfo) => {
         const { event } = resizeInfo;
 
         if (event.extendedProps.userId !== userId) {
@@ -217,67 +226,35 @@ export default function Calendar() {
             return;
         }
 
-        if (checkEventOverlap(event.start, event.end, currentEvents, event.id)) {
+        if (isPastDate(event.start)) {
             resizeInfo.revert();
-            toast.error('Cannot resize event: Would overlap with existing event');
+            toast.error('Cannot resize events to past dates');
             return;
         }
 
-        const startDate = new Date(event.start);
-        const endDate = new Date(event.end);
-        endDate.setDate(endDate.getDate() - 1);
+        if (checkEventOverlap(event.start, event.end, currentEvents, event.id)) {
+            resizeInfo.revert();
+            toast.error('Cannot resize: Time slot is already occupied');
+            return;
+        }
 
-        const isSingleDay = startDate.toDateString() === endDate.toDateString();
-
-        const formattedEndDate = !isSingleDay && event.end ?
-            ` - ${formatDate(endDate, { year: 'numeric', month: 'short', day: 'numeric' })}` : '';
-
-        const updatedEvents = currentEvents.map((evt) =>
-            evt.id === event.id
-                ? {
-                    id: evt.id,
-                    title: evt.title,
-                    start: event.startStr,
-                    end: event.endStr,
-                    allDay: event.allDay,
-                    dateDisplay: isSingleDay 
-                        ? formatDate(event.start, { year: 'numeric', month: 'short', day: 'numeric' })
-                        : `${formatDate(event.start, { year: 'numeric', month: 'short', day: 'numeric' })}${formattedEndDate}`
-                }
-                : evt
+        setCurrentEvents(prevEvents =>
+            prevEvents.map(ev =>
+                ev.id === event.id
+                    ? {
+                        ...ev,
+                        start: event.startStr,
+                        end: event.endStr
+                    }
+                    : ev
+            )
         );
-
-        setCurrentEvents(updatedEvents);
-
-        localStorage.setItem(`events_${userId}`, JSON.stringify(updatedEvents));
-    }
-
-    function dayCellClassNames(info) {
-        const today = new Date();
-        const cellDate = new Date(info.date);
-        
-        today.setHours(0, 0, 0, 0);
-        cellDate.setHours(0, 0, 0, 0);
-        
-        const classes = [];
-        
-        if (cellDate < today) {
-            classes.push('past-date');
-        }
-        
-        if (cellDate.getTime() === today.getTime()) {
-            classes.push('current-day');
-        }
-        
-        return classes;
-    }
+    };
 
     return (
         <div className="calendar-page">
-            <Sidebar
-                currentEvents={currentEvents}
-            />
-            <div className='calendar-main' style={{ color: theme.palette.mode === 'dark' ? 'black' : '#000000' }}>
+            <Sidebar currentEvents={currentEvents} />
+            <div className='calendar-main'>
                 <FullCalendar
                     plugins={[ dayGridPlugin, timeGridPlugin, interactionPlugin ]}
                     headerToolbar={{
@@ -290,15 +267,7 @@ export default function Calendar() {
                     eventStartEditable={true}
                     eventDurationEditable={true}
                     eventResizableFromStart={true}
-                    
-                    slotMinTime="00:00:00"
-                    slotMaxTime="24:00:00"
-                    eventConstraint={{
-                        startTime: new Date().toISOString()
-                    }}
-                    validRange={{
-                        start: new Date().toISOString().split('T')[0]
-                    }}
+                    eventResizable={true} // Add this prop
                     selectable={true}
                     selectMirror={true}
                     dayMaxEvents={true}
@@ -309,18 +278,13 @@ export default function Calendar() {
                     eventClick={handleEventClick}
                     eventDrop={handleEventDrop}
                     eventResize={handleEventResize}
-                    dayCellClassNames={dayCellClassNames}
+                    eventResizeStart={handleResizeStart} // Add this handler
                     eventClassNames='fc-event'
                     eventDisplay="block"
-                    eventTimeFormat={{
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        meridiem: 'short'
-                    }}
                     height="100%"
                     events={currentEvents}
                     selectConstraint={{
-                        start: new Date().toISOString().split('T')[0]
+                        start: new Date().toISOString().split('T')[ 0 ]
                     }}
                 />
             </div>
