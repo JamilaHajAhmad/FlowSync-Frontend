@@ -99,10 +99,10 @@ const CreateTaskForm = ({ open, onClose }) => {
 
   const mapPriorityToEnum = (priority) => {
     switch(priority) {
-      case 'Regular': return '1';
-      case 'Important': return '2';
-      case 'Urgent': return '0';
-      default: return '0';
+      case 'Regular': return 1;
+      case 'Important': return 2;
+      case 'Urgent': return 0;
+      default: return 0;
     }
   };
 
