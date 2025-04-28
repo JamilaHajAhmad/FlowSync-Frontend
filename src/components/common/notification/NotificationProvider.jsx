@@ -3,22 +3,6 @@ import { NotificationContext } from "./NotificationContext";
 
 const NotificationProvider = ({ children }) => {
     const [notifications, setNotifications] = useState([
-        {
-            id: 1,
-            type: 'task',
-            title: 'New Task Assigned',
-            message: 'You have been assigned a new task',
-            time: '5 min ago',
-            read: false
-        },
-        {
-            id: 2,
-            type: 'alert',
-            title: 'Task Deadline Updated',
-            message: 'The deadline for task "Frontend Development" has been updated',
-            time: '10 min ago',
-            read: false
-        }
     ]);
 
     const markAsRead = (id) => {
