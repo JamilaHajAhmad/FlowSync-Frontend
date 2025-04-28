@@ -19,6 +19,7 @@ import { Edit, Business, CalendarToday, Work, Security, NotificationsActive, Dev
 import backgroundImg from '../../../assets/images/profile.jpg';
 import { getProfile } from '../../../services/profileService';
 import { toast } from 'react-toastify';
+import { formatString } from '../../../utils';
 
 // Custom styled components
 const ProfileHeader = styled(Box)({
@@ -108,9 +109,9 @@ const ActionButton = styled(Button)({
 });
 const getStatusColor = (status) => {
   switch (status) {
-    case "OnDuty":
+    case "On Duty":
       return { color: "green", background: "#e0f7e9" };
-    case "Annual Leave":
+    case "Annually Leave":
       return { color: "red", background: "#fde8e8" };
     case "Temporarily Leave":
       return { color: "orange", background: "#fff4e0" };
@@ -168,7 +169,7 @@ const Profile = () => {
             },
             {
               label: 'Status',
-              value: profileData.status,
+              value: formatString(profileData.status),
               icon: <Work sx={{ fontSize: 18, color: '#4caf50' }} />,
               useStatusColor: true
             }
