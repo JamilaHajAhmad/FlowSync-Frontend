@@ -81,7 +81,7 @@ const TaskCard = ({ task, isDragging }) => {
       </Box>
       
       <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-        {task.title}
+        {task.taskTitle}
       </Typography>
 
       {task.ossNumber && (
@@ -120,7 +120,7 @@ const TaskCard = ({ task, isDragging }) => {
   const renderDialogContent = () => (
     <Box sx={{ py: 1 }}>
       <Typography variant="h6" gutterBottom>
-        {task.title}
+        {task.taskTitle}
       </Typography>
       
       <Grid container spacing={2}>

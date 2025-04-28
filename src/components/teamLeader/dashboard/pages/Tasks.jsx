@@ -255,7 +255,7 @@ export default function Tasks({
                 const formattedTasks = response.data.map(task => ({
                     id: task.id,
                     name: task.assignedMember.fullName,
-                    title: task.title,
+                    title: task.taskTitle,
                     status: task.status,
                     priority: task.priority,
                     frnNumber: task.frnNumber,
