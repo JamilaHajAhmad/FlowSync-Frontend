@@ -39,3 +39,8 @@ export const handleLogout = () => {
     localStorage.removeItem('user');
     window.location.href = '/';
 }
+
+export const formatString = (str) => {
+    if (!str) return '';
+    return str.replace(/_/g, ' ');
+};

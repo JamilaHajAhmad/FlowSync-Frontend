@@ -10,7 +10,7 @@ export const calculateTaskTimers = (task) => {
     const limits = {
         Regular: 7 * 24 * 60 * 60 * 1000,    // 7 days
         Important: 5 * 24 * 60 * 60 * 1000,  // 5 days
-        Urgant:  1*24* 60 * 60 * 1000      // 2 days
+        Urgent:  1*24* 60 * 60 * 1000      // 2 days
     };
 
     // Get limit based on task priority
