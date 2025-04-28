@@ -85,6 +85,7 @@ const Requests = () => {
             }
 
             const request = requests[type].find(req => req.requestId === id);
+            console.log(request);
             
             switch (type) {
                 case 'signup':
