@@ -43,7 +43,7 @@ export const handleRequestActionNotification = (request, action) => {
     return {
         id: Date.now(),
         type: isApproved ? 'success' : 'error',
-        title: `${request.charAt(0).toUpperCase() + request.slice(1)} Request ${action}`,
+        title: `${request} Request ${action}`,
         message: getActionMessage(request, action),
         time: new Date().toLocaleString(),
         read: false,
