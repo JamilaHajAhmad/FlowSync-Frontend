@@ -1,6 +1,6 @@
 export const calculateTaskTimers = (task) => {
-    const now = new Date();
-    const openDate = new Date(task.openDate);
+    const now = new Date().getTime(); // Get current timestamp in ms
+    const openDate = new Date(task.createdAt).getTime(); // Get creation timestamp in ms
 
     // Time counters in milliseconds
     const timeElapsed = now - openDate;
@@ -10,14 +10,15 @@ export const calculateTaskTimers = (task) => {
     const limits = {
         Regular: 7 * 24 * 60 * 60 * 1000,    // 7 days
         Important: 5 * 24 * 60 * 60 * 1000,  // 5 days
-        Urgant: 2 * 24 * 60 * 60 * 1000      // 2 days
+        Urgant:  1*24* 60 * 60 * 1000      // 2 days
     };
 
     // Get limit based on task priority
-    const priorityLimit = limits[ task.priority ] || limits.Regular;
+    const priorityLimit = limits[task.priority];
 
     // Calculate remaining time based on priority
-    const remainingTime = priorityLimit - timeElapsed;
+    const totalAllowedTime = openDate + priorityLimit;
+    const remainingTime = totalAllowedTime - now;
     const isDelayed = remainingTime < 0;
 
     // Calculate status thresholds based on priority

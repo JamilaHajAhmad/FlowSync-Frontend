@@ -1,11 +1,12 @@
 import api from './api';
 
 export const getAllFreezeRequests = (token) => {
-    return api.get('/freezetaskrequests/all-freeze-requests', {
+    const response =  api.get('/freezetaskrequests/all-freeze-requests', {
         headers: {
             Authorization: `Bearer ${token}`,
         },
     });
+    return response;
 };
 
 export const approveFreezeRequest = (id, token) => {
