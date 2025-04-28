@@ -6,16 +6,16 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import { useState, useContext, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { NotificationContext } from "../../../common/notification/NotificationContext";
 import { getAllSignupRequests, approveSignupRequest, rejectSignupRequest } from "../../../../services/signupRequests";
 import { getAllFreezeRequests, approveFreezeRequest, rejectFreezeRequest } from "../../../../services/freezeRequests";
 import { getAllCompletionRequests, approveCompletionRequest, rejectCompletionRequest } from "../../../../services/completionRequests";
+import { useRequestNotifications } from '../../../common/notification/handlers/RequestNotifications';
 
 const Requests = () => {
-    const { addNotification } = useContext(NotificationContext);
+    const { handleNewRequest, handleRequestAction } = useRequestNotifications();
     const [currentTab, setCurrentTab] = useState(0);
     const [requests, setRequests] = useState({
         signup: [],
@@ -56,10 +56,15 @@ const Requests = () => {
                     return;
             }
 
-            // Filter out any requests that have been approved or rejected
+            // Filter pending requests and create notifications for each
             const pendingRequests = response.data.filter(request => 
-                request.requestStatus === 'Pending' // Assuming 0 is pending status
+                request.requestStatus === 'Pending'
             );
+
+            // Create notifications for pending requests
+            pendingRequests.forEach(request => {
+                handleNewRequest(request, type);
+            });
 
             setRequests(prev => ({
                 ...prev,
@@ -75,47 +80,36 @@ const Requests = () => {
 
     const handleApprove = async (id, type) => {
         try {
-            // Get fresh token before making request
-            const token = localStorage.getItem('authToken');
             if (!token) {
                 throw new Error('No authentication token found');
             }
 
+            const request = requests[type].find(req => req.requestId === id);
+            
             switch (type) {
                 case 'signup':
                     await approveSignupRequest(id, token);
                     break;
                 case 'freeze':
-                    await approveFreezeRequest(id, token); // Add token parameter
+                    await approveFreezeRequest(id, token);
                     break;
                 case 'completion':
-                    await approveCompletionRequest(id, token); // Add token parameter
+                    await approveCompletionRequest(id, token);
                     break;
                 default:
                     return;
             }
             
-            // Update local state after successful API call
-            const request = requests[type].find(req => req.id === id);
+            // Update local state
             setRequests(prev => ({
                 ...prev,
-                [type]: prev[type].filter(request => request.id !== id)
+                [type]: prev[type].filter(req => req.requestId !== id)
             }));
 
-            // Update notification
-            const notificationData = {
-                id: Date.now(),
-                type: 'success',
-                title: `${type.charAt(0).toUpperCase() + type.slice(1)} Request Approved`,
-                message: getNotificationMessage(type, { ...request, status: 'approved' }),
-                time: new Date().toLocaleTimeString(),
-                read: false
-            };
-
-            addNotification(notificationData);
-            toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} request approved successfully!`);
+            // Handle notification for approved request
+            handleRequestAction(request, 'approved');
             
-            // Refresh the requests list
+            toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} request approved successfully!`);
             fetchRequests(type);
         } catch (error) {
             console.error('Error approving request:', error);
@@ -125,47 +119,36 @@ const Requests = () => {
 
     const handleReject = async (id, type) => {
         try {
-            // Get fresh token before making request
-            const token = localStorage.getItem('authToken');
             if (!token) {
                 throw new Error('No authentication token found');
             }
+
+            const request = requests[type].find(req => req.requestId === id);
 
             switch (type) {
                 case 'signup':
                     await rejectSignupRequest(id, token);
                     break;
                 case 'freeze':
-                    await rejectFreezeRequest(id, token); // Add token parameter
+                    await rejectFreezeRequest(id, token);
                     break;
                 case 'completion':
-                    await rejectCompletionRequest(id, token); // Add token parameter
+                    await rejectCompletionRequest(id, token);
                     break;
                 default:
                     return;
             }
             
-            // Update local state after successful API call
-            const request = requests[type].find(req => req.id === id);
+            // Update local state
             setRequests(prev => ({
                 ...prev,
-                [type]: prev[type].filter(request => request.id !== id)
+                [type]: prev[type].filter(req => req.requestId !== id)
             }));
 
-            // Update notification
-            const notificationData = {
-                id: Date.now(),
-                type: 'error',
-                title: `${type.charAt(0).toUpperCase() + type.slice(1)} Request Rejected`,
-                message: getNotificationMessage(type, { ...request, status: 'rejected' }),
-                time: new Date().toLocaleTimeString(),
-                read: false
-            };
-
-            addNotification(notificationData);
-            toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} request rejected.`);
+            // Handle notification for rejected request
+            handleRequestAction(request, 'rejected');
             
-            // Refresh the requests list
+            toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} request rejected.`);
             fetchRequests(type);
         } catch (error) {
             console.error('Error rejecting request:', error);
@@ -230,11 +213,9 @@ const Requests = () => {
         handleExportClose();
     };
 
+    // Update useEffect to fetch requests for current tab only
     useEffect(() => {
-        const requestTypes = ['signup', 'freeze', 'completion'];
-        const currentType = requestTypes[currentTab];
-        fetchRequests(currentType);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        fetchRequests(Object.keys(requests)[currentTab]);
     }, [currentTab]);
 
     const getColumns = (type) => {
@@ -268,19 +249,19 @@ const Requests = () => {
             signup: [],
             freeze: [
                 {
-                    accessorKey: "Freeze_FRNNumber", // Updated to match database field
+                    accessorKey: "frnNumber", // Updated to match database field
                     header: "FRN",
                     size: 120,
                 },
                 {
-                    accessorKey: "Reason", // Updated to match database field
+                    accessorKey: "reason", // Updated to match database field
                     header: "Reason",
                     size: 150,
                 },
             ],
             completion: [
                 {
-                    accessorKey: "Complete_FRNNumber", // Updated to match database field
+                    accessorKey: "frnNumber", // Updated to match database field
                     header: "FRN",
                     size: 120,
                 },
@@ -324,19 +305,6 @@ const Requests = () => {
                 ),
             }
         ];
-    };
-
-    const getNotificationMessage = (type, request) => {
-        switch (type) {
-            case 'signup':
-                return `Account request for ${request.name} has been ${request.status}`;
-            case 'freeze':
-                return `Task freeze request (${request.frn}) from ${request.name} has been ${request.status}`;
-            case 'completion':
-                return `Task completion request (${request.frn}) from ${request.name} has been ${request.status}`;
-            default:
-                return `Request has been ${request.status}`;
-        }
     };
 
     const table = useMaterialReactTable({
