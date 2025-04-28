@@ -85,7 +85,20 @@ const validationSchema = Yup.object({
 
 const EditProfile = () => {
     const [ loading, setLoading ] = useState(false);
-    const [imageLoading, setImageLoading] = useState(false);
+    const [initialLoading, setInitialLoading] = useState(true);
+    const [ imageLoading, setImageLoading ] = useState(false);
+    const [originalValues, setOriginalValues] = useState({
+        firstName: "",
+        lastName: "",
+        email: "",
+        dateOfBirth: "",
+        address: "",
+        bio: "",
+        phone: "",
+        major: "",
+        status: "On_Duty",
+        pictureURL: null
+    });
 
     const formik = useFormik({
         initialValues: {
@@ -97,27 +110,64 @@ const EditProfile = () => {
             bio: "",
             phone: "",
             major: "",
-            status: "OnDuty",
+            status: "On_Duty",
             pictureURL: null
         },
         validationSchema,
         onSubmit: async (values) => {
             setLoading(true);
+            console.log('Form submission - Current values:', values);
+            console.log('Form submission - Original values:', originalValues);
+
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await updateProfile({ dto: values }, token);
+            
+                // Calculate changed fields
+                const updatedFields = {};
+                for (const key in values) {
+                    if (values[key] !== originalValues[key]) {
+                        updatedFields[key] = values[key];
+                    }
+                }
+            
+                if (Object.keys(updatedFields).length === 0) {
+                    toast.info("No changes detected");
+                    setLoading(false);
+                    return;
+                }
+            
+                // Convert status to number if it's changed
+                if (updatedFields.status) {
+                    const statusMapping = {
+                        "On_Duty": 2,
+                        "Annually_Leave": 1,
+                        "Temporarily_Leave": 0
+                    };
+                    updatedFields.status = statusMapping[updatedFields.status];
+                }
+            
+                const response = await updateProfile(updatedFields, token);
                 console.log('Profile updated successfully:', response);
                 toast.success('Profile updated successfully');
+            
+                // Update both originalValues and formik values with the new data
+                const newOriginalValues = {
+                    ...values,
+                    // If status was updated, keep the string version in the state
+                    status: values.status
+                };
+            
+                setOriginalValues(newOriginalValues);
+                formik.setValues(newOriginalValues);
+            
             } catch (error) {
                 console.error('Error updating profile:', error);
                 toast.error(error.response?.data?.title || 'Failed to update profile');
-                console.error('Error updating profile:', error);
             } finally {
                 setLoading(false);
             }
         }
     });
-
     // Update useEffect to set formik values
     useEffect(() => {
         const fetchProfile = async () => {
@@ -126,8 +176,8 @@ const EditProfile = () => {
                 const response = await getProfile(token);
                 console.log('Profile fetched successfully:', response);
                 const profileData = response.data;
-
-                formik.setValues({
+    
+                const formattedData = {
                     firstName: profileData.firstName || "",
                     lastName: profileData.lastName || "",
                     email: profileData.email || "",
@@ -136,55 +186,66 @@ const EditProfile = () => {
                     bio: profileData.bio || "",
                     phone: profileData.phone || "",
                     major: profileData.major || "",
-                    status: profileData.status || "OnDuty",
+                    status: profileData.status || "On_Duty",
                     pictureURL: profileData.pictureURL || null
-                });
+                };
+    
+                formik.setValues(formattedData);
+                setOriginalValues(formattedData);
             } catch (error) {
-                toast.error('Failed to load profile data');
                 console.error('Error fetching profile:', error);
+                toast.error('Failed to load profile data');
+            } finally {
+                setInitialLoading(false);
             }
         };
-
+    
         fetchProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Empty dependency array
-
+    }, []);
     const theme = useTheme();
 
+    if (initialLoading) {
+        return (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+                <CircularProgress />
+            </Box>
+        );
+    }
+
     const handleImageUpload = async (event) => {
-        const file = event.target.files[0];
+        const file = event.target.files[ 0 ];
         if (!file) return;
-    
+
         try {
             setImageLoading(true);
-            
+
             // Validate file type
-            const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+            const validTypes = [ 'image/jpeg', 'image/png', 'image/jpg' ];
             if (!validTypes.includes(file.type)) {
                 toast.error('Please select a valid image file (JPG, JPEG, or PNG)');
                 return;
             }
-    
+
             // Validate file size (max 5MB)
             const maxSize = 5 * 1024 * 1024;
             if (file.size > maxSize) {
                 toast.error('Image size should be less than 5MB');
                 return;
             }
-    
+
             // Upload image using the service
             const imageUrl = await uploadImageToCloudinary(file);
-            
+
             // Update profile with new image URL
             const token = localStorage.getItem('authToken');
             try {
                 await updateProfile({
-                    dto: {
-                        ...formik.values,
-                        pictureURL: imageUrl
-                    }
+
+                    ...formik.values,
+                    pictureURL: imageUrl
+
                 }, token);
-    
+
                 // Update formik state only after successful backend update
                 formik.setFieldValue('pictureURL', imageUrl);
                 toast.success('Profile picture updated successfully');
@@ -229,8 +290,8 @@ const EditProfile = () => {
                     <Typography
                         variant="h4"
                         sx={{
-                            mb: 4,
-                            mt: -4,
+                            mb: 5,
+                            mt: -6,
                             background: 'linear-gradient(45deg, #064E3B 30%, #059669 90%)',
                             backgroundClip: 'text',
                             color: 'transparent',
@@ -242,7 +303,7 @@ const EditProfile = () => {
 
                     <Box display="flex" alignItems="center" gap={3} mb={4}>
                         {/* Profile Avatar */}
-                        <Box sx={{ position: 'relative' }}>
+                        <Box sx={{ position: 'relative', top: -190, left: -25 }}>
                             <Avatar
                                 src={formik.values.pictureURL || "/profile.jpg"}
                                 sx={{
@@ -264,7 +325,7 @@ const EditProfile = () => {
                                     component="span"
                                     sx={{
                                         position: 'absolute',
-                                        bottom: 0,
+                                        bottom:10,
                                         right: 0,
                                         bgcolor: '#059669',
                                         width: 32,
@@ -430,9 +491,9 @@ const EditProfile = () => {
                                             onBlur={formik.handleBlur}
                                             error={formik.touched.status && Boolean(formik.errors.status)}
                                         >
-                                            <MenuItem value="OnDuty">On Duty</MenuItem>
-                                            <MenuItem value="Annuallyleave">Annual leave</MenuItem>
-                                            <MenuItem value="Temporarilyleave">Temporarily leave</MenuItem>
+                                            <MenuItem value="On_Duty">On Duty</MenuItem>
+                                            <MenuItem value="Annually_Leave">Annual leave</MenuItem>
+                                            <MenuItem value="Temporarily_Leave">Temporarily leave</MenuItem>
                                         </StyledSelect>
                                         {formik.touched.status && formik.errors.status && (
                                             <Typography color="error" variant="caption">
