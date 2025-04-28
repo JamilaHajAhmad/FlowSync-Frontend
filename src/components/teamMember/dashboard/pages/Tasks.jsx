@@ -94,40 +94,24 @@ const TaskCard = ({ task, isDragging }) => {
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <CalendarToday sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
           <Typography variant="body2" color="text.secondary">
-            {task.openDate}
+            Open Date: {new Date(task.createdAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          })
+          }
+          
           </Typography>
         </Box>
         {task.dayLefts > 0 && (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Schedule sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
             <Typography variant="body2" color="text.secondary">
-              {task.dayLefts} days left
+              {timeRemaining} days left
             </Typography>
           </Box>
         )}
       </Box>
-
-      {task.hasPendingFreezeRequest && (
-        <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Chip
-            size="small"
-            label="Pending Freeze"
-            sx={{
-              backgroundColor: '#E3F2FD',
-              color: '#1976D2',
-              '& .MuiChip-label': {
-                fontWeight: 500
-              },
-              borderRadius: '4px'
-            }}
-          />
-          {task.freezeRequestedAt && (
-            <Typography variant="caption" color="text.secondary">
-              Requested: {new Date(task.freezeRequestedAt).toLocaleDateString()}
-            </Typography>
-          )}
-        </Box>
-      )}
     </Box>
   );
 
@@ -163,7 +147,12 @@ const TaskCard = ({ task, isDragging }) => {
             Open Date
           </Typography>
           <Typography variant="body1" gutterBottom>
-            {task.openDate}
+          {new Date(task.createdAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          })
+          }
           </Typography>
         </Grid>
 
@@ -172,7 +161,7 @@ const TaskCard = ({ task, isDragging }) => {
             Days Left
           </Typography>
           <Typography variant="body1" gutterBottom>
-            {task.dayLefts}
+            {timeRemaining.daysElapsed} days
           </Typography>
         </Grid>
 
@@ -237,61 +226,37 @@ const TaskCard = ({ task, isDragging }) => {
           </Grid>
         )}
         
-        {task.description && (
-          <Grid item xs={12}>
-            <Typography variant="body2" color="text.secondary">
-              Description
-            </Typography>
-            <Typography variant="body1" gutterBottom>
-              {task.description}
-            </Typography>
-          </Grid>
-        )}
+        
       </Grid>
 
       <Grid item xs={12}>
         <Typography variant="body2" color="text.secondary">
-          Time Remaining
+          {task.status === 'Frozen' ? 'Time Frozen At' : 'Time Remaining'}
         </Typography>
         <Box sx={{ 
           display: 'flex', 
           gap: 2, 
           alignItems: 'center',
-          color: timeRemaining.status === 'critical' ? '#d32f2f' : 
-                timeRemaining.status === 'warning' ? '#ed6c02' : '#059669'
+          color: task.status === 'Frozen' 
+              ? '#1976D2' 
+              : timeRemaining.status === 'critical' 
+                  ? '#d32f2f' 
+                  : timeRemaining.status === 'warning' 
+                      ? '#ed6c02' 
+                      : '#059669'
         }}>
           <Typography variant="h6">
+            {task.status === 'Frozen' ? 'Frozen at: ' : timeRemaining.isDelayed ? 'Delayed by: ' : ''}
             {`${formattedTime.days}d ${formattedTime.hours}h ${formattedTime.minutes}m ${formattedTime.seconds}s`}
           </Typography>
-          {timeRemaining.isDelayed && (
+          {task.status === 'Frozen' && (
+            <Schedule sx={{ color: '#1976D2' }} />
+          )}
+          {timeRemaining.isDelayed && task.status !== 'Frozen' && (
             <ErrorOutline color="error" />
           )}
         </Box>
       </Grid>
-
-      {task.hasPendingFreezeRequest && (
-        <Grid item xs={12}>
-          <Box sx={{ 
-            mt: 2, 
-            p: 2, 
-            bgcolor: '#E3F2FD', 
-            borderRadius: 1,
-            border: '1px solid #1976D2'
-          }}>
-            <Typography variant="subtitle2" color="#1976D2">
-              Pending Freeze Request
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Requested on: {new Date(task.freezeRequestedAt).toLocaleString()}
-            </Typography>
-            {task.freezingReason && (
-              <Typography variant="body2" color="text.secondary" mt={1}>
-                Reason: {task.freezingReason}
-              </Typography>
-            )}
-          </Box>
-        </Grid>
-      )}
     </Box>
   );
 
@@ -453,58 +418,59 @@ const Tasks = () => {
   
   useEffect(() => {
     const fetchAllTasks = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-          toast.error('Authentication token not found');
-          return;
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                throw new Error('Authentication token not found');
+            }
+
+            // Only fetch tasks, remove freeze requests fetch
+            const tasksResults = await Promise.all([
+                getMemberTasks(token, 'Opened'),
+                getMemberTasks(token, 'Completed'),
+                getMemberTasks(token, 'Delayed'),
+                getMemberTasks(token, 'Frozen')
+            ]).catch(error => {
+                throw new Error(`Failed to fetch tasks: ${error.message}`);
+            });
+
+            const formatTasks = (tasks = []) => tasks.map(task => {
+                if (!task) return null;
+
+                return {
+                    ...task,
+                    openDate: task.openDate ? new Date(task.openDate).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                    }) : null,
+                    completedDate: task.completedDate ? new Date(task.completedDate).toLocaleDateString('en-US') : null,
+                    frozenAt: task.frozenDate ? new Date(task.frozenDate).toLocaleDateString('en-US') : null,
+                    dayLefts: task.dayLefts || 0,
+                    daysDelayed: task.daysDelayed || 0,
+                    freezingReason: task.freezingReason || null
+                };
+            }).filter(Boolean);
+
+            const allTasks = [
+                ...formatTasks(tasksResults[0]?.data || []).map(task => ({ ...task, status: 'Opened' })),
+                ...formatTasks(tasksResults[1]?.data || []).map(task => ({ ...task, status: 'Completed' })),
+                ...formatTasks(tasksResults[2]?.data || []).map(task => ({ ...task, status: 'Delayed' })),
+                ...formatTasks(tasksResults[3]?.data || []).map(task => ({ ...task, status: 'Frozen' }))
+            ];
+
+            setTasksList(allTasks);
+        } catch (error) {
+            console.error('Error fetching tasks:', error);
+            toast.error(error.message || 'Failed to load tasks');
+        } finally {
+            setLoading(false);
         }
-
-        const taskPromises = [
-          getMemberTasks(token, 'Opened'),
-          getMemberTasks(token, 'Completed'),
-          getMemberTasks(token, 'Delayed'),
-          getMemberTasks(token, 'Frozen')
-        ];
-
-        const results = await Promise.all(taskPromises);
-        
-        const formatTasks = (tasks) => tasks.map(task => ({
-          ...task,
-          openDate: new Date(task.openDate).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-          }),
-          completedDate: task.completedDate ? new Date(task.completedDate).toLocaleDateString('en-US') : null,
-          frozenAt: task.frozenDate ? new Date(task.frozenDate).toLocaleDateString('en-US') : null,
-          dayLefts: task.dayLefts || 0,
-          daysDelayed: task.daysDelayed || 0,
-          // Preserve the pending freeze state from the API response
-          hasPendingFreezeRequest: task.hasPendingFreezeRequest,
-          freezeRequestedAt: task.freezeRequestedAt,
-          freezingReason: task.freezingReason
-        }));
-
-        const allTasks = [
-          ...formatTasks(results[0].data).map(task => ({ ...task, status: 'Opened' })),
-          ...formatTasks(results[1].data).map(task => ({ ...task, status: 'Completed' })),
-          ...formatTasks(results[2].data).map(task => ({ ...task, status: 'Delayed' })),
-          ...formatTasks(results[3].data).map(task => ({ ...task, status: 'Frozen' }))
-        ];
-
-        setTasksList(allTasks);
-      } catch (error) {
-        console.error('Error fetching tasks:', error);
-        toast.error('Failed to load tasks');
-      } finally {
-        setLoading(false);
-      }
     };
 
     fetchAllTasks();
-  }, []);
+}, []);
 
   if (loading) {
     return (
