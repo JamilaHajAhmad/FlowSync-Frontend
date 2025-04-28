@@ -18,6 +18,7 @@ import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { getAllMembers } from "../../../../services/memberService";
 import { deleteMember } from "../../../../services/memberService";
+import { formatString } from "../../../../utils";
 
 export default function Members({ showActions = true }) {
     const [rows, setRows] = useState([]);
@@ -66,12 +67,13 @@ export default function Members({ showActions = true }) {
     };
 
     const getStatusColor = (status) => {
+        status = formatString(status);
         switch (status) {
-            case "OnDuty":
+            case "On Duty":
                 return { color: "green", background: "#e0f7e9" };
-            case "AnnualLeave":
+            case "Annual Leave":
                 return { color: "red", background: "#fde8e8" };
-            case "TemporarilyLeave":
+            case "Temporarily Leave":
                 return { color: "orange", background: "#fff4e0" };
             default:
                 return {};
@@ -93,7 +95,7 @@ export default function Members({ showActions = true }) {
             header: "Status",
             Cell: ({ cell }) => (
                 <Chip
-                    label={cell.getValue()}
+                    label={formatString(cell.getValue())}
                     sx={{
                         fontSize: "12px",
                         color: getStatusColor(cell.getValue()).color,
