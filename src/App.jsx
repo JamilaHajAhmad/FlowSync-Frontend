@@ -1,6 +1,8 @@
 import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ProtectedRouter } from './routing/protectedRouter';
 import { ToastContainer } from 'react-toastify';
 import NotificationProvider from "./components/common/notification/NotificationProvider";
@@ -37,6 +39,7 @@ import ResetPassword from './components/auth/ResetPassword/ResetPassword';
 
 const App = () => {
     return (
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
         <NotificationProvider>
             <BrowserRouter>
                 <Routes>
@@ -75,6 +78,7 @@ const App = () => {
             </BrowserRouter>
             <ChatbotButton />
         </NotificationProvider>
+        </LocalizationProvider>
     );
 };
 
