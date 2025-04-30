@@ -315,15 +315,22 @@ const CreateTaskForm = ({ open, onClose }) => {
               fullWidth
             />
               <TextField
-              label="Case Type"
-              name="caseType"
-              fullWidth
-              value={formik.values.caseType}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={formik.touched.caseType && Boolean(formik.errors.caseType)}
-              helperText={formik.touched.caseType && formik.errors.caseType}
-            />
+  label="Case Type"
+  name="caseType"
+  fullWidth
+  value={formik.values.caseType}
+  onChange={formik.handleChange}
+  onBlur={formik.handleBlur}
+  error={formik.touched.caseType && Boolean(formik.errors.caseType)}
+  helperText={formik.touched.caseType && formik.errors.caseType}
+  placeholder="(Optional)"
+  InputLabelProps={{
+    shrink: true,
+  }}
+  InputProps={{
+    notched: true,
+  }}
+/>
           </Box>
         </DialogContent>
 
