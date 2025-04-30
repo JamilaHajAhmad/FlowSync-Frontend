@@ -9,6 +9,10 @@ import { uploadImageToCloudinary } from '../../services/imageService';
 import { toast } from "react-toastify";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
+import { useNavigate } from 'react-router-dom';
+import { adjustTimezone } from "../../utils";
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { format, parseISO } from 'date-fns';
 
 // Custom styled components
 const StyledTextField = styled(TextField)(() => ({
@@ -29,6 +33,59 @@ const StyledTextField = styled(TextField)(() => ({
         },
         '&.Mui-focused': {
             color: '#059669',
+        }
+    }
+}));
+
+
+
+// Add this after your other styled components
+const StyledDatePicker = styled(DatePicker)(() => ({
+    '& .MuiInputBase-root': {
+        borderRadius: '8px',
+        '& fieldset': {
+            borderColor: '#e5e7eb',
+        },
+        '&:hover fieldset': {
+            borderColor: '#10B981',
+        },
+        '&.Mui-focused fieldset': {
+            borderColor: '#059669',
+            borderWidth: '2px'
+        }
+    },
+    '& .MuiInputBase-input': {
+        padding: '16.5px 14px',
+    },
+    '& .MuiInputLabel-root': {
+        '&.Mui-focused': {
+            color: '#059669'
+        }
+    },
+    '& .MuiSvgIcon-root': {
+        color: '#059669'
+    },
+    '& .MuiPickersPopper': {
+        '& .MuiPaper-root': {
+            '& .MuiPickersDay-root': {
+                '&.Mui-selected': {
+                    backgroundColor: '#059669',
+                    color: '#fff',
+                    '&:hover': {
+                        backgroundColor: '#047857'
+                    }
+                },
+                '&:hover': {
+                    backgroundColor: 'rgba(5, 150, 105, 0.1)'
+                }
+            },
+            '& .MuiDayPicker-weekDayLabel': {
+                color: '#059669'
+            },
+            '& .MuiPickersDay-today': {
+                borderColor: '#059669',
+                color: '#059669'
+            }
         }
     }
 }));
@@ -84,6 +141,7 @@ const validationSchema = Yup.object({
 });
 
 const EditProfile = () => {
+    const navigate = useNavigate();
     const [ loading, setLoading ] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
     const [ imageLoading, setImageLoading ] = useState(false);
@@ -116,9 +174,6 @@ const EditProfile = () => {
         validationSchema,
         onSubmit: async (values) => {
             setLoading(true);
-            console.log('Form submission - Current values:', values);
-            console.log('Form submission - Original values:', originalValues);
-
             try {
                 const token = localStorage.getItem('authToken');
             
@@ -126,7 +181,10 @@ const EditProfile = () => {
                 const updatedFields = {};
                 for (const key in values) {
                     if (values[key] !== originalValues[key]) {
-                        updatedFields[key] = values[key];
+                        // Adjust date of birth before sending to server
+                        updatedFields[key] = key === 'dateOfBirth' 
+                            ? new Date(values[key]).toISOString() 
+                            : values[key];
                     }
                 }
             
@@ -146,20 +204,14 @@ const EditProfile = () => {
                     updatedFields.status = statusMapping[updatedFields.status];
                 }
             
-                const response = await updateProfile(updatedFields, token);
-                console.log('Profile updated successfully:', response);
+                await updateProfile(updatedFields, token);
                 toast.success('Profile updated successfully');
-            
-                // Update both originalValues and formik values with the new data
-                const newOriginalValues = {
-                    ...values,
-                    // If status was updated, keep the string version in the state
-                    status: values.status
-                };
-            
-                setOriginalValues(newOriginalValues);
-                formik.setValues(newOriginalValues);
-            
+                
+                // Add delay before navigation
+                setTimeout(() => {
+                    navigate('/profile');
+                }, 5000); // 2 seconds delay
+
             } catch (error) {
                 console.error('Error updating profile:', error);
                 toast.error(error.response?.data?.title || 'Failed to update profile');
@@ -181,7 +233,7 @@ const EditProfile = () => {
                     firstName: profileData.firstName || "",
                     lastName: profileData.lastName || "",
                     email: profileData.email || "",
-                    dateOfBirth: profileData.dateOfBirth?.split('T')[0] || "",
+                    dateOfBirth: profileData.dateOfBirth ? adjustTimezone(profileData.dateOfBirth) : "",
                     address: profileData.address || "",
                     bio: profileData.bio || "",
                     phone: profileData.phone || "",
@@ -191,6 +243,7 @@ const EditProfile = () => {
                 };
     
                 formik.setValues(formattedData);
+                console.log(formattedData);
                 setOriginalValues(formattedData);
             } catch (error) {
                 console.error('Error fetching profile:', error);
@@ -201,13 +254,14 @@ const EditProfile = () => {
         };
     
         fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const theme = useTheme();
 
     if (initialLoading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-                <CircularProgress />
+                <CircularProgress sx={{ color: '#4caf50' }} />
             </Box>
         );
     }
@@ -398,17 +452,38 @@ const EditProfile = () => {
 
                                 {/* Date of Birth */}
                                 <Grid item xs={12} sm={6}>
-                                    <StyledTextField
-                                        fullWidth
+                                    <StyledDatePicker
                                         label="Date of Birth"
-                                        name="dateOfBirth"
-                                        type="date"
-                                        value={formik.values.dateOfBirth}
-                                        onChange={formik.handleChange}
-                                        onBlur={formik.handleBlur}
-                                        error={formik.touched.dateOfBirth && Boolean(formik.errors.dateOfBirth)}
-                                        helperText={formik.touched.dateOfBirth && formik.errors.dateOfBirth}
-                                        InputLabelProps={{ shrink: true }}
+                                        value={formik.values.dateOfBirth ? parseISO(formik.values.dateOfBirth) : null}
+                                        onChange={(date) => {
+                                            formik.setFieldValue('dateOfBirth', date ? format(date, 'yyyy-MM-dd') : '');
+                                        }}
+                                        slotProps={{
+                                            textField: {
+                                                fullWidth: true,
+                                                error: formik.touched.dateOfBirth && Boolean(formik.errors.dateOfBirth),
+                                                helperText: formik.touched.dateOfBirth && formik.errors.dateOfBirth,
+                                                InputLabelProps: {
+                                                    shrink: true,
+                                                    sx: {
+                                                        bgcolor: 'background.paper',
+                                                        px: 1,
+                                                        transform: 'translate(14px, -9px) scale(0.75)',
+                                                        '&.Mui-focused': {
+                                                            color: '#059669'
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            popper: {
+                                                sx: {
+                                                    '& .MuiPaper-root': {
+                                                        border: '1px solid #e5e7eb',
+                                                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                                                    }
+                                                }
+                                            }
+                                        }}
                                     />
                                 </Grid>
 
@@ -492,8 +567,8 @@ const EditProfile = () => {
                                             error={formik.touched.status && Boolean(formik.errors.status)}
                                         >
                                             <MenuItem value="On_Duty">On Duty</MenuItem>
-                                            <MenuItem value="Annually_Leave">Annual leave</MenuItem>
-                                            <MenuItem value="Temporarily_Leave">Temporarily leave</MenuItem>
+                                            <MenuItem value="Annually_Leave">Annually Leave</MenuItem>
+                                            <MenuItem value="Temporarily_Leave">Temporarily Leave</MenuItem>
                                         </StyledSelect>
                                         {formik.touched.status && formik.errors.status && (
                                             <Typography color="error" variant="caption">

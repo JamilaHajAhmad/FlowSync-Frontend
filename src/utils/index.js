@@ -44,3 +44,21 @@ export const formatString = (str) => {
     if (!str) return '';
     return str.replace(/_/g, ' ');
 };
+
+export const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+    });
+};
+
+export const adjustTimezone = (date) => {
+    if (!date) return "";
+    const d = new Date(date);
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+        .toISOString()
+        .split('T')[0];
+};

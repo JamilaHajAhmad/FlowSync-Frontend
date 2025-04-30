@@ -20,7 +20,7 @@ import backgroundImg from '../../../assets/images/profile.jpg';
 import { getProfile } from '../../../services/profileService';
 import { toast } from 'react-toastify';
 import { formatString } from '../../../utils';
-
+import { formatDate } from '../../../utils';
 // Custom styled components
 const ProfileHeader = styled(Box)({
   backgroundImage: `url(${backgroundImg})`,
@@ -348,7 +348,7 @@ const Profile = () => {
                     <InfoField
                       fullWidth
                       variant="outlined"
-                      value={profileData.dateOfBirth}
+                      value={formatDate(profileData.dateOfBirth)}
                       InputProps={{
                         readOnly: true
                       }}
