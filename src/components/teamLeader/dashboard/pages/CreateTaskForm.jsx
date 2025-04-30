@@ -276,17 +276,7 @@ const CreateTaskForm = ({ open, onClose }) => {
             )}
           </FormControl>
 
-          <TextField
-            label="Case Type"
-            name="caseType"
-            fullWidth
-            value={formik.values.caseType}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.caseType && Boolean(formik.errors.caseType)}
-            helperText={formik.touched.caseType && formik.errors.caseType}
-          />
-
+        
           <Autocomplete
             options={caseSources}
             value={formik.values.caseSource}
@@ -303,7 +293,18 @@ const CreateTaskForm = ({ open, onClose }) => {
                 helperText={formik.touched.caseSource && formik.errors.caseSource}
               />
             )}
+
             fullWidth
+          />
+            <TextField
+            label="Case Type"
+            name="caseType"
+            fullWidth
+            value={formik.values.caseType}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.touched.caseType && Boolean(formik.errors.caseType)}
+            helperText={formik.touched.caseType && formik.errors.caseType}
           />
         </Box>
       </DialogContent>
