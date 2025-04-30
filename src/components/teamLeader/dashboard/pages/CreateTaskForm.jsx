@@ -25,6 +25,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
 import { createTask } from "../../../../services/taskService";
 import { getEmployeesWithTasks } from '../../../../services/employeeService';
+import TaskConfirmationDialog from './TaskConfirmationDialog';
 
 const caseSources = [
   'JebelAli',          
@@ -72,40 +73,77 @@ const validationSchema = Yup.object({
 });
 
 const CreateTaskForm = ({ open, onClose }) => {
-    const token = localStorage.getItem('authToken');
-    const [loading, setLoading] = useState(false);
-    const [employees, setEmployees] = useState([]);
-    const [employeesLoading, setEmployeesLoading] = useState(true);
-    const [employeesError, setEmployeesError] = useState(null);
+  const token = localStorage.getItem('authToken');
+  const [loading, setLoading] = useState(false);
+  const [employees, setEmployees] = useState([]);
+  const [employeesLoading, setEmployeesLoading] = useState(true);
+  const [employeesError, setEmployeesError] = useState(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationData, setConfirmationData] = useState(null);
 
-    // Add useEffect to fetch employees
-    useEffect(() => {
-        const fetchEmployees = async () => {
-            try {
-                setEmployeesLoading(true);
-                const data = await getEmployeesWithTasks(token);
-                console.log(data.data);
-                setEmployees(data.data);
-            } catch (error) {
-                setEmployeesError(error.message);
-                toast.error('Failed to load employees');
-            } finally {
-                setEmployeesLoading(false);
-            }
-        };
+  // Add useEffect to fetch employees
+  useEffect(() => {
+      const fetchEmployees = async () => {
+          try {
+              setEmployeesLoading(true);
+              const data = await getEmployeesWithTasks(token);
+              console.log(data.data);
+              setEmployees(data.data);
+          } catch (error) {
+              setEmployeesError(error.message);
+              toast.error('Failed to load employees');
+          } finally {
+              setEmployeesLoading(false);
+          }
+      };
 
-        fetchEmployees();
-    }, [token]);
+      fetchEmployees();
+  }, [token]);
 
-    const mapPriorityToEnum = (priority) => {
-      switch(priority) {
-        case 'Regular': return 1;
-        case 'Important': return 2;
-        case 'Urgent': return 0;
-        default: return 0;
-      }
-    };
+  const mapPriorityToEnum = (priority) => {
+    switch(priority) {
+      case 'Regular': return 1;
+      case 'Important': return 2;
+      case 'Urgent': return 0;
+      default: return 0;
+    }
+  };
 
+  const handleSubmit = (values) => {
+    // Get the selected employee's name
+    const selectedEmployee = employees.find(emp => emp.id === values.selectedMemberId);
+    
+    setConfirmationData({
+      ...values,
+      selectedMemberName: selectedEmployee?.fullName
+    });
+    setShowConfirmation(true);
+  };
+
+  const handleConfirm = async () => {
+    try {
+      setLoading(true);
+      const payload = {
+        ...confirmationData,
+        priority: mapPriorityToEnum(confirmationData.priority),
+        type: 'Opened'
+      };
+      
+      const response = await createTask(payload, token);
+      console.log(response);
+      toast.success('Task created successfully');
+      onClose();
+      formik.resetForm();
+    } catch (error) {
+      console.error('Error creating task:', error);
+      toast.error(error.response?.data?.title || 'Failed to create task');
+    } finally {
+      setLoading(false);
+      setShowConfirmation(false);
+    }
+  };
+
+  // Update formik config
   const formik = useFormik({
     initialValues: {
       title: '',
@@ -118,231 +156,220 @@ const CreateTaskForm = ({ open, onClose }) => {
       type: 'Opened',
     },
     validationSchema,
-    onSubmit: async (values) => {
-      try {
-        setLoading(true);
-        const payload = {
-          ...values,
-          priority: mapPriorityToEnum(values.priority),
-          caseSource: values.caseSource,
-          type: 'Opened'
-        };
-        
-        const response = await createTask(payload, token);
-        console.log('Task created:', response);
-        toast.success('Task created successfully');
-        onClose();
-        formik.resetForm();
-      } catch (error) {
-        console.error('Error creating task:', error);
-        toast.error(error.response?.data?.title || 'Failed to create task');
-      } finally {
-        setLoading(false);
-      }
-    },
+    onSubmit: handleSubmit
   });
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 2,
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-        }
-      }}
-    >
-      <DialogTitle
-        sx={{
-          p: 3,
-          pb: 2,
-          bgcolor: '#f8fafc',
-          borderBottom: '1px solid #e2e8f0'
+    <>
+      <Dialog
+        open={open}
+        onClose={onClose}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+          }
         }}
       >
-        <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a3d37' }}>
-          Create New Task
-        </Typography>
-        <IconButton
-          onClick={onClose}
+        <DialogTitle
           sx={{
-            position: 'absolute',
-            right: 16,
-            top: 16,
-            color: 'grey.500',
+            p: 3,
+            pb: 2,
+            bgcolor: '#f8fafc',
+            borderBottom: '1px solid #e2e8f0'
           }}
         >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-
-      <DialogContent sx={{ p: 3, pt: 3 }}>
-        <Box
-          component="form"
-          onSubmit={formik.handleSubmit}
-          sx={{
-            '& .MuiFormControl-root': { mt: 3 },
-            '& .MuiTextField-root': { mt: 3 },
-          }}
-        >
-          <TextField
-            label="Task Title"
-            name="title"
-            fullWidth
-            value={formik.values.title}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.title && Boolean(formik.errors.title)}
-            helperText={formik.touched.title && formik.errors.title}
-          />
-
-          <TextField
-            label="FRN Number"
-            name="frnNumber"
-            fullWidth
-            value={formik.values.frnNumber}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.frnNumber && Boolean(formik.errors.frnNumber)}
-            helperText={formik.touched.frnNumber && formik.errors.frnNumber}
-          />
-
-          <TextField
-            label="OSS Number"
-            name="ossNumber"
-            fullWidth
-            value={formik.values.ossNumber}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.ossNumber && Boolean(formik.errors.ossNumber)}
-            helperText={formik.touched.ossNumber && formik.errors.ossNumber}
-          />
-
-          <Box sx={{ mt: 4, mb: 1 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1a3d37' }}>
-              Task Priority
-            </Typography>
-          </Box>
-
-          
-
-          <RadioGroup
-            row
-            name="priority"
-            value={formik.values.priority}
-            onChange={formik.handleChange}
-            sx={{ gap: 2 }}
+          <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a3d37' }}>
+            Create New Task
+          </Typography>
+          <IconButton
+            onClick={onClose}
+            sx={{
+              position: 'absolute',
+              right: 16,
+              top: 16,
+              color: 'grey.500',
+            }}
           >
-            <FormControlLabel value="Regular" control={<Radio color="success" />} label="Regular" />
-            <FormControlLabel value="Important" control={<Radio color="warning" />} label="Important" />
-            <FormControlLabel value="Urgent" control={<Radio color="error" />} label="Urgent" />
-          </RadioGroup>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
 
-          <FormControl 
-            fullWidth
-            error={formik.touched.employee && Boolean(formik.errors.employee)}
+        <DialogContent sx={{ p: 3, pt: 3 }}>
+          <Box
+            component="form"
+            onSubmit={formik.handleSubmit}
+            sx={{
+              '& .MuiFormControl-root': { mt: 3 },
+              '& .MuiTextField-root': { mt: 3 },
+            }}
           >
-            <InputLabel id="employee-label">Select Employee</InputLabel>
-            <Select
-              labelId="employee-label"
-              name="selectedMemberId"
-              value={formik.values.selectedMemberId}
+            <TextField
+              label="Task Title"
+              name="title"
+              fullWidth
+              value={formik.values.title}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              label="Select Employee"
-              disabled={employeesLoading}
-            >
-              {employeesLoading ? (
-                <MenuItem disabled>Loading employees...</MenuItem>
-              ) : employeesError ? (
-                <MenuItem disabled>Error loading employees</MenuItem>
-              ) : Array.isArray(employees) && employees.length > 0 ? (
-                employees.map((emp) => (
-                  <MenuItem key={emp.id} value={emp.id}>
-                    {emp.fullName} ({emp.ongoingTasks} tasks)
-                  </MenuItem>
-                ))
-              ) : (
-                <MenuItem disabled>No employees available</MenuItem>
-              )}
-            </Select>
-            {formik.touched.selectedMemberId && formik.errors.selectedMemberId && (
-              <Typography color="error" variant="caption" sx={{ mt: 1 }}>
-                {formik.errors.selectedMemberId}
-              </Typography>
-            )}
-          </FormControl>
+              error={formik.touched.title && Boolean(formik.errors.title)}
+              helperText={formik.touched.title && formik.errors.title}
+            />
 
-        
-          <Autocomplete
-            options={caseSources}
-            value={formik.values.caseSource}
-            onChange={(_, newValue) => {
-              formik.setFieldValue('caseSource', newValue || '');
-            }}
-            onBlur={formik.handleBlur}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Case Source"
-                name="caseSource"
-                error={formik.touched.caseSource && Boolean(formik.errors.caseSource)}
-                helperText={formik.touched.caseSource && formik.errors.caseSource}
-              />
-            )}
-
-            fullWidth
-          />
             <TextField
-            label="Case Type"
-            name="caseType"
-            fullWidth
-            value={formik.values.caseType}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.caseType && Boolean(formik.errors.caseType)}
-            helperText={formik.touched.caseType && formik.errors.caseType}
-          />
-        </Box>
-      </DialogContent>
+              label="FRN Number"
+              name="frnNumber"
+              fullWidth
+              value={formik.values.frnNumber}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.frnNumber && Boolean(formik.errors.frnNumber)}
+              helperText={formik.touched.frnNumber && formik.errors.frnNumber}
+            />
 
-      <DialogActions>
-        <Button
-          onClick={onClose}
-          variant="outlined"
-          disabled={loading}
-          sx={{
-            color: '#64748b',
-            borderColor: '#64748b',
-            px: 3,
-            '&:hover': {
-              borderColor: '#475569',
-              backgroundColor: 'rgba(100, 116, 139, 0.04)'
-            }
-          }}
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={loading}
-          onClick={formik.handleSubmit}
-          sx={{
-            bgcolor: '#059669',
-            px: 3,
-            '&:hover': {
-              bgcolor: '#047857'
-            }
-          }}
-        >
-          {loading ? "Creating..." : "Create Task"}
-        </Button>
-      </DialogActions>
-    </Dialog>
+            <TextField
+              label="OSS Number"
+              name="ossNumber"
+              fullWidth
+              value={formik.values.ossNumber}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.ossNumber && Boolean(formik.errors.ossNumber)}
+              helperText={formik.touched.ossNumber && formik.errors.ossNumber}
+            />
+
+            <Box sx={{ mt: 4, mb: 1 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1a3d37' }}>
+                Task Priority
+              </Typography>
+            </Box>
+
+            
+
+            <RadioGroup
+              row
+              name="priority"
+              value={formik.values.priority}
+              onChange={formik.handleChange}
+              sx={{ gap: 2 }}
+            >
+              <FormControlLabel value="Regular" control={<Radio color="success" />} label="Regular" />
+              <FormControlLabel value="Important" control={<Radio color="warning" />} label="Important" />
+              <FormControlLabel value="Urgent" control={<Radio color="error" />} label="Urgent" />
+            </RadioGroup>
+
+            <FormControl 
+              fullWidth
+              error={formik.touched.employee && Boolean(formik.errors.employee)}
+            >
+              <InputLabel id="employee-label">Select Employee</InputLabel>
+              <Select
+                labelId="employee-label"
+                name="selectedMemberId"
+                value={formik.values.selectedMemberId}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                label="Select Employee"
+                disabled={employeesLoading}
+              >
+                {employeesLoading ? (
+                  <MenuItem disabled>Loading employees...</MenuItem>
+                ) : employeesError ? (
+                  <MenuItem disabled>Error loading employees</MenuItem>
+                ) : Array.isArray(employees) && employees.length > 0 ? (
+                  employees.map((emp) => (
+                    <MenuItem key={emp.id} value={emp.id}>
+                      {emp.fullName} ({emp.ongoingTasks} tasks)
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>No employees available</MenuItem>
+                )}
+              </Select>
+              {formik.touched.selectedMemberId && formik.errors.selectedMemberId && (
+                <Typography color="error" variant="caption" sx={{ mt: 1 }}>
+                  {formik.errors.selectedMemberId}
+                </Typography>
+              )}
+            </FormControl>
+
+          
+            <Autocomplete
+              options={caseSources}
+              value={formik.values.caseSource}
+              onChange={(_, newValue) => {
+                formik.setFieldValue('caseSource', newValue || '');
+              }}
+              onBlur={formik.handleBlur}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Case Source"
+                  name="caseSource"
+                  error={formik.touched.caseSource && Boolean(formik.errors.caseSource)}
+                  helperText={formik.touched.caseSource && formik.errors.caseSource}
+                />
+              )}
+
+              fullWidth
+            />
+              <TextField
+              label="Case Type"
+              name="caseType"
+              fullWidth
+              value={formik.values.caseType}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.caseType && Boolean(formik.errors.caseType)}
+              helperText={formik.touched.caseType && formik.errors.caseType}
+            />
+          </Box>
+        </DialogContent>
+
+        <DialogActions>
+          <Button
+            onClick={onClose}
+            variant="outlined"
+            disabled={loading}
+            sx={{
+              color: '#64748b',
+              borderColor: '#64748b',
+              px: 3,
+              '&:hover': {
+                borderColor: '#475569',
+                backgroundColor: 'rgba(100, 116, 139, 0.04)'
+              }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={loading}
+            onClick={formik.handleSubmit}
+            sx={{
+              bgcolor: '#059669',
+              px: 3,
+              '&:hover': {
+                bgcolor: '#047857'
+              }
+            }}
+          >
+            {loading ? "Creating..." : "Create Task"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <TaskConfirmationDialog
+        open={showConfirmation}
+        onClose={() => setShowConfirmation(false)}
+        taskData={confirmationData}
+        onConfirm={handleConfirm}
+        loading={loading}
+      />
+    </>
   );
 };
 
