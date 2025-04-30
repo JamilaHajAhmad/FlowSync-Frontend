@@ -317,6 +317,7 @@ const Requests = () => {
         enableColumnFilters: true,
         initialState: {
             pagination: { pageSize: 5, pageIndex: 0 },
+            columnOrder: ['Name', 'Email','Requested At', 'Actions']
         },
         muiTableHeadCellProps: {
             sx: {
@@ -364,6 +365,7 @@ const Requests = () => {
         ),
         state: {
             isLoading: isLoading,
+            columnOrder: ['Name', 'Email','Requested At', 'Actions']
         },
     });
 
