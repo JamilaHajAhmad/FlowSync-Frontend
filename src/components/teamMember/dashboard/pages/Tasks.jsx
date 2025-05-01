@@ -1,5 +1,5 @@
-import { Box, Typography, Card, Dialog, DialogTitle, DialogContent, DialogActions, Button, Chip, Grid, CircularProgress } from "@mui/material";
-import { Schedule, CalendarToday, ErrorOutline, CheckCircleOutline } from "@mui/icons-material";
+import { Box, Typography, Card, Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, CircularProgress } from "@mui/material";
+import { Schedule, CalendarToday, ErrorOutline, CheckCircleOutline, PauseCircleOutline } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import FreezeTaskForm from './FreezeTaskForm';
 import { DndContext, DragOverlay, closestCorners, useDroppable } from '@dnd-kit/core';
@@ -9,8 +9,9 @@ import { CSS } from '@dnd-kit/utilities';
 import UnfreezeTaskForm from './UnfreezeTaskForm';
 import CompleteTaskForm from './CompleteTaskForm';
 import { useTaskTimer } from '../../../../hooks/useTaskTimer';
-import { getMemberTasks } from '../../../../services/taskService';
+import { getMemberTasks, markTaskAsDelayed } from '../../../../services/taskService';
 import { toast } from 'react-toastify';
+import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 import React from 'react';
 
 const getStatusColor = (status) => {
@@ -28,31 +29,31 @@ const getStatusColor = (status) => {
   }
 };
 
-const statusColumns = ["Opened", "Frozen", "Delayed", "Completed"];
+const statusColumns = [ "Opened", "Frozen", "Delayed", "Completed" ];
 
 const isMovementAllowed = (source, destination) => {
   if (!source || !destination) return false;
 
   const invalidMoves = {
-    'Opened': ['Delayed'],
-    'Delayed': ['Opened', 'Frozen'],
-    'Frozen': ['Completed', 'Delayed'],
-    'Completed': ['Opened', 'Delayed', 'Frozen'],
+    'Opened': [ 'Delayed' ],
+    'Delayed': [ 'Opened', 'Frozen' ],
+    'Frozen': [ 'Completed', 'Delayed' ],
+    'Completed': [ 'Opened', 'Delayed', 'Frozen' ],
   };
 
-  return !invalidMoves[source]?.includes(destination);
+  return !invalidMoves[ source ]?.includes(destination);
 };
 
 const TaskCard = ({ task, isDragging }) => {
-  const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
-  
+  const [ openDetailsDialog, setOpenDetailsDialog ] = useState(false);
+
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
     transition,
-  } = useSortable({ 
+  } = useSortable({
     id: task.frnNumber.toString(),
     data: {
       type: 'task',
@@ -66,63 +67,100 @@ const TaskCard = ({ task, isDragging }) => {
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const renderCardInfo = () => (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-        <Typography variant="subtitle2" color="text.secondary">
-          {task.frnNumber}
-        </Typography>
-        {task.status === "Delayed" && (
-          <ErrorOutline sx={{ color: "#d32f2f" }} />
-        )}
-        {task.status === "Completed" && (
-          <CheckCircleOutline sx={{ color: "#059669" }} />
-        )}
-      </Box>
-      
-      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-        {task.taskTitle}
-      </Typography>
+  const renderCardInfo = () => {
 
-      {task.ossNumber && (
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          OSS: {task.ossNumber}
-        </Typography>
-      )}
-      
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <CalendarToday sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
-          <Typography variant="body2" color="text.secondary">
-            Open Date: {new Date(task.createdAt).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-          })
-          }
-          
+    return (
+      <Box>
+        {/* Existing title and status icon */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
+            {task.taskTitle}
           </Typography>
+          {task.status === "Delayed" && (
+            <ErrorOutline sx={{ color: "#d32f2f" }} />
+          )}
+          {task.status === "Completed" && (
+            <CheckCircleOutline sx={{ color: "#059669" }} />
+          )}
+          {task.status === "Frozen" && (
+            <PauseCircleOutline sx={{ color: "#1976D2" }} />
+          )}
+          {task.status === "Opened" && (
+            <RotateLeftIcon sx={{ color: "#ed6c02" }} />
+          )}
         </Box>
-        {task.dayLefts > 0 && (
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Schedule sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
-            <Typography variant="body2" color="text.secondary">
-              {timeRemaining} days left
-            </Typography>
-          </Box>
+
+        <Typography variant="body2">
+          FRN: {task.frnNumber}
+        </Typography>
+
+        {task.ossNumber && (
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            OSS: {task.ossNumber}
+          </Typography>
         )}
+
+        {/* Status-specific information */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
+          {/* For Opened tasks - show open date and days left */}
+          {task.status === "Opened" && (
+            <>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <CalendarToday sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
+                <Typography variant="body2" color="text.secondary">
+                  Opened: {new Date(task.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    day: '2-digit',
+                    month: '2-digit',
+                  })}
+                </Typography>
+              </Box>
+            </>
+          )}
+
+          {/* For Frozen tasks - show frozen date */}
+          {task.status === "Frozen" && (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <PauseCircleOutline sx={{ fontSize: 16, mr: 0.5, color: '#1976D2' }} />
+              <Typography variant="body2" color="text.secondary">
+                Frozen at: {task.frozenAt}
+              </Typography>
+            </Box>
+          )}
+
+          {/* For Delayed tasks - show days delayed */}
+          {task.status === "Delayed" && (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <ErrorOutline sx={{ fontSize: 16, mr: 0.5, color: '#d32f2f' }} />
+              <Typography variant="body2" color="error">
+                Delayed by: {Math.floor(timeRemaining.delayDuration / (1000 * 60 * 60 * 24))} days
+              </Typography>
+            </Box>
+          )}
+
+          {/* For Completed tasks - show completion date */}
+          {task.status === "Completed" && (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <CheckCircleOutline sx={{ fontSize: 16, mr: 0.5, color: '#059669' }} />
+              <Typography variant="body2" color="text.secondary">
+                Completed: {new Date(task.completedAt).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  day: '2-digit',
+                  month: '2-digit',
+                })}
+              </Typography>
+            </Box>
+          )}
+        </Box>
       </Box>
-    </Box>
-  );
+    );
+  };
 
   const { formattedTime, timeRemaining } = useTaskTimer(task);
 
   const renderDialogContent = () => (
     <Box sx={{ py: 1 }}>
-      <Typography variant="h6" gutterBottom>
-        {task.taskTitle}
-      </Typography>
-      
+
       <Grid container spacing={2}>
         <Grid item xs={6}>
           <Typography variant="body2" color="text.secondary">
@@ -132,7 +170,7 @@ const TaskCard = ({ task, isDragging }) => {
             {task.frnNumber}
           </Typography>
         </Grid>
-        
+
         <Grid item xs={6}>
           <Typography variant="body2" color="text.secondary">
             OSS Number
@@ -141,18 +179,18 @@ const TaskCard = ({ task, isDragging }) => {
             {task.ossNumber || 'N/A'}
           </Typography>
         </Grid>
-        
+
         <Grid item xs={6}>
           <Typography variant="body2" color="text.secondary">
             Open Date
           </Typography>
           <Typography variant="body1" gutterBottom>
-          {new Date(task.createdAt).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-          })
-          }
+            {new Date(task.createdAt).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            })
+            }
           </Typography>
         </Grid>
 
@@ -172,7 +210,11 @@ const TaskCard = ({ task, isDragging }) => {
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="body1" gutterBottom>
-                {task.completedDate}
+              {new Date(task.completedAt).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  day: '2-digit',
+                  month: '2-digit',
+                })}
               </Typography>
               <CheckCircleOutline sx={{ color: "#059669", fontSize: 20 }} />
             </Box>
@@ -203,7 +245,7 @@ const TaskCard = ({ task, isDragging }) => {
             </Typography>
           </Grid>
         )}
-        
+
         {task.frozenAt && (
           <Grid item xs={6}>
             <Typography variant="body2" color="text.secondary">
@@ -214,36 +256,36 @@ const TaskCard = ({ task, isDragging }) => {
             </Typography>
           </Grid>
         )}
-        
-        {task.freezingReason && (
+
+        {task.reason && (
           <Grid item xs={12}>
             <Typography variant="body2" color="text.secondary">
               Freezing Reason
             </Typography>
             <Typography variant="body1" gutterBottom>
-              {task.freezingReason}
+              {task.reason}
             </Typography>
           </Grid>
         )}
-        
-        
+
+
       </Grid>
 
       <Grid item xs={12}>
         <Typography variant="body2" color="text.secondary">
           {task.status === 'Frozen' ? 'Time Frozen At' : 'Time Remaining'}
         </Typography>
-        <Box sx={{ 
-          display: 'flex', 
-          gap: 2, 
+        <Box sx={{
+          display: 'flex',
+          gap: 2,
           alignItems: 'center',
-          color: task.status === 'Frozen' 
-              ? '#1976D2' 
-              : timeRemaining.status === 'critical' 
-                  ? '#d32f2f' 
-                  : timeRemaining.status === 'warning' 
-                      ? '#ed6c02' 
-                      : '#059669'
+          color: task.status === 'Frozen'
+            ? '#1976D2'
+            : timeRemaining.status === 'critical'
+              ? '#d32f2f'
+              : timeRemaining.status === 'warning'
+                ? '#ed6c02'
+                : '#059669'
         }}>
           <Typography variant="h6">
             {task.status === 'Frozen' ? 'Frozen at: ' : timeRemaining.isDelayed ? 'Delayed by: ' : ''}
@@ -294,9 +336,9 @@ const TaskCard = ({ task, isDragging }) => {
           ⋮⋮
         </Box>
 
-        <Box 
+        <Box
           onClick={() => setOpenDetailsDialog(true)}
-          sx={{ 
+          sx={{
             cursor: 'pointer',
             pr: 4
           }}
@@ -305,21 +347,21 @@ const TaskCard = ({ task, isDragging }) => {
         </Box>
       </Card>
 
-      <Dialog 
-        open={openDetailsDialog} 
-        onClose={() => setOpenDetailsDialog(false)} 
-        maxWidth="sm" 
+      <Dialog
+        open={openDetailsDialog}
+        onClose={() => setOpenDetailsDialog(false)}
+        maxWidth="sm"
         fullWidth
         onClick={(e) => e.stopPropagation()}
       >
-        <DialogTitle 
-          sx={{ 
+        <DialogTitle
+          sx={{
             borderBottom: '1px solid #e0e0e0',
             backgroundColor: getStatusColor(task.status).background,
             color: getStatusColor(task.status).color
           }}
         >
-          Task Details
+          {task.taskTitle} Details
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
           {renderDialogContent()}
@@ -407,78 +449,122 @@ const DroppableColumn = ({ status, children }) => {
 };
 
 const Tasks = () => {
-  const [tasksList, setTasksList] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeId, setActiveId] = useState(null);
-  const [openFreezeDialog, setOpenFreezeDialog] = useState(false);
-  const [openUnfreezeDialog, setOpenUnfreezeDialog] = useState(false);
-  const [openCompleteDialog, setOpenCompleteDialog] = useState(false);
-  const [selectedTask, setSelectedTask] = useState(null);
-  const [pendingStatusChange, setPendingStatusChange] = useState(null);
-  
+  const [ tasksList, setTasksList ] = useState([]);
+  const [ loading, setLoading ] = useState(true);
+  const [ activeId, setActiveId ] = useState(null);
+  const [ openFreezeDialog, setOpenFreezeDialog ] = useState(false);
+  const [ openUnfreezeDialog, setOpenUnfreezeDialog ] = useState(false);
+  const [ openCompleteDialog, setOpenCompleteDialog ] = useState(false);
+  const [ selectedTask, setSelectedTask ] = useState(null);
+  const [ pendingStatusChange, setPendingStatusChange ] = useState(null);
+
   useEffect(() => {
     const fetchAllTasks = async () => {
-        try {
-            setLoading(true);
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                throw new Error('Authentication token not found');
-            }
-
-            // Only fetch tasks, remove freeze requests fetch
-            const tasksResults = await Promise.all([
-                getMemberTasks(token, 'Opened'),
-                getMemberTasks(token, 'Completed'),
-                getMemberTasks(token, 'Delayed'),
-                getMemberTasks(token, 'Frozen')
-            ]).catch(error => {
-                throw new Error(`Failed to fetch tasks: ${error.message}`);
-            });
-
-            const formatTasks = (tasks = []) => tasks.map(task => {
-                if (!task) return null;
-
-                return {
-                    ...task,
-                    openDate: task.openDate ? new Date(task.openDate).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit'
-                    }) : null,
-                    completedDate: task.completedDate ? new Date(task.completedDate).toLocaleDateString('en-US') : null,
-                    frozenAt: task.frozenDate ? new Date(task.frozenDate).toLocaleDateString('en-US') : null,
-                    dayLefts: task.dayLefts || 0,
-                    daysDelayed: task.daysDelayed || 0,
-                    freezingReason: task.freezingReason || null
-                };
-            }).filter(Boolean);
-
-            const allTasks = [
-                ...formatTasks(tasksResults[0]?.data || []).map(task => ({ ...task, status: 'Opened' })),
-                ...formatTasks(tasksResults[1]?.data || []).map(task => ({ ...task, status: 'Completed' })),
-                ...formatTasks(tasksResults[2]?.data || []).map(task => ({ ...task, status: 'Delayed' })),
-                ...formatTasks(tasksResults[3]?.data || []).map(task => ({ ...task, status: 'Frozen' }))
-            ];
-
-            setTasksList(allTasks);
-        } catch (error) {
-            console.error('Error fetching tasks:', error);
-            toast.error(error.message || 'Failed to load tasks');
-        } finally {
-            setLoading(false);
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          throw new Error('Authentication token not found');
         }
+
+        // Only fetch tasks, remove freeze requests fetch
+        const tasksResults = await Promise.all([
+          getMemberTasks(token, 'Opened'),
+          getMemberTasks(token, 'Completed'),
+          getMemberTasks(token, 'Delayed'),
+          getMemberTasks(token, 'Frozen')
+        ]).catch(error => {
+          throw new Error(`Failed to fetch tasks: ${error.message}`);
+        });
+
+        const formatTasks = (tasks = []) => tasks.map(task => {
+          if (!task) return null;
+
+          return {
+            ...task,
+            createdAt: task.createdAt ? new Date(task.createdAt).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            }) : null,
+            completedAt: task.completedAt ? new Date(task.completedAt).toLocaleDateString('en-US') : null,
+            frozenAt: task.frozenAt ? new Date(task.frozenAt).toLocaleDateString('en-US') : null,
+            dayLefts: task.dayLefts || 0,
+            daysDelayed: task.daysDelayed || 0,
+            reason: task.reason || null
+          };
+        }).filter(Boolean);
+
+        const allTasks = [
+          ...formatTasks(tasksResults[ 0 ]?.data || []).map(task => ({ ...task, status: 'Opened' })),
+          ...formatTasks(tasksResults[ 1 ]?.data || []).map(task => ({ ...task, status: 'Completed' })),
+          ...formatTasks(tasksResults[ 2 ]?.data || []).map(task => ({ ...task, status: 'Delayed' })),
+          ...formatTasks(tasksResults[ 3 ]?.data || []).map(task => ({ ...task, status: 'Frozen' }))
+        ];
+
+        console.log('Fetched tasks:', allTasks);
+
+        setTasksList(allTasks);
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+        toast.error(error.message || 'Failed to load tasks');
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchAllTasks();
-}, []);
+  }, []);
+
+  useEffect(() => {
+    const checkForDelayedTasks = async () => {
+      const token = localStorage.getItem('authToken');
+      if (!token) return;
+
+      const openedTasks = tasksList.filter(task => task.status === 'Opened');
+
+      for (const task of openedTasks) {
+
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const { timeRemaining } = useTaskTimer(task);
+
+        if (timeRemaining.isDelayed) {
+          try {
+            await markTaskAsDelayed(task.frnNumber, token);
+
+            // Update local state
+            setTasksList(prevTasks => prevTasks.map(t =>
+              t.frnNumber === task.frnNumber
+                ? { ...t, status: 'Delayed' }
+                : t
+            ));
+
+            toast.warning(`Task ${task.frnNumber} has been marked as delayed`);
+          } catch (error) {
+            console.error(`Failed to mark task ${task.frnNumber} as delayed:`, error);
+            toast.error(`Failed to update delayed status for task ${task.frnNumber}`);
+          }
+        }
+      }
+    };
+
+    // Run the check every minute
+    const intervalId = setInterval(checkForDelayedTasks, 60000);
+
+    // Initial check
+    checkForDelayedTasks();
+
+    // Cleanup
+    return () => clearInterval(intervalId);
+  }, [ tasksList ]);
 
   if (loading) {
     return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: 'calc(100vh - 32px)' 
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: 'calc(100vh - 32px)'
       }}>
         <CircularProgress sx={{ color: '#059669' }} />
       </Box>
@@ -499,34 +585,34 @@ const Tasks = () => {
     const { active, over } = event;
 
     if (!over) {
-        setActiveId(null);
-        return;
+      setActiveId(null);
+      return;
     }
 
     const activeTask = tasksList.find(task => task.frnNumber.toString() === active.id);
-    
-    // Get the status based on the drop target type
-    const overStatus = over.data.current?.sortable ? 
-        over.data.current.task.status : // For task-to-task drops
-        over.data.current?.status || over.id; // For column drops
 
-    console.log('Drag end:', { 
-        activeTask, 
-        fromStatus: activeTask?.status, 
-        toStatus: overStatus,
-        hasPendingFreeze: activeTask?.hasPendingFreezeRequest,
-        dropType: over.data.current?.sortable ? 'task' : 'column'
+    // Get the status based on the drop target type
+    const overStatus = over.data.current?.sortable ?
+      over.data.current.task.status : // For task-to-task drops
+      over.data.current?.status || over.id; // For column drops
+
+    console.log('Drag end:', {
+      activeTask,
+      fromStatus: activeTask?.status,
+      toStatus: overStatus,
+      hasPendingFreeze: activeTask?.hasPendingFreezeRequest,
+      dropType: over.data.current?.sortable ? 'task' : 'column'
     });
 
     if (!activeTask || activeTask.status === overStatus) {
-        setActiveId(null);
-        return;
+      setActiveId(null);
+      return;
     }
 
     if (!isMovementAllowed(activeTask.status, overStatus)) {
-        toast.error('This movement is not allowed');
-        setActiveId(null);
-        return;
+      toast.error('This movement is not allowed');
+      setActiveId(null);
+      return;
     }
 
     setSelectedTask(activeTask);
@@ -534,17 +620,17 @@ const Tasks = () => {
 
     // Handle different status transitions
     if (activeTask.status === 'Opened' && overStatus === 'Frozen') {
-        if (activeTask.hasPendingFreezeRequest) {
-            toast.warning('This task already has a pending freeze request');
-            setSelectedTask(null);
-            setPendingStatusChange(null);
-        } else {
-            setOpenFreezeDialog(true);
-        }
+      if (activeTask.hasPendingFreezeRequest) {
+        toast.warning('This task already has a pending freeze request');
+        setSelectedTask(null);
+        setPendingStatusChange(null);
+      } else {
+        setOpenFreezeDialog(true);
+      }
     } else if (activeTask.status === 'Frozen' && overStatus === 'Opened') {
-        setOpenUnfreezeDialog(true);
+      setOpenUnfreezeDialog(true);
     } else if (activeTask.status === 'Opened' && overStatus === 'Completed') {
-        setOpenCompleteDialog(true);
+      setOpenCompleteDialog(true);
     }
 
     setActiveId(null);
@@ -593,7 +679,7 @@ const Tasks = () => {
         case 'complete':
           updatedTask = {
             ...task,
-            status: 'Completed',
+            status: 'Opened',
             completedDate: new Date().toLocaleDateString('en-US'),
             completionNotes: task.completionNotes
           };
@@ -619,7 +705,7 @@ const Tasks = () => {
       }
 
       if (success) {
-        const newTasks = tasksList.map(t => 
+        const newTasks = tasksList.map(t =>
           t.frnNumber === task.frnNumber ? updatedTask : t
         );
         setTasksList(newTasks);
@@ -705,6 +791,7 @@ const Tasks = () => {
           setOpenUnfreezeDialog(false);
           setSelectedTask(null);
           setPendingStatusChange(null);
+
         }}
         task={selectedTask}
         onSubmitSuccess={(updatedTask) => handleTaskAction('unfreeze', updatedTask)}

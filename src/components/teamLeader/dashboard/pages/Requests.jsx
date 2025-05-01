@@ -11,7 +11,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getAllSignupRequests, approveSignupRequest, rejectSignupRequest } from "../../../../services/signupRequests";
 import { getAllFreezeRequests, approveFreezeRequest, rejectFreezeRequest } from "../../../../services/freezeRequests";
-import { getAllCompletionRequests, approveCompletionRequest, rejectCompletionRequest } from "../../../../services/completionRequests";
+import { getAllCompletionRequests, approveCompletionRequest } from "../../../../services/completionRequests";
 import { useRequestNotifications } from '../../../common/notification/handlers/RequestNotifications';
 
 const Requests = () => {
@@ -133,9 +133,6 @@ const Requests = () => {
                 case 'freeze':
                     await rejectFreezeRequest(id, token);
                     break;
-                case 'completion':
-                    await rejectCompletionRequest(id, token);
-                    break;
                 default:
                     return;
             }
@@ -217,6 +214,7 @@ const Requests = () => {
     // Update useEffect to fetch requests for current tab only
     useEffect(() => {
         fetchRequests(Object.keys(requests)[currentTab]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentTab]);
 
     const getColumns = (type) => {
@@ -293,15 +291,17 @@ const Requests = () => {
                         >
                             Approve
                         </Button>
-                        <Button
-                            variant="contained"
-                            color="error"
-                            size="small"
-                            startIcon={<CancelIcon />}
-                            onClick={() => handleConfirmAction(row.original.requestId, type, 'reject', 'Are you sure you want to reject this request?')}
-                        >
-                            Reject
-                        </Button>
+                        {type !== 'completion' && (
+                            <Button
+                                variant="contained"
+                                color="error"
+                                size="small"
+                                startIcon={<CancelIcon />}
+                                onClick={() => handleConfirmAction(row.original.requestId, type, 'reject', 'Are you sure you want to reject this request?')}
+                            >
+                                Reject
+                            </Button>
+                        )}
                     </Stack>
                 ),
             }

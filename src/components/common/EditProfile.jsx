@@ -233,7 +233,7 @@ const EditProfile = () => {
                     firstName: profileData.firstName || "",
                     lastName: profileData.lastName || "",
                     email: profileData.email || "",
-                    dateOfBirth: profileData.dateOfBirth ? adjustTimezone(profileData.dateOfBirth) : "",
+                    dateOfBirth: profileData.dateOfBirth ? adjustTimezone(profileData.dateOfBirth) : null,
                     address: profileData.address || "",
                     bio: profileData.bio || "",
                     phone: profileData.phone || "",
@@ -456,7 +456,7 @@ const EditProfile = () => {
                                         label="Date of Birth"
                                         value={formik.values.dateOfBirth ? parseISO(formik.values.dateOfBirth) : null}
                                         onChange={(date) => {
-                                            formik.setFieldValue('dateOfBirth', date ? format(date, 'yyyy-MM-dd') : '');
+                                            formik.setFieldValue('dateOfBirth', date ? format(date, 'yyyy-MM-dd') : null);
                                         }}
                                         slotProps={{
                                             textField: {

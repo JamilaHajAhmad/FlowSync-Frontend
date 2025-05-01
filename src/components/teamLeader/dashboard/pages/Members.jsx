@@ -8,7 +8,8 @@ import { Box, IconButton, Stack, Chip, Button, Menu, MenuItem, Typography,
     DialogTitle,
     DialogContent,
     DialogActions,
-    DialogContentText
+    DialogContentText,
+    Avatar
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -40,7 +41,8 @@ export default function Members({ showActions = true }) {
                     name: member.fullName,
                     status: member.status,
                     email: member.email,
-                    tasks: member.ongoingTasks
+                    tasks: member.ongoingTasks,
+                    pictureURL: member.pictureURL,
                 }));
                 setRows(formattedMembers);
             } catch (error) {
@@ -85,9 +87,31 @@ export default function Members({ showActions = true }) {
             accessorKey: "name",
             header: "Users",
             Cell: ({ cell }) => (
-                <Typography sx={{ textAlign: 'center' }}>
-                    {cell.getValue()}
-                </Typography>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                    }}
+                >
+                    <Avatar
+                        alt={cell.getValue()}
+                        src={cell.row.original.pictureURL}
+                        sx={{
+                            width: 32,
+                            height: 32,
+                            border: '2px solid #f3f4f6'
+                        }}
+                    />
+                    <Typography
+                        sx={{
+                            fontWeight: 500,
+                            color: '#111827'
+                        }}
+                    >
+                        {cell.getValue()}
+                    </Typography>
+                </Box>
             ),
         },
         {

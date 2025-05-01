@@ -12,7 +12,8 @@ import {
     Grid,
     IconButton,
     Paper,
-    alpha
+    alpha,
+    Avatar
 } from '@mui/material';
 import {
     Close as CloseIcon,
@@ -62,7 +63,7 @@ const TaskConfirmationDialog = ({ open, onClose, taskData, onConfirm, loading })
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <Box>
                         <Typography variant="h5" sx={{ fontWeight: 700, color: '#1e293b', mb: 0.5 }}>
-                            Confirm Task Creation
+                            Confirm Task CreationBox
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                             Please review the task details before proceeding
@@ -144,7 +145,16 @@ const TaskConfirmationDialog = ({ open, onClose, taskData, onConfirm, loading })
                                     bgcolor: alpha(priorityColors.color, 0.08),
                                     borderRadius: 2
                                 }}>
-                                    <PersonIcon sx={{ color: priorityColors.color }} />
+                                    <Avatar
+                                        src={taskData?.pictureURL}
+                                        alt={taskData?.selectedMemberName}
+                                        sx={{ 
+                                            width: 32, 
+                                            height: 32,
+                                            border: `2px solid ${priorityColors.color}`,
+                                            bgcolor: alpha(priorityColors.color, 0.1)
+                                        }}
+                                    />
                                     <Box>
                                         <Typography variant="body2" color="text.secondary">
                                             Assigned To

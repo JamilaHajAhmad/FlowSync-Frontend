@@ -113,6 +113,10 @@ const getColumns = (tab) => {
                 {
                     accessorKey: "completedAt",
                     header: "Completed At",
+                },
+                {
+                    accessorKey: 'notes',
+                    header: 'Notes',
                 }
             ];
         case 'Opened':
@@ -149,6 +153,10 @@ const getColumns = (tab) => {
                 {
                     accessorKey: "frozenAt",
                     header: "Frozen At",
+                },
+                {
+                    accessorKey: "reason",
+                    header: "Reason",
                 }
             ];
         default:
@@ -268,12 +276,15 @@ export default function Tasks({
                     dayLefts: task.dayLefts,
                     daysDelayed: task.daysDelayed,
                     completedAt: task.completedAt ? new Date(task.completedAt).toLocaleDateString('en-US') : '',
+                    reason: task.reason,
+                    notes: task.notes,
                     frozenAt: task.frozenAt ? new Date(task.frozenAt).toLocaleDateString('en-US') : '',
                     caseType: task.caseType,
                     caseSource: task.caseSource
                 }));
 
                 setTasks(formattedTasks);
+                console.log(formattedTasks);
             } catch (error) {
                 console.error('Error fetching tasks:', error);
                 toast.error('Failed to load tasks');

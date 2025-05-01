@@ -39,3 +39,22 @@ export const createFreezeRequest = async (data, token) => {
         }
     );
 };
+
+export const unfreezeTask = async (frnNumber, token) => {
+    return await api.post(`/freezetaskrequests/unfreeze-task`, { frnNumber }, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+    });
+};
+
+export const markTaskAsDelayed = async (frnNumber, token) => {
+    return await api.post(`/taskmanagement/mark-delayed-task`,{ frnNumber }, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+    });
+};
+

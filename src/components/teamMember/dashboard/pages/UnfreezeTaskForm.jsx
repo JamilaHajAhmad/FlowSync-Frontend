@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -6,13 +6,47 @@ import {
     DialogActions,
     Button,
     Typography,
+    CircularProgress,
 } from "@mui/material";
 import { PlayCircleOutline } from "@mui/icons-material";
+import { unfreezeTask } from '../../../../services/taskService';
+import { toast } from 'react-toastify';
 
 const UnfreezeTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
-    const handleConfirm = () => {
-        onSubmitSuccess(task);
-        onClose();
+    const [loading, setLoading] = useState(false);
+
+    const handleConfirm = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('authToken');
+            
+            if (!token) {
+                throw new Error('Authentication token not found');
+            }
+
+            if (!task?.frnNumber) {
+                throw new Error('Task FRN number is missing');
+            }
+
+            console.log('Sending unfreeze request for task:', task.frnNumber);
+            
+            const result = await unfreezeTask(task.frnNumber, token);
+            
+            console.log('Unfreeze API response:', result);
+            
+            onSubmitSuccess(task);
+            toast.success('Task unfrozen successfully');
+            onClose();
+        } catch (error) {
+            console.error('Error in handleConfirm:', error);
+            const errorMessage = error.response?.data?.errors?.$?.[0] || 
+                               error.response?.data?.errors?.dto?.[0] ||
+                               error.message || 
+                               'Failed to unfreeze task';
+            toast.error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -72,6 +106,7 @@ const UnfreezeTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
                     onClick={onClose}
                     variant="outlined"
                     color="inherit"
+                    disabled={loading}
                 >
                     Cancel
                 </Button>
@@ -80,8 +115,10 @@ const UnfreezeTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
                     onClick={handleConfirm}
                     variant="contained"
                     color="primary"
+                    disabled={loading}
+                    startIcon={loading && <CircularProgress size={20} color="inherit" />}
                 >
-                    Confirm
+                    {loading ? 'Unfreezing...' : 'Confirm'}
                 </Button>
             </DialogActions>
         </Dialog>

@@ -18,7 +18,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  IconButton
+  IconButton,
+  Avatar
 } from "@mui/material";
 import { Close as CloseIcon } from '@mui/icons-material';
 import "react-toastify/dist/ReactToastify.css";
@@ -83,21 +84,28 @@ const CreateTaskForm = ({ open, onClose }) => {
 
   // Add useEffect to fetch employees
   useEffect(() => {
-      const fetchEmployees = async () => {
-          try {
-              setEmployeesLoading(true);
-              const data = await getEmployeesWithTasks(token);
-              console.log(data.data);
-              setEmployees(data.data);
-          } catch (error) {
-              setEmployeesError(error.message);
-              toast.error('Failed to load employees');
-          } finally {
-              setEmployeesLoading(false);
-          }
-      };
+    const fetchEmployees = async () => {
+        try {
+            setEmployeesLoading(true);
+            const data = await getEmployeesWithTasks(token);
+            // Sort by tasks count, then alphabetically
+            const sortedEmployees = data.data.sort((a, b) => {
+                const taskDiff = a.ongoingTasks - b.ongoingTasks;
+                // If task counts are equal, sort alphabetically
+                return taskDiff === 0 ? 
+                    a.fullName.localeCompare(b.fullName) : 
+                    taskDiff;
+            });
+            setEmployees(sortedEmployees);
+        } catch (error) {
+            setEmployeesError(error.message);
+            toast.error('Failed to load employees');
+        } finally {
+            setEmployeesLoading(false);
+        }
+    };
 
-      fetchEmployees();
+    fetchEmployees();
   }, [token]);
 
   const mapPriorityToEnum = (priority) => {
@@ -110,12 +118,12 @@ const CreateTaskForm = ({ open, onClose }) => {
   };
 
   const handleSubmit = (values) => {
-    // Get the selected employee's name
     const selectedEmployee = employees.find(emp => emp.id === values.selectedMemberId);
     
     setConfirmationData({
       ...values,
-      selectedMemberName: selectedEmployee?.fullName
+      selectedMemberName: selectedEmployee?.fullName,
+      pictureURL: selectedEmployee?.pictureURL
     });
     setShowConfirmation(true);
   };
@@ -272,6 +280,22 @@ const CreateTaskForm = ({ open, onClose }) => {
                 onBlur={formik.handleBlur}
                 label="Select Employee"
                 disabled={employeesLoading}
+                renderValue={(selected) => {
+                    const employee = employees.find(emp => emp.id === selected);
+                    if (!employee) return '';
+                    return (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Avatar
+                                src={employee.pictureURL}
+                                alt={employee.fullName}
+                                sx={{ width: 24, height: 24 }}
+                            />
+                            <Typography>
+                                {employee.fullName} ({employee.ongoingTasks} tasks)
+                            </Typography>
+                        </Box>
+                    );
+                }}
               >
                 {employeesLoading ? (
                   <MenuItem disabled>Loading employees...</MenuItem>
@@ -279,8 +303,23 @@ const CreateTaskForm = ({ open, onClose }) => {
                   <MenuItem disabled>Error loading employees</MenuItem>
                 ) : Array.isArray(employees) && employees.length > 0 ? (
                   employees.map((emp) => (
-                    <MenuItem key={emp.id} value={emp.id}>
-                      {emp.fullName} ({emp.ongoingTasks} tasks)
+                    <MenuItem 
+                      key={emp.id} 
+                      value={emp.id}
+                      sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1
+                      }}
+                    >
+                      <Avatar
+                          src={emp.pictureURL}
+                          alt={emp.fullName}
+                          sx={{ width: 24, height: 24 }}
+                      />
+                      <Typography>
+                          {emp.fullName} ({emp.ongoingTasks} tasks)
+                      </Typography>
                     </MenuItem>
                   ))
                 ) : (

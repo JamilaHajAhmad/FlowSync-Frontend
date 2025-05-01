@@ -1,141 +1,147 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Dialog,
     DialogTitle,
     DialogContent,
     DialogActions,
     Button,
-    Typography,
-    Box,
     TextField,
-    CircularProgress
-} from "@mui/material";
-import { CheckCircleOutline } from "@mui/icons-material";
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
-
-const validationSchema = Yup.object({
-    notes: Yup.string()
-        .min(10, 'Notes should be at least 10 characters')
-        .max(500, 'Notes must not exceed 500 characters')
-        .required('Completion notes are required')
-});
+    CircularProgress,
+    Box,
+    Typography
+} from '@mui/material';
+import { toast } from 'react-toastify';
+import { createCompletionRequest } from '../../../../services/completionRequests';
 
 const CompleteTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
-    const formik = useFormik({
-        initialValues: { notes: '' },
-        validationSchema,
-        onSubmit: async (values, { setSubmitting, resetForm }) => {
-            try {
-                await onSubmitSuccess({
-                    ...task,
-                    completionNotes: values.notes.trim()
-                });
-                resetForm();
-                onClose();
-            } catch (error) {
-                console.error('Error completing task:', error);
-            } finally {
-                setSubmitting(false);
-            }
+    const [loading, setLoading] = useState(false);
+    const [notes, setNotes] = useState('');
+    const token = localStorage.getItem('authToken');
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!notes.trim()) {
+            toast.error('Please provide completion notes');
+            return;
         }
-    });
+
+        if (!task?.frnNumber) {
+            toast.error('Task information is missing');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const requestData = {
+                frnNumber: task.frnNumber,
+                notes: notes.trim()
+            };
+
+            await createCompletionRequest(requestData, token);
+            
+            // Create updated task object with completion info
+            const updatedTask = {
+                ...task,
+                completionNotes: notes.trim(),
+                completedDate: new Date().toLocaleDateString('en-US')
+            };
+
+            // Call onSubmitSuccess with updated task
+            onSubmitSuccess(updatedTask);
+            
+            toast.success('Completion request submitted successfully');
+            setNotes('');
+            onClose();
+        } catch (error) {
+            console.error('Error submitting completion request:', error);
+            toast.error(error?.response?.data?.message || 'Failed to submit completion request');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
-        <Dialog
-            open={open}
-            onClose={formik.isSubmitting ? undefined : onClose}
+        <Dialog 
+            open={open} 
+            onClose={() => !loading && onClose()}
             maxWidth="sm"
             fullWidth
-            PaperProps={{
-                sx: {
-                    borderRadius: '12px',
-                    boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.12)',
-                    overflow: 'hidden',
-                },
-            }}
         >
-            <DialogTitle
-                sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    padding: '16px 24px',
-                    fontSize: '1.25rem',
-                    fontWeight: 600,
-                }}
-            >
-                <CheckCircleOutline color="success" />
-                Complete Task
+            <DialogTitle sx={{ 
+                pb: 1,
+                color: '#059669',
+                fontWeight: 'bold' 
+            }}>
+                Complete Task Request
             </DialogTitle>
 
-            <form onSubmit={formik.handleSubmit}>
-                <DialogContent
+            <DialogContent>
+                <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle1" color="text.secondary">
+                        Task: {task?.taskTitle}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        FRN: {task?.frnNumber}
+                    </Typography>
+                </Box>
+                <TextField
+                    autoFocus
+                    multiline
+                    rows={4}
+                    label="Completion Notes"
+                    fullWidth
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    disabled={loading}
+                    placeholder="Please provide details about task completion..."
                     sx={{
-                        padding: '24px',
-                        '& .MuiTypography-root': {
-                            color: 'rgba(0, 0, 0, 0.87)',
-                            marginBottom: '8px',
-                        },
-                    }}
-                >
-                    <Typography variant="subtitle1" gutterBottom>
-                        Request leader approval to mark task <strong>{task?.frnNumber}</strong> as completed.
-                    </Typography>
-
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                        This action requires confirmation from your team leader.
-                    </Typography>
-
-                    <TextField
-                        fullWidth
-                        name="notes"
-                        label="Completion Notes"
-                        multiline
-                        rows={3}
-                        value={formik.values.notes}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        error={formik.touched.notes && Boolean(formik.errors.notes)}
-                        helperText={formik.touched.notes && formik.errors.notes}
-                        disabled={formik.isSubmitting}
-                        placeholder="Please provide details about task completion..."
-                        sx={{
-                            mt: 2,
-                            '& .MuiOutlinedInput-root': {
-                                '&:hover fieldset': { borderColor: '#4ade80' },
-                                '&.Mui-focused fieldset': { borderColor: '#22c55e' }
+                        '& .MuiOutlinedInput-root': {
+                            '&.Mui-focused fieldset': {
+                                borderColor: '#059669'
                             }
-                        }}
-                    />
-                </DialogContent>
+                        },
+                        '& .MuiInputLabel-root.Mui-focused': {
+                            color: '#059669'
+                        }
+                    }}
+                />
+            </DialogContent>
 
-                <DialogActions
+            <DialogActions sx={{ px: 3, pb: 3 }}>
+                <Button
+                    onClick={onClose}
+                    disabled={loading}
                     sx={{
-                        padding: '16px 24px',
-                        borderTop: '1px solid rgba(0, 0, 0, 0.08)',
-                        gap: '12px',
+                        color: 'text.secondary',
+                        '&:hover': {
+                            backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                        }
                     }}
                 >
-                    <Button
-                        onClick={onClose}
-                        variant="outlined"
-                        color="inherit"
-                        disabled={formik.isSubmitting}
-                    >
-                        Cancel
-                    </Button>
-
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        color="success"
-                        disabled={formik.isSubmitting || !formik.isValid || !formik.dirty}
-                    >
-                        {formik.isSubmitting ? 'Submitting...' : 'Request Completion'}
-                    </Button>
-                </DialogActions>
-            </form>
+                    Cancel
+                </Button>
+                <Button
+                    onClick={handleSubmit}
+                    disabled={loading || !notes.trim()}
+                    variant="contained"
+                    sx={{
+                        bgcolor: '#059669',
+                        '&:hover': {
+                            bgcolor: '#047857'
+                        },
+                        '&.Mui-disabled': {
+                            bgcolor: '#82c4b3'
+                        },
+                        minWidth: 100
+                    }}
+                >
+                    {loading ? (
+                        <CircularProgress size={24} sx={{ color: '#fff' }} />
+                    ) : (
+                        'Submit'
+                    )}
+                </Button>
+            </DialogActions>
         </Dialog>
     );
 };

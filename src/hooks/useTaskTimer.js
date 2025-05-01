@@ -8,7 +8,8 @@ export const useTaskTimer = (task) => {
         status: 'normal', 
         daysElapsed: 0, 
         totalDays: 0, 
-        priority: 'Regular' 
+        priority: 'Regular',
+        delayDuration: 0
     });
 
     useEffect(() => {
@@ -26,7 +27,7 @@ export const useTaskTimer = (task) => {
             // Get timer calculations from utility function
             const timerData = calculateTaskTimers(task);
             
-            // Format the remaining time
+            // Format the time (will be delay duration if task is delayed)
             const formatted = formatTimeRemaining(timerData.remainingTime);
             
             setFormattedTime(formatted);
@@ -35,7 +36,8 @@ export const useTaskTimer = (task) => {
                 status: timerData.status,
                 daysElapsed: timerData.daysElapsed,
                 totalDays: Math.floor(timerData.totalTime / (1000 * 60 * 60 * 24)),
-                priority: timerData.priority
+                priority: timerData.priority,
+                delayDuration: timerData.isDelayed ? timerData.remainingTime : 0
             });
         };
 
@@ -59,7 +61,8 @@ export const useTaskTimer = (task) => {
                     status: 'frozen',
                     daysElapsed: Math.floor(timeElapsedUntilFrozen / (1000 * 60 * 60 * 24)),
                     totalDays: Math.floor(totalAllowedTime / (1000 * 60 * 60 * 24)),
-                    priority: task.priority
+                    priority: task.priority,
+                    delayDuration: 0
                 }
             };
         };
