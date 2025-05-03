@@ -123,7 +123,11 @@ const TaskCard = ({ task, isDragging }) => {
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <PauseCircleOutline sx={{ fontSize: 16, mr: 0.5, color: '#1976D2' }} />
               <Typography variant="body2" color="text.secondary">
-                Frozen at: {task.frozenAt}
+                Frozen at: {new Date(task.frozenAt).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  day: '2-digit',
+                  month: '2-digit',
+                })}
               </Typography>
             </Box>
           )}
@@ -199,11 +203,11 @@ const TaskCard = ({ task, isDragging }) => {
             Days Left
           </Typography>
           <Typography variant="body1" gutterBottom>
-            {timeRemaining.daysElapsed} days
+            {timeRemaining.daysLeft} days
           </Typography>
         </Grid>
 
-        {task.status === "Completed" && (
+        {task.completedAt && (
           <Grid item xs={6}>
             <Typography variant="body2" color="text.secondary">
               Completed At
@@ -216,7 +220,6 @@ const TaskCard = ({ task, isDragging }) => {
                   month: '2-digit',
                 })}
               </Typography>
-              <CheckCircleOutline sx={{ color: "#059669", fontSize: 20 }} />
             </Box>
           </Grid>
         )}
@@ -228,7 +231,7 @@ const TaskCard = ({ task, isDragging }) => {
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="body1" gutterBottom color="#d32f2f">
-                {task.daysDelayed} days
+                {timeRemaining.delayDuration} days
               </Typography>
               <ErrorOutline sx={{ color: "#d32f2f", fontSize: 20 }} />
             </Box>
@@ -252,7 +255,11 @@ const TaskCard = ({ task, isDragging }) => {
               Frozen At
             </Typography>
             <Typography variant="body1" gutterBottom>
-              {task.frozenAt}
+              {new Date(task.frozenAt).toLocaleDateString('en-US', {
+                year: 'numeric',
+                day: '2-digit',
+                month: '2-digit',
+              })}
             </Typography>
           </Grid>
         )}
@@ -273,7 +280,7 @@ const TaskCard = ({ task, isDragging }) => {
 
       <Grid item xs={12}>
         <Typography variant="body2" color="text.secondary">
-          {task.status === 'Frozen' ? 'Time Frozen At' : 'Time Remaining'}
+          Time Remaining
         </Typography>
         <Box sx={{
           display: 'flex',
@@ -288,11 +295,14 @@ const TaskCard = ({ task, isDragging }) => {
                 : '#059669'
         }}>
           <Typography variant="h6">
-            {task.status === 'Frozen' ? 'Frozen at: ' : timeRemaining.isDelayed ? 'Delayed by: ' : ''}
+            { timeRemaining.isDelayed ? 'Delayed by: ' : ''}
             {`${formattedTime.days}d ${formattedTime.hours}h ${formattedTime.minutes}m ${formattedTime.seconds}s`}
           </Typography>
           {task.status === 'Frozen' && (
             <Schedule sx={{ color: '#1976D2' }} />
+          )}
+          {task.status === 'Completed' && (
+            <CheckCircleOutline sx={{ color: "#059669" }} />
           )}
           {timeRemaining.isDelayed && task.status !== 'Frozen' && (
             <ErrorOutline color="error" />
@@ -411,7 +421,7 @@ const DroppableColumn = ({ status, children }) => {
           whiteSpace: 'nowrap',
         }}
       >
-        {status} ({React.Children.count(children)})
+        {status}
       </Typography>
 
       <Box
@@ -456,6 +466,7 @@ const Tasks = () => {
   const [ openUnfreezeDialog, setOpenUnfreezeDialog ] = useState(false);
   const [ openCompleteDialog, setOpenCompleteDialog ] = useState(false);
   const [ selectedTask, setSelectedTask ] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [ pendingStatusChange, setPendingStatusChange ] = useState(null);
 
   useEffect(() => {
@@ -476,22 +487,16 @@ const Tasks = () => {
         ]).catch(error => {
           throw new Error(`Failed to fetch tasks: ${error.message}`);
         });
-
+        
         const formatTasks = (tasks = []) => tasks.map(task => {
           if (!task) return null;
 
           return {
             ...task,
-            createdAt: task.createdAt ? new Date(task.createdAt).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit'
-            }) : null,
-            completedAt: task.completedAt ? new Date(task.completedAt).toLocaleDateString('en-US') : null,
-            frozenAt: task.frozenAt ? new Date(task.frozenAt).toLocaleDateString('en-US') : null,
-            dayLefts: task.dayLefts || 0,
-            daysDelayed: task.daysDelayed || 0,
-            reason: task.reason || null
+            createdAt: task.createdAt,
+            completedAt: task.completedAt,
+            frozenAt: task.frozenAt,
+            reason: task.reason
           };
         }).filter(Boolean);
 
@@ -656,11 +661,10 @@ const Tasks = () => {
             ...task,
             status: 'Opened',
             hasPendingFreezeRequest: true,
-            freezingReason: task.freezingReason,
+            freezingReason: task.reason,
             freezeRequestedAt: new Date().toISOString()
           };
           success = true;
-          toast.info('Freeze request sent for approval');
           break;
 
         case 'unfreeze':
@@ -681,22 +685,9 @@ const Tasks = () => {
             ...task,
             status: 'Opened',
             completedDate: new Date().toLocaleDateString('en-US'),
-            completionNotes: task.completionNotes
+            completionNotes: task.notes
           };
           success = true;
-          toast.success('Task completed successfully');
-          break;
-
-        case 'updateStatus':
-          updatedTask = {
-            ...task,
-            status: pendingStatusChange || task.status,
-            ...(pendingStatusChange === 'Delayed' && {
-              daysDelayed: task.dayLefts
-            })
-          };
-          success = true;
-          toast.info(`Task moved to ${pendingStatusChange || task.status}`);
           break;
 
         default:

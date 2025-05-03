@@ -1,6 +1,6 @@
 export const calculateTaskTimers = (task) => {
-    const now = new Date().getTime(); // Get current timestamp in ms
-    const openDate = new Date(task.createdAt).getTime(); // Get creation timestamp in ms
+    const now = new Date().getTime();
+    const openDate = new Date(task.createdAt).getTime();
 
     // Time counters in milliseconds
     const timeElapsed = now - openDate;
@@ -10,39 +10,45 @@ export const calculateTaskTimers = (task) => {
     const limits = {
         Regular: 7 * 24 * 60 * 60 * 1000,    // 7 days
         Important: 5 * 24 * 60 * 60 * 1000,  // 5 days
-        Urgent:  1*24* 60 * 60 * 1000      // 2 days
+        Urgent: 1 * 24 * 60 * 60 * 1000      // 1 days
     };
 
-    // Get limit based on task priority
     const priorityLimit = limits[task.priority];
-
-    // Calculate remaining time based on priority
     const totalAllowedTime = openDate + priorityLimit;
     const remainingTime = totalAllowedTime - now;
-    const isDelayed = remainingTime < 0;
 
-    // Calculate status thresholds based on priority
-    const warningThreshold = priorityLimit * 0.5;  // 50% of time remaining
-    const criticalThreshold = priorityLimit * 0.25; // 25% of time remaining
+    // Calculate days left for open tasks
+    let daysLeft;
+    if (task.status === 'Opened') {
+        daysLeft = Math.ceil(remainingTime / (1000 * 60 * 60 * 24));
+    } else {
+        daysLeft = Math.max(0, Math.ceil(remainingTime / (1000 * 60 * 60 * 24)));
+    }
+    
+    const isDelayed = remainingTime < 0;
+    const warningThreshold = priorityLimit * 0.5;
+    const criticalThreshold = priorityLimit * 0.25;
 
     return {
         daysElapsed,
+        daysLeft,
+        timeElapsed,
         remainingTime,
         isDelayed,
         priority: task.priority,
         status: remainingTime > warningThreshold ? 'normal' :
-            remainingTime > criticalThreshold ? 'warning' : 'critical',
+                remainingTime > criticalThreshold ? 'warning' : 'critical',
         totalTime: priorityLimit
     };
 };
 
 export const formatTimeRemaining = (milliseconds) => {
-    if (milliseconds < 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    const absMs = Math.abs(milliseconds); 
 
-    const seconds = Math.floor((milliseconds / 1000) % 60);
-    const minutes = Math.floor((milliseconds / (1000 * 60)) % 60);
-    const hours = Math.floor((milliseconds / (1000 * 60 * 60)) % 24);
-    const days = Math.floor(milliseconds / (1000 * 60 * 60 * 24));
+    const seconds = Math.floor((absMs / 1000) % 60);
+    const minutes = Math.floor((absMs / (1000 * 60)) % 60);
+    const hours = Math.floor((absMs / (1000 * 60 * 60)) % 24);
+    const days = Math.floor(absMs / (1000 * 60 * 60 * 24));
 
     return { days, hours, minutes, seconds };
 };
