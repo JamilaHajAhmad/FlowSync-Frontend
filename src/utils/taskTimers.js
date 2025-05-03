@@ -13,7 +13,9 @@ export const calculateTaskTimers = (task) => {
         Urgent: 1 * 24 * 60 * 60 * 1000      // 1 days
     };
 
-    const priorityLimit = limits[task.priority];
+    const threeHours = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
+
+    const priorityLimit = limits[task.priority] + threeHours;
     const totalAllowedTime = openDate + priorityLimit;
     const remainingTime = totalAllowedTime - now;
 

@@ -6,11 +6,12 @@ export const useTaskTimer = (task) => {
     const [timeRemaining, setTimeRemaining] = useState({ 
         isDelayed: false, 
         status: 'normal', 
-        daysElapsed: 0, 
+        daysElapsed: 0,
+        daysLeft: 0, // Add daysLeft to initial state
         totalDays: 0, 
         priority: 'Regular',
         delayDuration: 0,
-        isFrozen: false // Explicit frozen flag
+        isFrozen: false
     });
 
     const frozenTimeData = useMemo(() => {
@@ -27,34 +28,33 @@ export const useTaskTimer = (task) => {
         const calculateTime = () => {
             if (!task || !task.createdAt || !task.priority) return;
 
-            // Handle both Frozen and Completed states
             if (task.status === 'Frozen' && frozenTimeData) {
                 setFormattedTime(frozenTimeData.formattedTime);
-                setTimeRemaining(frozenTimeData.timeRemaining);
+                setTimeRemaining(frozenTimeData.timeRemaining); // Use full timeRemaining object
                 return;
             }
 
             if (task.status === 'Completed' && completedTimeData) {
                 setFormattedTime(completedTimeData.formattedTime);
-                setTimeRemaining(completedTimeData.timeRemaining);
+                setTimeRemaining(completedTimeData.timeRemaining); // Use full timeRemaining object
                 return;
             }
 
             // Get timer calculations from utility function
             const timerData = calculateTaskTimers(task);
-            
-            // Format the time (will be delay duration if task is delayed)
             const formatted = formatTimeRemaining(timerData.remainingTime);
             
             setFormattedTime(formatted);
             setTimeRemaining({
                 isDelayed: timerData.isDelayed,
                 status: timerData.status,
-                daysElapsed: timerData.daysElapsed,
+                daysElapsed: Math.floor((new Date().getTime() - new Date(task.createdAt).getTime()) / (24 * 60 * 60 * 1000)), // Calculate days elapsed
+                daysLeft: timerData.daysLeft,
                 totalDays: Math.floor(timerData.totalTime / (1000 * 60 * 60 * 24)),
                 priority: timerData.priority,
-                delayDuration: timerData.isDelayed ? timerData.remainingTime : 0,
-                isFrozen: false
+                delayDuration: timerData.isDelayed ? Math.abs(timerData.remainingTime) : 0,
+                isFrozen: false,
+                remainingTime: timerData.remainingTime // Add remaining time to state
             });
         };
 
@@ -77,12 +77,6 @@ export const useTaskTimer = (task) => {
     return { formattedTime, timeRemaining };
 };
 
-function calculateTaskElapsedDays(createdAt) {
-    const now = Date.now();
-    const created = new Date(createdAt).getTime();
-    return Math.floor((now - created) / (1000 * 60 * 60 * 24));
-}
-
 function calculateFrozenTime(task) {
     if (!task.frozenAt) {
         console.error('Frozen task is missing frozenAt timestamp');
@@ -92,6 +86,7 @@ function calculateFrozenTime(task) {
                 isDelayed: false,
                 status: 'Frozen',
                 daysElapsed: 0,
+                daysLeft: 0, // Add daysLeft to frozen state
                 totalDays: 0,
                 priority: task.priority || 'Regular',
                 delayDuration: 0,
@@ -100,24 +95,44 @@ function calculateFrozenTime(task) {
         };
     }
 
-    const taskTimers = calculateTaskTimers({
-        ...task,
-        status: 'Opened',
-        frozenAt: undefined
-    });
+    // Calculate the time remaining at the moment the task was frozen
+    const frozenAt = new Date(task.frozenAt).getTime();
+    const openDate = new Date(task.createdAt).getTime();
+    const currentTime = new Date().getTime();
+    
+    // Define time constants
+    const DAY_IN_MS = 24 * 60 * 60 * 1000;
+    
+    const limits = {
+        Regular: 7 * DAY_IN_MS,
+        Important: 5 * DAY_IN_MS,
+        Urgent: DAY_IN_MS
+    };
 
-    const daysElapsed = calculateTaskElapsedDays(task.createdAt);
-    const remainingTimeAtFreeze = taskTimers.remainingTime;
+    // Calculate the remaining time at freeze moment
+    const priorityLimit = limits[task.priority];
+    const totalAllowedTime = openDate + priorityLimit;
+    const remainingTimeAtFreeze = totalAllowedTime - frozenAt;
+    
+    // Calculate total elapsed days from creation until now
+    const daysElapsed = Math.floor((currentTime - openDate) / DAY_IN_MS);
+    const daysLeft = Math.max(0, Math.floor(remainingTimeAtFreeze / DAY_IN_MS)); // Calculate daysLeft
+
+    // Format the frozen time
     const frozenTimeFormat = formatTimeRemaining(remainingTimeAtFreeze);
 
     return {
         formattedTime: frozenTimeFormat,
         timeRemaining: {
-            ...taskTimers,
-            daysElapsed,
+            isDelayed: remainingTimeAtFreeze < 0,
             status: 'Frozen',
-            totalDays: Math.floor(taskTimers.totalTime / (1000 * 60 * 60 * 24)),
-            isFrozen: true
+            daysElapsed,
+            daysLeft, // Include daysLeft in frozen timeRemaining
+            totalDays: Math.floor(priorityLimit / DAY_IN_MS),
+            priority: task.priority,
+            delayDuration: remainingTimeAtFreeze < 0 ? Math.abs(remainingTimeAtFreeze) : 0,
+            isFrozen: true,
+            remainingTime: remainingTimeAtFreeze
         }
     };
 }
@@ -131,6 +146,7 @@ function calculateCompletedTime(task) {
                 isDelayed: false,
                 status: 'Completed',
                 daysElapsed: 0,
+                daysLeft: 0, // Add daysLeft to completed state
                 totalDays: 0,
                 priority: task.priority || 'Regular',
                 delayDuration: 0,
@@ -139,24 +155,43 @@ function calculateCompletedTime(task) {
         };
     }
 
-    const taskTimers = calculateTaskTimers({
-        ...task,
-        status: 'Opened',
-        completedAt: undefined
-    });
+    // Calculate times based on completion timestamp
+    const completedAt = new Date(task.completedAt).getTime();
+    const openDate = new Date(task.createdAt).getTime();
+    
+    // Define time constants
+    const DAY_IN_MS = 24 * 60 * 60 * 1000;
+    
+    const limits = {
+        Regular: 7 * DAY_IN_MS,
+        Important: 5 * DAY_IN_MS,
+        Urgent: DAY_IN_MS
+    };
 
-    const daysElapsed = calculateTaskElapsedDays(task.createdAt);
-    const finalTimeState = taskTimers.remainingTime;
-    const finalTimeFormat = formatTimeRemaining(finalTimeState);
+    // Calculate final state at completion moment
+    const priorityLimit = limits[task.priority];
+    const totalAllowedTime = openDate + priorityLimit;
+    const finalTimeState = totalAllowedTime - completedAt;
+    
+    // Calculate days elapsed until completion
+    const daysElapsed = Math.floor((completedAt - openDate) / DAY_IN_MS);
+    const daysLeft = Math.max(0, Math.floor(finalTimeState / DAY_IN_MS)); // Calculate daysLeft
+
+    // Format the completion time
+    const completedTimeFormat = formatTimeRemaining(finalTimeState);
 
     return {
-        formattedTime: finalTimeFormat,
+        formattedTime: completedTimeFormat,
         timeRemaining: {
-            ...taskTimers,
-            daysElapsed,
+            isDelayed: finalTimeState < 0,
             status: 'Completed',
-            totalDays: Math.floor(taskTimers.totalTime / (1000 * 60 * 60 * 24)),
-            isFrozen: false
+            daysElapsed,
+            daysLeft, // Include daysLeft in completed timeRemaining
+            totalDays: Math.floor(priorityLimit / DAY_IN_MS),
+            priority: task.priority,
+            delayDuration: finalTimeState < 0 ? Math.abs(finalTimeState) : 0,
+            isFrozen: false,
+            remainingTime: finalTimeState
         }
     };
 }

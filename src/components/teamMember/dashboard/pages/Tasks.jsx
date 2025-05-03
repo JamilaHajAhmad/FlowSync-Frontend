@@ -529,15 +529,24 @@ const Tasks = () => {
       const openedTasks = tasksList.filter(task => task.status === 'Opened');
 
       for (const task of openedTasks) {
+        // Calculate if task is delayed without using hook
+        const now = new Date().getTime();
+        const openDate = new Date(task.createdAt).getTime();
+        
+        const limits = {
+          Regular: 7 * 24 * 60 * 60 * 1000,    // 7 days
+          Important: 5 * 24 * 60 * 60 * 1000,  // 5 days
+          Urgent: 1 * 24 * 60 * 60 * 1000      // 1 day
+        };
 
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        const { timeRemaining } = useTaskTimer(task);
+        const priorityLimit = limits[task.priority];
+        const totalAllowedTime = openDate + priorityLimit;
+        const isDelayed = now > totalAllowedTime;
 
-        if (timeRemaining.isDelayed) {
+        if (isDelayed) {
           try {
             await markTaskAsDelayed(task.frnNumber, token);
 
-            // Update local state
             setTasksList(prevTasks => prevTasks.map(t =>
               t.frnNumber === task.frnNumber
                 ? { ...t, status: 'Delayed' }
@@ -561,7 +570,7 @@ const Tasks = () => {
 
     // Cleanup
     return () => clearInterval(intervalId);
-  }, [ tasksList ]);
+  }, [tasksList]);
 
   if (loading) {
     return (
