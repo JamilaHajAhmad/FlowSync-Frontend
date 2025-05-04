@@ -20,12 +20,7 @@ export const calculateTaskTimers = (task) => {
     const remainingTime = totalAllowedTime - now;
 
     // Calculate days left for open tasks
-    let daysLeft;
-    if (task.status === 'Opened') {
-        daysLeft = Math.ceil(remainingTime / (1000 * 60 * 60 * 24));
-    } else {
-        daysLeft = Math.max(0, Math.ceil(remainingTime / (1000 * 60 * 60 * 24)));
-    }
+    let daysLeft = Math.round(remainingTime / (1000 * 60 * 60 * 24));
     
     const isDelayed = remainingTime < 0;
     const warningThreshold = priorityLimit * 0.5;

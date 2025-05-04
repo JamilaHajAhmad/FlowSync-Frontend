@@ -646,6 +646,9 @@ const Tasks = () => {
     } else if (activeTask.status === 'Opened' && overStatus === 'Completed') {
       setOpenCompleteDialog(true);
     }
+    else if (activeTask.status === 'Delayed' && overStatus === 'Completed') {
+      setOpenCompleteDialog(true);
+    }
 
     setActiveId(null);
   };
