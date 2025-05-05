@@ -10,15 +10,17 @@ import {
     CssBaseline
 } from '@mui/material';
 import { NotificationContext } from './NotificationContext';
-import NotificationItem from './NotificationItem';
+import { NotificationItem } from './NotificationItem';
 import PageHeading from '../PageHeading';
 import Sidebar from '../../teamLeader/dashboard/components/Sidebar';
+import MSidebar from '../../teamMember/dashboard/components/MSidebar';
 import Topbar from '../Topbar';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import  getDesignTokens  from '../../../theme';
+import { decodeToken } from '../../../utils';
 
 const NotificationsPage = () => {
-    const { notifications, markAllAsRead } = useContext(NotificationContext);
+    const { notifications, markAllAsRead, markAsRead } = useContext(NotificationContext);
     const [open, setOpen] = useState(false);
     const [mode, setMode] = useState(
         localStorage.getItem("currentMode") ? 
@@ -26,18 +28,37 @@ const NotificationsPage = () => {
         "light"
     );
 
+    const [userRole, setUserRole] = React.useState(null);
+    
+        React.useEffect(() => {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                const decoded = decodeToken(token);
+                setUserRole(decoded.role);
+            }
+        }, []);
+
     const theme = React.useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
 
     const handleDrawerOpen = () => {
         setOpen(!open);
     };
 
+     const renderSidebar = () => {
+            if (userRole === 'Leader') { // Leader role
+                return <Sidebar open={open} />;
+            } else if (userRole === 'Member') { // Member role
+                return <MSidebar open={open} />;
+            }
+            return null;
+        };
+
     return (
         <ThemeProvider theme={theme}>
             <Box sx={{ display: 'flex' }}>
                 <CssBaseline />
                 <Topbar open={open} handleDrawerOpen={handleDrawerOpen} setMode={setMode} />
-                <Sidebar open={open} />
+                {renderSidebar()}
                 <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
                     <Box sx={{ height: 64 }} />
                     <PageHeading 
@@ -87,22 +108,9 @@ const NotificationsPage = () => {
                                         {notifications.map((notification, index) => (
                                             <React.Fragment key={notification.id}>
                                                 <Box sx={{ position: 'relative' }}>
-                                                    {!notification.read && (
-                                                        <Box
-                                                            sx={{
-                                                                width: 6,
-                                                                height: 6,
-                                                                borderRadius: '50%',
-                                                                backgroundColor: '#4caf50',
-                                                                position: 'absolute',
-                                                                top: 24,
-                                                                right: 16,
-                                                                zIndex: 1
-                                                            }}
-                                                        />
-                                                    )}
                                                     <NotificationItem 
                                                         notification={notification}
+                                                        onMarkAsRead={() => markAsRead(notification.id)}
                                                     />
                                                 </Box>
                                                 {index < notifications.length - 1 && <Divider />}

@@ -8,8 +8,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { NotificationContext } from './NotificationContext';
-import NotificationItem from './NotificationItem';
-import { Circle } from '@mui/icons-material';
+import { NotificationItem } from './NotificationItem';
 
 const NotificationList = ({ onClose }) => {
     const { notifications, markAllAsRead, markAsRead } = useContext(NotificationContext);
@@ -22,16 +21,6 @@ const NotificationList = ({ onClose }) => {
 
     const handleMarkAllAsRead = () => {
         markAllAsRead();
-    };
-
-    const handleNotificationClick = (notification) => {
-        if (!notification.read) {
-            markAsRead(notification.id);
-        }
-        if (notification.onClick) {
-            notification.onClick();
-        }
-        onClose();
     };
 
     if (notifications.length === 0) {
@@ -56,14 +45,14 @@ const NotificationList = ({ onClose }) => {
                 <Typography variant="subtitle1" fontWeight={600}>
                     Notifications
                 </Typography>
-                {notifications.some(n => !n.read) && (
+                {notifications.some(n => !n.isRead) && (
                     <Button 
                         size="small"
                         onClick={handleMarkAllAsRead}
                         sx={{ 
-                            color: '#4caf50',
+                            color: 'success.main',
                             '&:hover': {
-                                backgroundColor: 'rgba(76, 175, 80, 0.04)'
+                                backgroundColor: 'success.lighter'
                             }
                         }}
                     >
@@ -72,29 +61,21 @@ const NotificationList = ({ onClose }) => {
                 )}
             </Box>
             <List sx={{ 
-                p: 0,  // Remove padding
-                overflowY: 'visible', // Remove list scrolling
+                p: 0,
+                maxHeight: '400px',
+                overflowY: 'auto',
             }}>
                 {notifications.map((notification, index) => (
                     <React.Fragment key={notification.id}>
-                        <Box sx={{ position: 'relative' }}>
-                            {!notification.read && (
-                                <Circle 
-                                    sx={{
-                                        position: 'absolute',
-                                        top: 20,
-                                        right: 16,
-                                        fontSize: 8,
-                                        color: '#4caf50',
-                                        zIndex: 2
-                                    }}
-                                />
-                            )}
-                            <NotificationItem 
-                                notification={notification}
-                                onClick={() => handleNotificationClick(notification)}
-                            />
-                        </Box>
+                        <NotificationItem 
+                            notification={notification}
+                            onMarkAsRead={(id) => {
+                                markAsRead(id);
+                                if (notification.onClick) {
+                                    notification.onClick();
+                                }
+                            }}
+                        />
                         {index < notifications.length - 1 && <Divider />}
                     </React.Fragment>
                 ))}
@@ -105,9 +86,9 @@ const NotificationList = ({ onClose }) => {
                     fullWidth
                     onClick={handleSeeAll}
                     sx={{ 
-                        color: '#4caf50',
+                        color: 'success.main',
                         '&:hover': {
-                            backgroundColor: 'rgba(76, 175, 80, 0.04)'
+                            backgroundColor: 'success.lighter'
                         }
                     }}
                 >

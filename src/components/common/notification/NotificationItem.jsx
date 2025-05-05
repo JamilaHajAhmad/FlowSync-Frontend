@@ -1,78 +1,65 @@
 import React from 'react';
-import {
-    ListItem,
-    ListItemText,
-    ListItemIcon,
-    Typography,
-    Box
-} from '@mui/material';
-import {
-    NotificationsActive,
-    Assignment,
-    Person,
-    Warning
-} from '@mui/icons-material';
+import { ListItem, ListItemText, IconButton, Typography, Box } from '@mui/material';
+import { CheckCircle, Error, Info, Warning } from '@mui/icons-material';
+import { NotificationTypes } from './NotificationContext';
+import { formatDistanceToNow } from 'date-fns';
 
-const NotificationItem = ({ notification, onClick }) => {
-    const getIcon = (type) => {
-        switch (type) {
-            case 'task':
-                return <Assignment sx={{ color: '#4caf50' }} />;
-            case 'user':
-                return <Person sx={{ color: '#2196f3' }} />;
-            case 'alert':
-                return <Warning sx={{ color: '#f44336' }} />;
-            default:
-                return <NotificationsActive sx={{ color: '#ff9800' }} />;
+const getIcon = (type) => {
+    switch (type) {
+        case NotificationTypes.Error:
+            return <Error color="error" />;
+        case NotificationTypes.Warning:
+            return <Warning color="warning" />;
+        case NotificationTypes.Info:
+            return <Info color="info" />;
+        default:
+            return <CheckCircle color="success" />;
+    }
+};
+
+export const NotificationItem = ({ notification, onMarkAsRead }) => {
+    const { id, type, message, isRead, createdAt } = notification;
+
+    const formatTimeAgo = (date) => {
+        try {
+            return formatDistanceToNow(new Date(date), { addSuffix: true });
+        } catch (error) {
+            return error.message;
         }
     };
 
     return (
-        <ListItem 
-            onClick={onClick}
-            sx={{ 
-                p: 2,
-                cursor: 'pointer',
-                borderBottom: '1px solid #f0f0f0',
-                backgroundColor: notification.read ? 'transparent' : 'rgba(76, 175, 80, 0.04)',
-                '&:hover': {
-                    backgroundColor: 'rgba(0, 0, 0, 0.04)'
-                }
+        <ListItem
+            sx={{
+                bgcolor: isRead ? 'transparent' : 'action.hover',
+                '&:hover': { bgcolor: 'action.selected' }
             }}
+            secondaryAction={
+                <IconButton 
+                    edge="end" 
+                    onClick={() => onMarkAsRead(id)}
+                    sx={{ color: isRead ? 'success.main' : 'action.disabled' }}
+                >
+                    <CheckCircle />
+                </IconButton>
+            }
         >
-            <ListItemIcon>
-                {getIcon(notification.type)}
-            </ListItemIcon>
             <ListItemText
                 primary={
-                    <Typography 
-                        variant="subtitle2" 
-                        fontWeight={notification.read ? 400 : 600}
-                    >
-                        {notification.title}
-                    </Typography>
-                }
-                secondary={
-                    <Box>
-                        <Typography 
-                            variant="body2" 
-                            color="text.secondary"
-                            sx={{ mt: 0.5 }}
-                        >
-                            {notification.message}
-                        </Typography>
-                        <Typography 
-                            variant="caption" 
-                            color="text.secondary"
-                            sx={{ mt: 0.5, display: 'block' }}
-                        >
-                            {notification.time}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        {getIcon(type)}
+                        <Typography variant="body1">
+                            {message}
                         </Typography>
                     </Box>
                 }
+                secondary={
+                    <Typography variant="caption" color="text.secondary">
+                        {formatTimeAgo(createdAt)}
+                    </Typography>
+                }
+                sx={{ mr: 2 }}
             />
         </ListItem>
     );
 };
-
-export default NotificationItem;
