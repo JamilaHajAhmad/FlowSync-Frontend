@@ -112,14 +112,14 @@ const TopbarOffset = styled('div')(({ theme }) => ({
 
 export default function Topbar({ open, handleDrawerOpen, setMode }) {
     const theme = useTheme();
-    const { notifications } = useContext(NotificationContext);
+    // eslint-disable-next-line no-unused-vars
+    const { notifications, unreadCount } = useContext(NotificationContext); // Access unreadCount from context
     const [anchorEl, setAnchorEl] = useState(null);
     const navigate = useNavigate();
 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [showResults, setShowResults] = useState(false);
-
 
     const searchItems = searchablePages; 
     const searchResults = useMemo(() => {
@@ -135,71 +135,40 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
     }, [searchItems, searchTerm]);
 
     const handleSearchKeyDown = (e) => {
-        // Only handle keyboard navigation when we have results and they're visible
         if (searchResults.length && showResults) {
             switch (e.key) {
                 case 'ArrowDown':
                     e.preventDefault();
-                    setSelectedIndex(prev => {
-                        const next = prev + 1;
-                        // Loop back to start if we reach the end
-                        return next >= searchResults.length ? 0 : next;
-                    });
+                    setSelectedIndex(prev => (prev + 1) % searchResults.length);
                     break;
-
                 case 'ArrowUp':
                     e.preventDefault();
-                    setSelectedIndex(prev => {
-                        const next = prev - 1;
-                        // Loop to end if we're at the start
-                        return next < 0 ? searchResults.length - 1 : next;
-                    });
+                    setSelectedIndex(prev => (prev - 1 + searchResults.length) % searchResults.length);
                     break;
-
                 case 'Enter':
                     e.preventDefault();
                     if (searchResults[selectedIndex]) {
                         navigate(searchResults[selectedIndex].path);
                         setShowResults(false);
                         setSearchTerm('');
-                        e.target.blur(); // Remove focus from search input
+                        e.target.blur();
                     }
                     break;
-
                 case 'Escape':
                     e.preventDefault();
                     setShowResults(false);
                     setSearchTerm('');
-                    e.target.blur(); // Remove focus from search input
+                    e.target.blur();
                     break;
-
-                case 'Tab':
-                    // Prevent default tab behavior when results are shown
-                    if (showResults) {
-                        e.preventDefault();
-                        setSelectedIndex(prev => {
-                            if (e.shiftKey) {
-                                // Shift+Tab goes backwards
-                                return prev <= 0 ? searchResults.length - 1 : prev - 1;
-                            }
-                            // Regular tab goes forwards
-                            return prev >= searchResults.length - 1 ? 0 : prev + 1;
-                        });
-                    }
-                    break;
-
                 default:
                     break;
             }
         } else if (e.key === 'Escape') {
-            // Allow Escape to clear even when no results
             setShowResults(false);
             setSearchTerm('');
             e.target.blur();
         }
     };
-
-    const unreadCount = notifications.filter((n) => !n.read).length;
 
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);
@@ -219,7 +188,7 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                     <IconButton
                         color="inherit"
                         aria-label={open ? "close drawer" : "open drawer"}
-                        onClick={handleDrawerOpen} // Same function handles both open and close
+                        onClick={handleDrawerOpen}
                         edge="start"
                         sx={{
                             marginRight: 5,

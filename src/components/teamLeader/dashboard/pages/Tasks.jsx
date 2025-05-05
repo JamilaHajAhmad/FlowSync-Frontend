@@ -125,10 +125,6 @@ const getColumns = (tab) => {
                 {
                     accessorKey: "priority",
                     header: "Priority",
-                },
-                {
-                    accessorKey: "dayLefts",
-                    header: "Days Left",
                 }
             ];
         case 'Delayed':
@@ -137,10 +133,6 @@ const getColumns = (tab) => {
                 {
                     accessorKey: "priority",
                     header: "Priority",
-                },
-                {
-                    accessorKey: "daysDelayed",
-                    header: "Days Delayed",
                 }
             ];
         case 'Frozen':
@@ -195,7 +187,6 @@ export default function Tasks({
             'FRN Number': task.frnNumber,
             'OSS Number': task.ossNumber,
             'Open Date': task.openDate,
-            'Days Left': task.dayLefts,
             'Case Type': task.caseType,
             'Case Source': task.caseSource
         }));
@@ -203,7 +194,7 @@ export default function Tasks({
         if (fileType === 'pdf') {
             const pdf = new jsPDF('landscape');
             
-            const tableColumn = ["Name", "Status", "Priority", "FRN Number", "OSS Number", "Open Date", "Days Left", "Case Type", "Case Source"];
+            const tableColumn = ["Name", "Status", "Priority", "FRN Number", "OSS Number", "Open Date", "Case Type", "Case Source"];
             const tableRows = exportData.map(item => [
                 item.Name,
                 item.Status,
@@ -211,7 +202,6 @@ export default function Tasks({
                 item["FRN Number"],
                 item["OSS Number"],
                 item["Open Date"],
-                item["Days Left"],
                 item["Case Type"],
                 item["Case Source"]
             ]);
@@ -273,8 +263,6 @@ export default function Tasks({
                         month: '2-digit',
                         day: '2-digit'
                     }),
-                    dayLefts: task.dayLefts,
-                    daysDelayed: task.daysDelayed,
                     completedAt: task.completedAt ? new Date(task.completedAt).toLocaleDateString('en-US') : '',
                     reason: task.reason,
                     notes: task.notes,
