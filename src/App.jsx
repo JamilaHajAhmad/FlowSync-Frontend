@@ -5,7 +5,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ProtectedRouter } from './routing/protectedRouter';
 import { ToastContainer } from 'react-toastify';
-import NotificationProvider from "./components/common/notification/NotificationProvider";
+import { NotificationProvider } from "./components/common/notification/NotificationProvider";
 import 'react-toastify/dist/ReactToastify.css';
 import Landing from './components/Landing/Landing';
 import Register from './components/auth/Register/Register';
