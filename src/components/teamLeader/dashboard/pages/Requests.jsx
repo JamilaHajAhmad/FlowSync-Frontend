@@ -12,10 +12,8 @@ import "react-toastify/dist/ReactToastify.css";
 import { getAllSignupRequests, approveSignupRequest, rejectSignupRequest } from "../../../../services/signupRequests";
 import { getAllFreezeRequests, approveFreezeRequest, rejectFreezeRequest } from "../../../../services/freezeRequests";
 import { getAllCompletionRequests, approveCompletionRequest } from "../../../../services/completionRequests";
-import { useRequestNotifications } from '../../../common/notification/handlers/RequestNotifications';
 
 const Requests = () => {
-    const { handleNewRequest, handleRequestAction } = useRequestNotifications();
     const [currentTab, setCurrentTab] = useState(0);
     const [requests, setRequests] = useState({
         signup: [],
@@ -61,11 +59,6 @@ const Requests = () => {
                 request.requestStatus === 'Pending'
             );
 
-            // Create notifications for pending requests
-            pendingRequests.forEach(request => {
-                handleNewRequest(request, type);
-            });
-
             setRequests(prev => ({
                 ...prev,
                 [type]: pendingRequests
@@ -106,9 +99,6 @@ const Requests = () => {
                 ...prev,
                 [type]: prev[type].filter(req => req.requestId !== id)
             }));
-
-            // Handle notification for approved request
-            handleRequestAction(request, 'approved');
             
             toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} request approved successfully!`);
             fetchRequests(type);
@@ -123,8 +113,6 @@ const Requests = () => {
             if (!token) {
                 throw new Error('No authentication token found');
             }
-
-            const request = requests[type].find(req => req.requestId === id);
 
             switch (type) {
                 case 'signup':
@@ -142,9 +130,6 @@ const Requests = () => {
                 ...prev,
                 [type]: prev[type].filter(req => req.requestId !== id)
             }));
-
-            // Handle notification for rejected request
-            handleRequestAction(request, 'rejected');
             
             toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} request rejected.`);
             fetchRequests(type);
