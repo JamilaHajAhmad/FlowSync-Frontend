@@ -74,7 +74,7 @@ const TaskReminderCard = () => {
           <Card 
             key={index} 
             sx={{ 
-              maxWidth: 400, 
+              minWidth: 300, 
               borderLeft: `5px solid ${borderLeftColor}`, 
               mb: 2, 
             }}

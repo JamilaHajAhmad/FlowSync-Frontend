@@ -55,7 +55,7 @@ const data = [
 
 export default function MainGrid() {
   return (
-    <Box sx={{ width: '100%', maxWidth: { sm: '100%', md: '1700px' } }}>
+    <Box sx={{ width: '100%', maxWidth: { sm: '100%', md: '1700px' },  }}>
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
         Overview
       </Typography>
@@ -82,7 +82,7 @@ export default function MainGrid() {
       </Typography>
       <Stack
         direction="row"
-        spacing={2}
+        spacing={4}
         sx={{ mb: 2 }}
       >
         <TaskReminderCard />
@@ -91,7 +91,7 @@ export default function MainGrid() {
         <Grid item xs={12} md={6}>
           <TasksOverview />
         </Grid>
-        <Grid item xs={12} md={6} sx={{ mt: (theme) => theme.spacing(19), ml: (theme) => theme.spacing(5) }}>
+        <Grid item xs={12} md={6} sx={{  position: 'sticky', mt: 14, ml: 5 }}>
           <KpiCard title="KPI" value={72} />
         </Grid>
       </Grid>
