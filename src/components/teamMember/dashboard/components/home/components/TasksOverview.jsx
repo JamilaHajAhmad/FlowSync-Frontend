@@ -10,7 +10,8 @@ import {
   Button,
   Chip
 } from "@mui/material";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getMemberTasks } from '../../../../../../services/taskService';
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -18,7 +19,7 @@ const getStatusColor = (status) => {
       return { color: "green", background: "#e0f7e9" };
     case "Delayed":
       return { color: "red", background: "#fde8e8" };
-    case "On Going":
+    case "Opened":
       return { color: "orange", background: "#fff4e0" };
     case "Frozen":
       return { color: "#1976D2", background: "#E3F2FD" };
@@ -27,89 +28,13 @@ const getStatusColor = (status) => {
   }
 };
 
-const rows = [
-  {
-    frnNumber: '#123',
-    ossNumber: 'OSS-456',
-    status: 'On Going',
-    priority: 'High',
-    caseType: 'Investigation',
-    caseSource: 'Email',
-    openDate: '08.08.2024',
-    completedAt: '10.08.2024',
-    dayLefts: 4,
-    daysDelayed: 2,
-    frozenAt: '09.08.2024'
-  },
-  {
-    frnNumber: '#124',
-    ossNumber: 'OSS-457',
-    status: 'Completed',
-    priority: 'Medium',
-    caseType: 'Review',
-    caseSource: 'Phone',
-    openDate: '07.08.2024',
-    completedAt: '11.08.2024',
-    dayLefts: 0,
-    daysDelayed: 0,
-    frozenAt: ''
-  },
-  {
-    frnNumber: '#125',
-    ossNumber: 'OSS-458',
-    status: 'Delayed',
-    priority: 'High',
-    caseType: 'Investigation',
-    caseSource: 'Email',
-    openDate: '06.08.2024',
-    completedAt: '',
-    dayLefts: 0,
-    daysDelayed: 5,
-    frozenAt: ''
-  },
-  {
-    frnNumber: '#126',
-    ossNumber: 'OSS-459',
-    status: 'Frozen',
-    priority: 'Low',
-    caseType: 'Documentation',
-    caseSource: 'Email',
-    openDate: '05.08.2024',
-    completedAt: '',
-    dayLefts: 2,
-    daysDelayed: 0,
-    frozenAt: '08.08.2024'
-  },
-  {
-    frnNumber: '#127',
-    ossNumber: 'OSS-460',
-    status: 'On Going',
-    priority: 'Medium',
-    caseType: 'Support',
-    caseSource: 'Chat',
-    openDate: '04.08.2024',
-    completedAt: '',
-    dayLefts: 3,
-    daysDelayed: 0,
-    frozenAt: ''
-  },
-  {
-    frnNumber: '#128',
-    ossNumber: 'OSS-461',
-    status: 'Completed',
-    priority: 'High',
-    caseType: 'Bug Fix',
-    caseSource: 'Internal',
-    openDate: '03.08.2024',
-    completedAt: '07.08.2024',
-    dayLefts: 0,
-    daysDelayed: 0,
-    frozenAt: ''
-  }
-];
-
 const getColumns = (tab) => {
   const baseColumns = [
+    {
+      accessorKey: "taskTitle",
+      header: "Task Title",
+      size: 150,
+    },
     {
       accessorKey: 'frnNumber',
       header: 'FRN Number',
@@ -133,7 +58,7 @@ const getColumns = (tab) => {
       },
     },
     {
-      accessorKey: 'status',
+      accessorKey: 'type',
       header: 'Status',
       size: 100,
       Cell: ({ cell }) => (
@@ -165,9 +90,15 @@ const getColumns = (tab) => {
       },
     },
     {
-      accessorKey: 'openDate',
+      accessorKey: 'createdAt',
       header: 'Open Date',
       size: 100,
+      Cell: ({ cell }) => {
+        const date = new Date(cell.getValue());
+        const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+        const formattedDate = date.toLocaleDateString('en-US', options);
+        return <span>{formattedDate}</span>;
+      },
       muiTableHeadCellProps: {
         align: 'center',
       },
@@ -213,33 +144,24 @@ const getColumns = (tab) => {
         muiTableBodyCellProps: {
           align: 'center',
         },
+        Cell: ({ cell }) => {
+          const date = new Date(cell.getValue());
+          const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+          const formattedDate = date.toLocaleDateString('en-US', options);
+          return <span>{formattedDate}</span>;
+        },
       },
-    ],
-    'On Going': [
       {
-        accessorKey: 'dayLefts',
-        header: 'Days Left',
-        size: 100,
+        accessorKey: 'notes',
+        header: 'Notes',
+        size: 150,
         muiTableHeadCellProps: {
           align: 'center',
         },
         muiTableBodyCellProps: {
           align: 'center',
         },
-      },
-    ],
-    'Delayed': [
-      {
-        accessorKey: 'daysDelayed',
-        header: 'Days Delayed',
-        size: 120,
-        muiTableHeadCellProps: {
-          align: 'center',
-        },
-        muiTableBodyCellProps: {
-          align: 'center',
-        },
-      },
+      }
     ],
     'Frozen': [
       {
@@ -252,7 +174,24 @@ const getColumns = (tab) => {
         muiTableBodyCellProps: {
           align: 'center',
         },
+        Cell: ({ cell }) => {
+          const date = new Date(cell.getValue());
+          const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+          const formattedDate = date.toLocaleDateString('en-US', options);
+          return <span>{formattedDate}</span>;
+        },
       },
+      {
+        accessorKey: 'reason',
+        header: 'Reason',
+        size: 150,
+        muiTableHeadCellProps: {
+          align: 'center',
+        },
+        muiTableBodyCellProps: {
+          align: 'center',
+        },
+      }
     ],
   };
 
@@ -260,16 +199,27 @@ const getColumns = (tab) => {
 };
 
 function TasksOverview() {
-  const [ activeTab, setActiveTab ] = useState('All');
-  const [ filteredData, setFilteredData ] = React.useState(rows);
+  const [activeTab, setActiveTab] = useState('All');
+  const [filteredData, setFilteredData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  React.useEffect(() => {
-    if (activeTab === 'All') {
-      setFilteredData(rows);
-    } else {
-      setFilteredData(rows.filter(row => row.status === activeTab));
-    }
-  }, [ activeTab ]);
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        setLoading(true);
+        const token = 'your-auth-token'; // Replace with actual token retrieval logic
+        const response = await getMemberTasks(token, activeTab === 'All' ? 'Opened' : activeTab);
+        console.log('Fetched tasks:', response.data);
+        setFilteredData(response.data); // Assuming the API returns data in `response.data`
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTasks();
+  }, [activeTab]);
 
   const table = useMaterialReactTable({
     columns: getColumns(activeTab),
@@ -302,7 +252,7 @@ function TasksOverview() {
           '::-webkit-scrollbar': { display: 'none' },
         }}
       >
-        {[ 'All', 'Completed', 'On Going', 'Delayed', 'Frozen' ].map((tab) => (
+        {[ 'All', 'Completed', 'Opened', 'Delayed', 'Frozen' ].map((tab) => (
           <Button
             key={tab}
             variant={activeTab === tab ? "contained" : "outlined"}
@@ -347,37 +297,63 @@ function TasksOverview() {
     <Box 
       sx={{ 
         mt: 4, 
-        width: '100%', 
-        maxWidth: '800px',
+        maxWidth: '900px',
+        minHeight: '400px',
       }}
     >
       <Typography variant="h6" sx={{ mb: 3 }}>Tasks Overview</Typography>
-      <MaterialReactTable
-        table={table}
-        muiTablePaperProps={{
-          elevation: 0,
-          sx: {
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-          },
-        }}
-        muiTableContainerProps={{
-          sx: {
-            border: 'none',
-          },
-        }}
-        muiTopToolbarProps={{
-          sx: {
-            backgroundColor: '#f9fafb',
-            borderBottom: '1px solid #e0e0e0',
-          },
-        }}
-        muiBottomToolbarProps={{
-          sx: {
-            borderTop: '1px solid #e0e0e0',
-          },
-        }}
-      />
+      {loading ? (
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          height: '300px',
+          border: '1px solid #e0e0e0',
+          borderRadius: '4px',
+        }}>
+          <Typography>Loading...</Typography>
+        </Box>
+      ) : (
+        <MaterialReactTable
+          table={table}
+          renderEmptyRowsFallback={() => (
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '300px',
+              }}
+            >
+              <Typography color="text.secondary">No tasks available</Typography>
+            </Box>
+          )}
+          muiTablePaperProps={{
+            elevation: 0,
+            sx: {
+              border: '1px solid #e0e0e0',
+              borderRadius: '4px',
+              minHeight: '400px',
+            },
+          }}
+          muiTableContainerProps={{
+            sx: {
+              border: 'none',
+            },
+          }}
+          muiTopToolbarProps={{
+            sx: {
+              backgroundColor: '#f9fafb',
+              borderBottom: '1px solid #e0e0e0',
+            },
+          }}
+          muiBottomToolbarProps={{
+            sx: {
+              borderTop: '1px solid #e0e0e0',
+            },
+          }}
+        />
+      )}
     </Box>
   );
 }
