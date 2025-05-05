@@ -15,8 +15,8 @@ export const calculateTaskTimers = (task) => {
 
     const threeHours = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
 
-    const priorityLimit = limits[task.priority] + threeHours;
-    const totalAllowedTime = openDate + priorityLimit;
+    const priorityLimit = limits[task.priority];
+    const totalAllowedTime = openDate + priorityLimit + threeHours;
     const remainingTime = totalAllowedTime - now;
 
     // Calculate days left for open tasks
