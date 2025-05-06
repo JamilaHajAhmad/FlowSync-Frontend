@@ -144,7 +144,7 @@ const CreateTaskForm = ({ open, onClose }) => {
       formik.resetForm();
     } catch (error) {
       console.error('Error creating task:', error);
-      toast.error(error.response?.data?.title || 'Failed to create task');
+      toast.error(error.response.data || 'Failed to create task');
     } finally {
       setLoading(false);
       setShowConfirmation(false);
