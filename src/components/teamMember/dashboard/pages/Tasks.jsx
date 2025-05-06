@@ -198,14 +198,14 @@ const TaskCard = ({ task, isDragging }) => {
           </Typography>
         </Grid>
 
-        <Grid item xs={6}>
+        {(task.status === "Opened" || task.status === 'Frozen') && <Grid item xs={6}>
           <Typography variant="body2" color="text.secondary">
             Days Left
           </Typography>
           <Typography variant="body1" gutterBottom>
             {timeRemaining.daysLeft} days
           </Typography>
-        </Grid>
+        </Grid>}
 
         {task.completedAt && (
           <Grid item xs={6}>
@@ -295,7 +295,7 @@ const TaskCard = ({ task, isDragging }) => {
                 : '#059669'
         }}>
           <Typography variant="h6">
-            { timeRemaining.isDelayed ? 'Delayed by: ' : ''}
+            
             {`${formattedTime.days}d ${formattedTime.hours}h ${formattedTime.minutes}m ${formattedTime.seconds}s`}
           </Typography>
           {task.status === 'Frozen' && (
@@ -523,56 +523,57 @@ const Tasks = () => {
 
   useEffect(() => {
     const checkForDelayedTasks = async () => {
-      const token = localStorage.getItem('authToken');
-      if (!token) return;
+        const token = localStorage.getItem('authToken');
+        if (!token) return;
 
-      const openedTasks = tasksList.filter(task => task.status === 'Opened');
+        const openedTasks = tasksList.filter(task => task.status === 'Opened');
 
-      for (const task of openedTasks) {
-        // Calculate if task is delayed without using hook
-        const now = new Date().getTime();
-        const openDate = new Date(task.createdAt).getTime();
-        
-        const limits = {
-          Regular: 7 * 24 * 60 * 60 * 1000,    // 7 days
-          Important: 5 * 24 * 60 * 60 * 1000,  // 5 days
-          Urgent: 1 * 24 * 60 * 60 * 1000      // 1 day
-        };
+        for (const task of openedTasks) {
+            const now = new Date().getTime();
+            const openDate = new Date(task.createdAt).getTime();
+            
+            const limits = {
+                Regular: 15 * 60 * 1000,    // 15 minutes
+                Important: 10 * 60 * 1000,  // 10 minutes
+                Urgent: 1 * 60 * 1000       // 5 minutes
+            };
 
-        
+            const priorityLimit = limits[task.priority];
+            const totalAllowedTime = openDate + priorityLimit;
+            const isDelayed = now >= totalAllowedTime; // Changed from > to >= for immediate detection
 
-        const priorityLimit = limits[task.priority];
-        const totalAllowedTime = openDate + priorityLimit;
-        const isDelayed = now > totalAllowedTime;
+            if (isDelayed && task.status !== 'Delayed') {
+                try {
+                    // Mark as delayed immediately
+                    await markTaskAsDelayed(task.frnNumber, token);
+                    
+                    // Update local state immediately
+                    setTasksList(prevTasks => prevTasks.map(t =>
+                        t.frnNumber === task.frnNumber
+                            ? { 
+                                ...t, 
+                                status: 'Delayed',
+                                delayedAt: new Date().toISOString() 
+                              }
+                            : t
+                    ));
 
-        if (isDelayed) {
-          try {
-            await markTaskAsDelayed(task.frnNumber, token);
-
-            setTasksList(prevTasks => prevTasks.map(t =>
-              t.frnNumber === task.frnNumber
-                ? { ...t, status: 'Delayed' }
-                : t
-            ));
-
-            toast.warning(`Task ${task.frnNumber} has been marked as delayed`);
-          } catch (error) {
-            console.error(`Failed to mark task ${task.frnNumber} as delayed:`, error);
-            toast.error(`Failed to update delayed status for task ${task.frnNumber}`);
-          }
+                    toast.warning(`Task ${task.frnNumber} has been marked as delayed`);
+                } catch (error) {
+                    console.error(`Failed to mark task ${task.frnNumber} as delayed:`, error);
+                }
+            }
         }
-      }
     };
 
-    // Run the check every minute
-    const intervalId = setInterval(checkForDelayedTasks, 60000);
+    // Check more frequently (every second instead of every minute)
+    const intervalId = setInterval(checkForDelayedTasks, 1000);
 
     // Initial check
     checkForDelayedTasks();
 
-    // Cleanup
     return () => clearInterval(intervalId);
-  }, [tasksList]);
+}, [tasksList]);
 
   if (loading) {
     return (

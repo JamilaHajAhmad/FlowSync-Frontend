@@ -13,3 +13,9 @@ export const markAsRead = async (token, notificationId) => {
         headers: { Authorization: `Bearer ${token}` }
     });
 }
+
+export const markAllAsRead = async (token) => {
+    return await axios.post(`${BASE_URL}/notifications/mark-all-as-read`, null, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+}

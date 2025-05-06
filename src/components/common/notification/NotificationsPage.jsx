@@ -16,27 +16,27 @@ import Sidebar from '../../teamLeader/dashboard/components/Sidebar';
 import MSidebar from '../../teamMember/dashboard/components/MSidebar';
 import Topbar from '../Topbar';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import  getDesignTokens  from '../../../theme';
+import getDesignTokens from '../../../theme';
 import { decodeToken } from '../../../utils';
+import { markAllAsRead as apiMarkAllAsRead } from './notificationService';
 
 const NotificationsPage = () => {
-    const { notifications, markAllAsRead, markAsRead } = useContext(NotificationContext);
+    const { notifications, markAllAsRead: contextMarkAllAsRead, markAsRead } = useContext(NotificationContext);
     const [open, setOpen] = useState(false);
     const [mode, setMode] = useState(
         localStorage.getItem("currentMode") ? 
         localStorage.getItem("currentMode") : 
         "light"
     );
-
     const [userRole, setUserRole] = React.useState(null);
     
-        React.useEffect(() => {
-            const token = localStorage.getItem('authToken');
-            if (token) {
-                const decoded = decodeToken(token);
-                setUserRole(decoded.role);
-            }
-        }, []);
+    React.useEffect(() => {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            const decoded = decodeToken(token);
+            setUserRole(decoded.role);
+        }
+    }, []);
 
     const theme = React.useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
 
@@ -44,14 +44,25 @@ const NotificationsPage = () => {
         setOpen(!open);
     };
 
-     const renderSidebar = () => {
-            if (userRole === 'Leader') { // Leader role
-                return <Sidebar open={open} />;
-            } else if (userRole === 'Member') { // Member role
-                return <MSidebar open={open} />;
-            }
-            return null;
-        };
+    const handleMarkAllAsRead = async () => {
+        try {
+            const token = localStorage.getItem('authToken');
+            await apiMarkAllAsRead(token); // API call
+            contextMarkAllAsRead(); // Update local state
+        } catch (error) {
+            console.error('Failed to mark all notifications as read:', error);
+            // Optionally show an error message to the user
+        }
+    };
+
+    const renderSidebar = () => {
+        if (userRole === 'Leader') {
+            return <Sidebar open={open} />;
+        } else if (userRole === 'Member') {
+            return <MSidebar open={open} />;
+        }
+        return null;
+    };
 
     return (
         <ThemeProvider theme={theme}>
@@ -62,13 +73,13 @@ const NotificationsPage = () => {
                 <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
                     <Box sx={{ height: 64 }} />
                     <PageHeading 
-                            title="Notifications" 
-                            subtitle="View and manage your notifications"
-                        />
+                        title="Notifications" 
+                        subtitle="View and manage your notifications"
+                    />
                     <Box>
                         {notifications.some(n => !n.read) && (
                             <Button 
-                                onClick={markAllAsRead}
+                                onClick={handleMarkAllAsRead}
                                 sx={{ 
                                     color: '#4caf50',
                                     borderColor: '#4caf50',

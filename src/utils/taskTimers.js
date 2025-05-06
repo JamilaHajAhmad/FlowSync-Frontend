@@ -1,41 +1,27 @@
-export const calculateTaskTimers = (task) => {
+export const calculateTaskTimers = (task, timeOffset = 0) => {
     const now = new Date().getTime();
     const openDate = new Date(task.createdAt).getTime();
-
-    // Time counters in milliseconds
-    const timeElapsed = now - openDate;
-    const daysElapsed = Math.floor(timeElapsed / (1000 * 60 * 60 * 24));
-
-    // Define limits based on priority
+    
     const limits = {
-        Regular: 7 * 24 * 60 * 60 * 1000,    // 7 days
-        Important: 5 * 24 * 60 * 60 * 1000,  // 5 days
-        Urgent: 1 * 24 * 60 * 60 * 1000      // 1 days
+        Regular: 15 * 60 * 1000,
+        Important: 10 * 60 * 1000,
+        Urgent: 1 * 60 * 1000
     };
 
-    const threeHours = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
-
     const priorityLimit = limits[task.priority];
-    const totalAllowedTime = openDate + priorityLimit + threeHours;
-    const remainingTime = totalAllowedTime - now;
-
-    // Calculate days left for open tasks
-    let daysLeft = Math.round(remainingTime / (1000 * 60 * 60 * 24));
     
-    const isDelayed = remainingTime < 0;
-    const warningThreshold = priorityLimit * 0.5;
-    const criticalThreshold = priorityLimit * 0.25;
+    // Apply time offset for unfrozen tasks
+    const effectiveNow = timeOffset ? (now - timeOffset) : now;
+    const totalAllowedTime = openDate + priorityLimit;
+    const remainingTime = totalAllowedTime - effectiveNow;
 
     return {
-        daysElapsed,
-        daysLeft,
-        timeElapsed,
         remainingTime,
-        isDelayed,
-        priority: task.priority,
-        status: remainingTime > warningThreshold ? 'normal' :
-                remainingTime > criticalThreshold ? 'warning' : 'critical',
-        totalTime: priorityLimit
+        isDelayed: remainingTime < 0,
+        status: remainingTime < 0 ? 'Delayed' : 'normal',
+        daysLeft: Math.max(0, Math.floor(remainingTime / (24 * 60 * 60 * 1000))),
+        totalTime: priorityLimit,
+        priority: task.priority
     };
 };
 
