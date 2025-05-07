@@ -1,4 +1,6 @@
 import api from './api';
+import axios from 'axios';
+const API_URL = 'https://localhost:55914';
 
 export const getProfile = async (token) => {
     return api.get('/profile/get-profile', {
@@ -26,3 +28,11 @@ export const getProfilePicture = async (token) => {
         return null;
     }
 };
+
+export const deleteAccount = async (password, token) => {
+    return await axios.post(`/${API_URL}/delete-account`, { password },{
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+}
