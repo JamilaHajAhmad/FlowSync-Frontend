@@ -31,6 +31,25 @@ const Login = () => {
             .min(8, 'Password must be at least 8 characters')
     });
 
+    const handleNavigation = async (decodedToken, userData) => {
+        const is2FAEnabled = localStorage.getItem('is2FAEnabled');
+        
+        if (is2FAEnabled === 'true') {
+            // Redirect to 2FA verification first
+            navigate('/settings/security/verify');
+            return;
+        }
+
+        // Only show welcome message and navigate if 2FA is not enabled
+        if (decodedToken.role === 'Leader') {
+            toast.success(`Welcome back, ${userData.displayName}!`);
+            navigate('/leader-dashboard');
+        } else {
+            toast.success(`Welcome back, ${userData.displayName}!`);
+            navigate('/member-dashboard');
+        }
+    };
+
     const formik = useFormik({
         initialValues: {
             email: '',
@@ -56,19 +75,12 @@ const Login = () => {
                 const userData = response.data.user;
                 localStorage.setItem('user', JSON.stringify(userData));
 
-                // Handle navigation based on role and status
-                if (decodedToken.role === 'Leader') { // Team Leader
-                    toast.success(`Welcome back, ${userData.displayName}!`);
-                    navigate('/leader-dashboard');
-                    console.log(decodedToken)
-                } else { // Team Member
-                    toast.success(`Welcome back, ${userData.displayName}!`);
-                    navigate('/member-dashboard');
-                    console.log(decodedToken)
-                }
+                // Handle navigation and 2FA check in a single function
+                await handleNavigation(decodedToken, userData);
+
             } catch (error) {
                 console.error('Login error:', error);
-                const errorMsg = error.response.data|| 'Login failed. Please try again.';
+                const errorMsg = error.response?.data || 'Login failed. Please try again.';
                 toast.error(errorMsg);
             } finally {
                 setSubmitting(false);

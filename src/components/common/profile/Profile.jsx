@@ -449,7 +449,8 @@ const Profile = () => {
                             }
                           }}
                         >
-                          Enable
+                          <Link to="/settings/security/2fa" target="_blank"
+                            style={{ textDecoration: 'none', color: '#4caf50' }} >Enable</Link>
                         </Button>
                       </Box>
 
@@ -483,7 +484,8 @@ const Profile = () => {
                             }
                           }}
                         >
-                          Configure
+                          <Link to="/settings/security/login-notifications" target="_blank"
+                            style={{ textDecoration: 'none', color: '#4caf50' }} >Configure</Link>
                         </Button>
                       </Box>
 
@@ -517,7 +519,8 @@ const Profile = () => {
                             }
                           }}
                         >
-                          View Devices
+                          <Link to="/settings/security/connected-devices" target="_blank"
+                            style={{ textDecoration: 'none', color: '#4caf50' }} >View Devices</Link>
                         </Button>
                       </Box>
                     </Grid>
