@@ -59,11 +59,17 @@ const caseSources = [
 const validationSchema = Yup.object({
   title: Yup.string()
     .required('Task title is required')
-    .min(3, 'Title must be at least 3 characters'),
+    .min(3, 'Title must be at least 3 characters')
+    .matches(
+      /^[A-Za-z0-9\s.,!?'-]+$/,
+      'Task title must be in English characters only'
+    ),
   frnNumber: Yup.string()
-    .required('FRN Number is required'),
+    .required('FRN Number is required')
+    .matches(/^\d{5}$/, 'FRN Number must be exactly 5 digits'),
   ossNumber: Yup.string()
-    .required('OSS Number is required'),
+    .required('OSS Number is required')
+    .matches(/^\d{12}$/, 'OSS Number must be exactly 12 digits'),
   priority: Yup.string()
     .required('Priority is required'),
   selectedMemberId: Yup.string()

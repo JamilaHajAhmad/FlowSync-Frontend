@@ -20,10 +20,6 @@ const CompleteTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!notes.trim()) {
-            toast.error('Please provide completion notes');
-            return;
-        }
 
         if (!task?.frnNumber) {
             toast.error('Task information is missing');
@@ -88,7 +84,7 @@ const CompleteTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
                     autoFocus
                     multiline
                     rows={4}
-                    label="Completion Notes"
+                    label="Completion Notes (optional)"
                     fullWidth
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
@@ -122,7 +118,7 @@ const CompleteTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
                 </Button>
                 <Button
                     onClick={handleSubmit}
-                    disabled={loading || !notes.trim()}
+                    disabled={loading}
                     variant="contained"
                     sx={{
                         bgcolor: '#059669',
