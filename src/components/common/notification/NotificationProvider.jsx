@@ -1,10 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { NotificationContext } from './NotificationContext';
+import { NotificationContext, NotificationTypes } from './NotificationContext';
 import { getNotifications, markAsRead as markAsReadApi } from './notificationService';
 
 export const NotificationProvider = ({ children }) => {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [isSecurityNotificationsEnabled, setIsSecurityNotificationsEnabled] = useState(
+        localStorage.getItem('securityNotificationsEnabled') === 'true'
+    );
     const token = localStorage.getItem('authToken');
     
     // Update unread count whenever notifications change
@@ -66,16 +69,26 @@ export const NotificationProvider = ({ children }) => {
         );
     };
 
+    const filteredNotifications = notifications.filter(notification => 
+        notification.type !== NotificationTypes.Security || isSecurityNotificationsEnabled
+    );
+
     return (
         <NotificationContext.Provider
             value={{
-                notifications,
-                unreadCount, // This will now be reactive
+                notifications: filteredNotifications,
+                unreadCount: filteredNotifications.filter(n => !n.isRead).length,
+                isSecurityNotificationsEnabled,
                 markAsRead,
                 markAllAsRead,
                 addNotification,
                 clearNotification,
                 fetchNotifications,
+                toggleSecurityNotifications: () => {
+                    const newValue = !isSecurityNotificationsEnabled;
+                    setIsSecurityNotificationsEnabled(newValue);
+                    localStorage.setItem('securityNotificationsEnabled', newValue);
+                },
                 hasUnread: unreadCount > 0 // Add this helper property
             }}
         >

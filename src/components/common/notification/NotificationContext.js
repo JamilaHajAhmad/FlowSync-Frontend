@@ -9,15 +9,18 @@ export const NotificationTypes = {
     FreezeTaskRequest: 'FreezeTaskRequest',
     Info: 'Info',
     Warning: 'Warning',
-    Error: 'Error'
+    Error: 'Error',
+    Security: 'Security',
 };
 
 export const NotificationContext = createContext({
     notifications: [],
     unreadCount: 0,
+    isSecurityNotificationsEnabled: false,
     markAsRead: (notificationId) => {},
     markAllAsRead: () => {},
     addNotification: (notification) => {},
     clearNotification: (notificationId) => {},
-    fetchNotifications: () => {}
+    fetchNotifications: () => {},
+    toggleSecurityNotifications: () => {},
 });
