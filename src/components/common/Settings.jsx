@@ -10,7 +10,6 @@ import {
     AccordionSummary,
     AccordionDetails,
     Button,
-    Modal,
 } from "@mui/material";
 import {
     ExpandMore,
@@ -23,18 +22,12 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import logo from "../../assets/images/logo.png";
-import { toast } from "react-toastify";
 import { handleLogout } from "../../utils";
+import DeleteAccountModal from './security/DeleteAccountModal';
 
 const Settings = () => {
     const navigate = useNavigate();
     const [ isDeleteModalOpen, setIsDeleteModalOpen ] = useState(false);
-
-    const handleDeleteAccount = () => {
-        // Implement account deletion logic here
-        setIsDeleteModalOpen(false);
-        toast.success("Account deleted successfully!");
-    };
 
     return (
         <Box sx={{ display: "flex", height: "100vh" }}>
@@ -197,39 +190,10 @@ const Settings = () => {
                 </Box>
 
                 {/* Confirm Delete Account Modal */}
-                <Modal
+                <DeleteAccountModal 
                     open={isDeleteModalOpen}
                     onClose={() => setIsDeleteModalOpen(false)}
-                >
-                    <Box
-                        sx={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            width: 400,
-                            bgcolor: 'background.paper',
-                            borderRadius: 2,
-                            boxShadow: 24,
-                            p: 4,
-                        }}
-                    >
-                        <Typography variant="h6" gutterBottom>
-                            Confirm Delete Account
-                        </Typography>
-                        <Typography mb={3}>
-                            Are you sure you want to delete your account? This action cannot be undone.
-                        </Typography>
-                        <Box display="flex" justifyContent="space-between">
-                            <Button variant="contained" color="error" onClick={handleDeleteAccount}>
-                                Delete
-                            </Button>
-                            <Button variant="outlined" onClick={() => setIsDeleteModalOpen(false)}>
-                                Cancel
-                            </Button>
-                        </Box>
-                    </Box>
-                </Modal>
+                />
             </Box>
         </Box>
     );
