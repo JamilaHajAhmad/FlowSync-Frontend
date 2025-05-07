@@ -36,6 +36,10 @@ import FAQ from './components/teamMember/dashboard/components/FAQ';
 import FeedbackSupport from './components/teamMember/dashboard/components/FeedbackSupport';
 import ChatbotButton from './components/common/chat/ChatbotButton';
 import ResetPassword from './components/auth/ResetPassword/ResetPassword';
+import TwoFactorAuth from './components/common/security/TwoFactorAuth';
+import ToggleTwoFactorAuth from './components/common/security/ToggleTwoFactorAuth';
+import ConnectedDevices from './components/common/security/ConnectedDevices';
+import LoginNotifications from './components/common/security/LoginNotifications';
 
 const App = () => {
     return (
@@ -63,6 +67,10 @@ const App = () => {
                     <Route path="/requests" element={<ProtectedRouter><Requests /></ProtectedRouter>} />
                     <Route path="/settings/edit-profile" element={<ProtectedRouter><EditProfile /></ProtectedRouter>} />
                     <Route path="/settings/change-password" element={<ProtectedRouter><ChangePW /></ProtectedRouter>} />
+                    <Route path="/settings/security/2fa" element={<ProtectedRouter><ToggleTwoFactorAuth /></ProtectedRouter>} />
+                    <Route path="/settings/security/verify" element={<ProtectedRouter><TwoFactorAuth /></ProtectedRouter>} />
+                    <Route path="/settings/security/connected-devices" element={<ProtectedRouter><ConnectedDevices /></ProtectedRouter>} />
+                    <Route path="/settings/security/login-notifications" element={<ProtectedRouter><LoginNotifications /></ProtectedRouter>} />
                     <Route path="/analytics" element={<ProtectedRouter><Analytics /></ProtectedRouter>} />
                     <Route path="/analytics/bar" element={<ProtectedRouter><Layout children={<Bar />} /></ProtectedRouter>} />
                     <Route path="/analytics/line" element={<ProtectedRouter><Layout children={<Line />} /></ProtectedRouter>} />
