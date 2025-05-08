@@ -14,16 +14,9 @@ export const useTaskTimer = (task) => {
         isFrozen: false
     });
 
-    // Add new state for time offset
-    const [timeOffset, setTimeOffset] = useState(0);
-
-    // Modify frozenTimeData to include the frozen remaining time
     const frozenTimeData = useMemo(() => {
         if (!task || task.status !== 'Frozen') return null;
-        const data = calculateFrozenTime(task);
-        // Store the remaining time at freeze point
-        setTimeOffset(data.timeRemaining.remainingTime);
-        return data;
+        return calculateFrozenTime(task);
     }, [task]);
 
     const completedTimeData = useMemo(() => {
@@ -42,15 +35,12 @@ export const useTaskTimer = (task) => {
                 return;
             }
 
-            // Handle Completed tasks
-            if (task.status === 'Completed' && completedTimeData) {
-                setFormattedTime(completedTimeData.formattedTime);
-                setTimeRemaining(completedTimeData.timeRemaining);
-                return;
-            }
+            // For unfrozen tasks that were previously frozen
+            const offset = task.lastUnfrozenAt ? 
+                (new Date(task.lastUnfrozenAt).getTime() - new Date(task.frozenAt).getTime()) : 0;
 
-            // Get timer calculations from utility function
-            const timerData = calculateTaskTimers(task, task.status === 'Frozen' ? timeOffset : 0);
+            // Get timer calculations from utility function with offset
+            const timerData = calculateTaskTimers(task, offset);
 
             // If time is up, lock at zero and don't continue counting
             if (timerData.remainingTime <= 0) {
@@ -90,10 +80,7 @@ export const useTaskTimer = (task) => {
             });
         };
 
-        // Initial calculation
         calculateTime();
-
-        // Only set up interval for active tasks
         let timer;
         if (task.status === 'Opened') {
             timer = setInterval(calculateTime, 1000);
@@ -104,14 +91,7 @@ export const useTaskTimer = (task) => {
                 clearInterval(timer);
             }
         };
-    }, [task, frozenTimeData, completedTimeData, timeOffset]);
-
-    // Reset offset when task changes or unfreezes
-    useEffect(() => {
-        if (task.status !== 'Frozen') {
-            setTimeOffset(0); // Reset timeOffset when the task is no longer frozen
-        }
-    }, [task.status]);
+    }, [task, frozenTimeData, completedTimeData]);
 
     return { formattedTime, timeRemaining };
 };
@@ -134,10 +114,8 @@ function calculateFrozenTime(task) {
         };
     }
 
-    // Calculate times using only fixed timestamps
     const frozenAt = new Date(task.frozenAt).getTime();
     const openDate = new Date(task.createdAt).getTime();
-    
     const DAY_IN_MS = 24 * 60 * 60 * 1000;
     
     const limits = {
@@ -147,15 +125,15 @@ function calculateFrozenTime(task) {
     };
 
     const priorityLimit = limits[task.priority];
-    const totalAllowedTime = openDate + priorityLimit;
-    const remainingTimeAtFreeze = totalAllowedTime - frozenAt;
+    // Calculate time elapsed before freezing
+    const timeElapsedBeforeFreeze = frozenAt - openDate;
+    // Calculate remaining time at freeze point
+    const remainingTimeAtFreeze = priorityLimit - timeElapsedBeforeFreeze;
     
-    // Calculate days using only the frozen timestamp
-    const daysElapsed = Math.floor((frozenAt - openDate) / DAY_IN_MS);
+    const daysElapsed = Math.floor(timeElapsedBeforeFreeze / DAY_IN_MS);
     const daysLeft = Math.max(0, Math.floor(remainingTimeAtFreeze / DAY_IN_MS));
 
-    // Format the frozen time - this will now be consistent
-    const frozenTimeFormat = formatTimeRemaining(remainingTimeAtFreeze);
+    const frozenTimeFormat = formatTimeRemaining(remainingTimeAtFreeze, task.priority);
 
     return {
         formattedTime: frozenTimeFormat,

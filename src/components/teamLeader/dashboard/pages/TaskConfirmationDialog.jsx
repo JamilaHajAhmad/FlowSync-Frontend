@@ -63,7 +63,7 @@ const TaskConfirmationDialog = ({ open, onClose, taskData, onConfirm, loading })
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <Box>
                         <Typography variant="h5" sx={{ fontWeight: 700, color: '#1e293b', mb: 0.5 }}>
-                            Confirm Task CreationBox
+                            Confirm Task Creation
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                             Please review the task details before proceeding

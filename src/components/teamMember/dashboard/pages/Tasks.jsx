@@ -231,7 +231,7 @@ const TaskCard = ({ task, isDragging }) => {
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="body1" gutterBottom color="#d32f2f">
-                {timeRemaining.delayDuration} days
+                {timeRemaining.daysElapsed} days
               </Typography>
               <ErrorOutline sx={{ color: "#d32f2f", fontSize: 20 }} />
             </Box>
@@ -288,7 +288,7 @@ const TaskCard = ({ task, isDragging }) => {
           alignItems: 'center',
           color: task.status === 'Frozen'
             ? '#1976D2'
-            : timeRemaining.status === 'critical'
+            : timeRemaining.status === 'critical' || timeRemaining.status === 'Delayed'
               ? '#d32f2f'
               : timeRemaining.status === 'warning'
                 ? '#ed6c02'
@@ -617,7 +617,6 @@ const Tasks = () => {
       activeTask,
       fromStatus: activeTask?.status,
       toStatus: overStatus,
-      hasPendingFreeze: activeTask?.hasPendingFreezeRequest,
       dropType: over.data.current?.sortable ? 'task' : 'column'
     });
 
@@ -637,13 +636,8 @@ const Tasks = () => {
 
     // Handle different status transitions
     if (activeTask.status === 'Opened' && overStatus === 'Frozen') {
-      if (activeTask.hasPendingFreezeRequest) {
-        toast.warning('This task already has a pending freeze request');
-        setSelectedTask(null);
         setPendingStatusChange(null);
-      } else {
         setOpenFreezeDialog(true);
-      }
     } else if (activeTask.status === 'Frozen' && overStatus === 'Opened') {
       setOpenUnfreezeDialog(true);
     } else if (activeTask.status === 'Opened' && overStatus === 'Completed') {
@@ -675,7 +669,6 @@ const Tasks = () => {
           updatedTask = {
             ...task,
             status: 'Opened',
-            hasPendingFreezeRequest: true,
             freezingReason: task.reason,
             freezeRequestedAt: new Date().toISOString()
           };
@@ -688,7 +681,6 @@ const Tasks = () => {
             status: 'Opened',
             frozenAt: null,
             freezingReason: null,
-            hasPendingFreezeRequest: false,
             freezeRequestedAt: null
           };
           success = true;
@@ -725,7 +717,7 @@ const Tasks = () => {
       }
     } catch (error) {
       console.error('Error handling task action:', error);
-      toast.error(error.response?.data?.message || 'Failed to update task');
+      toast.error(error.response?.data || 'Failed to update task');
       setPendingStatusChange(null);
     }
   };

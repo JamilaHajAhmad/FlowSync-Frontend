@@ -50,7 +50,7 @@ const CompleteTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
             onClose();
         } catch (error) {
             console.error('Error submitting completion request:', error);
-            toast.error(error?.response?.data?.message || 'Failed to submit completion request');
+            toast.error(error?.response?.data || 'Failed to submit completion request');
         } finally {
             setLoading(false);
         }

@@ -6,7 +6,6 @@ import {
     DialogActions,
     Button,
     Typography,
-    Box,
     TextField,
     CircularProgress
 } from "@mui/material";
@@ -34,7 +33,7 @@ const FreezeTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
                     throw new Error('Authentication token not found');
                 }
 
-                if (!task?.frnNumber) {
+                if (!task.frnNumber) {
                     throw new Error('Task FRN number is missing');
                 }
 
@@ -45,8 +44,7 @@ const FreezeTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
 
                 onSubmitSuccess({
                     ...task,
-                    freezingReason: values.reason.trim(),
-                    hasPendingFreezeRequest: true
+                    freezingReason: values.reason.trim()
                 });
 
                 resetForm();
@@ -54,7 +52,8 @@ const FreezeTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
                 toast.success('Freeze request sent successfully');
             } catch (error) {
                 console.error('Error creating freeze request:', error);
-                toast.error(error.response?.data?.message || 'Failed to create freeze request');
+                console.log(task)
+                toast.error(error.response?.data || 'Failed to create freeze request');
             } finally {
                 setSubmitting(false);
             }

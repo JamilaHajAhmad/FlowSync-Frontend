@@ -10,18 +10,24 @@ export const calculateTaskTimers = (task, timeOffset = 0) => {
 
     const priorityLimit = limits[task.priority];
     
-    // Apply time offset for unfrozen tasks
+    // Adjust current time by subtracting the frozen duration
     const effectiveNow = timeOffset ? (now - timeOffset) : now;
-    const totalAllowedTime = openDate + priorityLimit;
-    const remainingTime = totalAllowedTime - effectiveNow;
+    
+    // Calculate remaining time with offset
+    const timeElapsed = effectiveNow - openDate;
+    const remainingTime = priorityLimit - timeElapsed;
+    
+    const warningThreshold = priorityLimit * 0.5;
+    const criticalThreshold = priorityLimit * 0.25;
 
     return {
         remainingTime,
         isDelayed: remainingTime < 0,
-        status: remainingTime < 0 ? 'Delayed' : 'normal',
         daysLeft: Math.max(0, Math.floor(remainingTime / (24 * 60 * 60 * 1000))),
         totalTime: priorityLimit,
-        priority: task.priority
+        priority: task.priority,
+        status: remainingTime > warningThreshold ? 'normal' :
+                remainingTime > criticalThreshold ? 'warning' : 'critical'
     };
 };
 
