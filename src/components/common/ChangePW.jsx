@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { decodeToken } from '../../utils';
+import { ArrowBack } from '@mui/icons-material';
 
 const theme = createTheme({
     palette: {
@@ -101,6 +102,10 @@ const ChangePW = () => {
     });
     const [strength, setStrength] = useState(0);
 
+    const handleBack = () => {
+        navigate('/profile');
+    };
+
     const formik = useFormik({
         initialValues: {
             currentPassword: '',
@@ -177,8 +182,27 @@ const ChangePW = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 p: 3,
-                backgroundColor: 'background.default'
+                backgroundColor: 'background.default',
+                position: 'relative'
             }}>
+                <Button
+                    startIcon={<ArrowBack />}
+                    onClick={handleBack}
+                    sx={{
+                        position: 'absolute',
+                        top: 24,
+                        left: 24,
+                        color: '#064e3b',
+                        '&:hover': {
+                            bgcolor: '#ecfdf5'
+                        },
+                        textTransform: 'capitalize',
+                        fontWeight: 500
+                    }}
+                >
+                    
+                </Button>
+
                 <Motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}

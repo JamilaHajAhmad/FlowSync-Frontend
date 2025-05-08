@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { adjustTimezone } from "../../utils";
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { format, parseISO } from 'date-fns';
+import { ArrowBack } from "@mui/icons-material";
 
 // Custom styled components
 const StyledTextField = styled(TextField)(() => ({
@@ -319,6 +320,10 @@ const EditProfile = () => {
         }
     };
 
+    const handleBackToProfile = () => {
+        navigate('/profile');
+    };
+
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
@@ -338,6 +343,24 @@ const EditProfile = () => {
                         FlowSync
                     </Typography>
                 </Box>
+
+                {/* Add Back Button */}
+                <Button
+                    startIcon={<ArrowBack />}
+                    onClick={handleBackToProfile}
+                    sx={{
+                        position: 'absolute',
+                        top: 32,
+                        left: 32,
+                        color: '#064e3b',
+                        '&:hover': {
+                            bgcolor: '#ecfdf5'
+                        },
+                        textTransform: 'capitalize',
+                        fontWeight: 500
+                    }}
+                >
+                </Button>
 
                 {/* Profile Edit Section */}
                 <StyledPaper elevation={0}>

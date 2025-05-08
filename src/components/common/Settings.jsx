@@ -18,16 +18,30 @@ import {
     Delete,
     ExitToApp,
     Security,
-    NotificationsActive, DeviceHub
+    NotificationsActive,
+    DeviceHub,
+    ArrowBack
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import logo from "../../assets/images/logo.png";
 import { handleLogout } from "../../utils";
 import DeleteAccountModal from './security/DeleteAccountModal';
+import { decodeToken } from "../../utils";
 
 const Settings = () => {
     const navigate = useNavigate();
-    const [ isDeleteModalOpen, setIsDeleteModalOpen ] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    const handleBackToDashboard = () => {
+        const token = localStorage.getItem('authToken');
+        const decodedToken = decodeToken(token);
+        const role = decodedToken.role;
+        if (role === 'Leader') {
+            navigate('/leader-dashboard');
+        } else {
+            navigate('/member-dashboard');
+        }
+    };
 
     return (
         <Box sx={{ display: "flex", height: "100vh" }}>
@@ -43,6 +57,24 @@ const Settings = () => {
                     p: 4,
                 }}
             >
+                {/* Add Back to Dashboard button at the top */}
+                <Box sx={{ position: 'absolute', bottom: 20, left: 18 }}>
+                    <Button
+                        startIcon={<ArrowBack />}
+                        onClick={handleBackToDashboard}
+                        sx={{
+                            color: '#064e3b',
+                            '&:hover': {
+                                bgcolor: '#ecfdf5'
+                            },
+                            textTransform: 'capitalize',
+                            fontWeight: 500
+                        }}
+                    >
+                        Back to Dashboard
+                    </Button>
+                </Box>
+
                 <img src={logo} alt="FlowSync Logo" width={250} />
                 <Typography
                     variant="h4"

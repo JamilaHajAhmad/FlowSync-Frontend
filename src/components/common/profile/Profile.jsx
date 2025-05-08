@@ -368,7 +368,6 @@ const Profile = () => {
                       <Link
                         to="/settings/edit-profile"
                         style={{ textDecoration: 'none' }}
-                        target="_blank"
                       >
                         <ActionButton startIcon={<Edit />}>
                           Edit
@@ -414,7 +413,7 @@ const Profile = () => {
                             },
                           }}
                         >
-                          <Link to="/settings/change-password" target="_blank"
+                          <Link to="/settings/change-password"
                             style={{ textDecoration: 'none', color: '#4caf50' }} >Change</Link>
                         </Button>
                       </Box>
@@ -449,7 +448,7 @@ const Profile = () => {
                             }
                           }}
                         >
-                          <Link to="/settings/security/2fa" target="_blank"
+                          <Link to="/settings/security/2fa"
                             style={{ textDecoration: 'none', color: '#4caf50' }} >Enable</Link>
                         </Button>
                       </Box>
@@ -484,7 +483,7 @@ const Profile = () => {
                             }
                           }}
                         >
-                          <Link to="/settings/security/login-notifications" target="_blank"
+                          <Link to="/settings/security/login-notifications"
                             style={{ textDecoration: 'none', color: '#4caf50' }} >Configure</Link>
                         </Button>
                       </Box>
@@ -519,7 +518,7 @@ const Profile = () => {
                             }
                           }}
                         >
-                          <Link to="/settings/security/connected-devices" target="_blank"
+                          <Link to="/settings/security/connected-devices"
                             style={{ textDecoration: 'none', color: '#4caf50' }} >View Devices</Link>
                         </Button>
                       </Box>

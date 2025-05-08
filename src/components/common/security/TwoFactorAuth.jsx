@@ -14,12 +14,13 @@ import { enableTwoFactor, disableTwoFactor, verifyTwoFactor } from '../../../ser
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { decodeToken } from '../../../utils';
+import logo from '../../../assets/images/logo.png';
 
 const TwoFactorAuth = () => {
-    const [ isEnabled, setIsEnabled ] = useState(false);
-    const [ verificationCode, setVerificationCode ] = useState('');
-    const [ error, setError ] = useState('');
-    const [ loading, setLoading ] = useState(false);
+    const [isEnabled, setIsEnabled] = useState(false);
+    const [verificationCode, setVerificationCode] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const token = localStorage.getItem('authToken');
     const navigate = useNavigate();
 
@@ -53,8 +54,7 @@ const TwoFactorAuth = () => {
             if (role === 'Leader') {
                 toast.success(`Welcome back, ${user.displayName}!`);
                 navigate('/leader-dashboard');
-            }
-            else {
+            } else {
                 toast.success(`Welcome back, ${user.displayName}!`);
                 navigate('/member-dashboard');
             }
@@ -68,57 +68,134 @@ const TwoFactorAuth = () => {
 
     return (
         <Box sx={{ maxWidth: 600, mx: 'auto', mt: 4, p: 2 }}>
-            <Card elevation={3}>
+            {/* Logo and Title */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, ml: -30 }}>
+                <img src={logo} alt="FlowSync Logo" style={{ width: '60px', marginRight: '12px' }} />
+                <Typography
+                    variant="h5"
+                    sx={{
+                        color: '#059669',
+                        fontWeight: 'bold',
+                        fontSize: '24px',
+                    }}
+                >
+                    FlowSync
+                </Typography>
+            </Box>
+
+            <Card elevation={3} sx={{ bgcolor: 'white' }}>
                 <CardContent>
                     <Box display="flex" alignItems="center" mb={3}>
-                        <SecurityIcon sx={{ fontSize: 30, mr: 1, color: 'primary.main' }} />
-                        <Typography variant="h5" component="h2">
+                        <SecurityIcon sx={{ fontSize: 30, mr: 1, color: '#064e3b' }} />
+                        <Typography
+                            variant="h5"
+                            component="h2"
+                            sx={{
+                                color: '#064e3b',
+                                fontWeight: 'bold'
+                            }}
+                        >
                             Two-Factor Authentication
                         </Typography>
                     </Box>
 
                     {error && (
-                        <Alert severity="error" sx={{ mb: 2 }}>
+                        <Alert
+                            severity="error"
+                            sx={{
+                                mb: 2,
+                                '& .MuiAlert-icon': {
+                                    color: '#dc2626'
+                                }
+                            }}
+                        >
                             {error}
                         </Alert>
                     )}
+
+                    <Box sx={{
+                        mb: 3,
+                        p: 2,
+                        bgcolor: '#f0fdf4',
+                        borderRadius: 1,
+                        border: '1px solid #d1fae5'
+                    }}>
+                        <Typography
+                            variant="body2"
+                            sx={{
+                                color: '#065f46',
+                                lineHeight: 1.6
+                            }}
+                        >
+                            {!isEnabled ?
+                                "To enable two-factor authentication, click the button below to receive a verification code via email." :
+                                "Enter the 6-digit verification code that was sent to your email address."
+                            }
+                        </Typography>
+                    </Box>
 
                     <Box mb={3}>
                         {!isEnabled ? (
                             <Button
                                 variant="contained"
-                                color="primary"
                                 onClick={() => handleEnable2FA(token)}
                                 disabled={loading}
                                 startIcon={loading ? <CircularProgress size={20} /> : <SecurityIcon />}
+                                sx={{
+                                    bgcolor: '#059669',
+                                    '&:hover': {
+                                        bgcolor: '#047857'
+                                    },
+                                    '&.Mui-disabled': {
+                                        bgcolor: '#d1fae5',
+                                        color: '#065f46'
+                                    }
+                                }}
                             >
                                 Send Verification Code
                             </Button>
-                        ) : null}
+                        ) : (
+                            <Box>
+                                <TextField
+                                    fullWidth
+                                    label="Verification Code"
+                                    variant="outlined"
+                                    value={verificationCode}
+                                    onChange={(e) => setVerificationCode(e.target.value)}
+                                    sx={{
+                                        mb: 2,
+                                        '& .MuiOutlinedInput-root': {
+                                            '&.Mui-focused fieldset': {
+                                                borderColor: '#059669'
+                                            }
+                                        },
+                                        '& .MuiInputLabel-root.Mui-focused': {
+                                            color: '#059669'
+                                        }
+                                    }}
+                                    placeholder="Enter 6-digit code"
+                                />
+                                <Button
+                                    variant="contained"
+                                    onClick={() => handleVerify(verificationCode, token)}
+                                    disabled={loading || !verificationCode}
+                                    startIcon={loading ? <CircularProgress size={20} /> : <SecurityIcon />}
+                                    sx={{
+                                        bgcolor: '#059669',
+                                        '&:hover': {
+                                            bgcolor: '#047857'
+                                        },
+                                        '&.Mui-disabled': {
+                                            bgcolor: '#d1fae5',
+                                            color: '#065f46'
+                                        }
+                                    }}
+                                >
+                                    Verify Code
+                                </Button>
+                            </Box>
+                        )}
                     </Box>
-
-                    {isEnabled && (
-                        <Box>
-                            <TextField
-                                fullWidth
-                                label="Verification Code"
-                                variant="outlined"
-                                value={verificationCode}
-                                onChange={(e) => setVerificationCode(e.target.value)}
-                                sx={{ mb: 2 }}
-                                placeholder="Enter 6-digit code"
-                            />
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={() => handleVerify(verificationCode, token)}
-                                disabled={loading || !verificationCode}
-                                startIcon={loading ? <CircularProgress size={20} /> : null}
-                            >
-                                Verify Code
-                            </Button>
-                        </Box>
-                    )}
                 </CardContent>
             </Card>
         </Box>
