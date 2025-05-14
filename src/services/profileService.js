@@ -29,8 +29,8 @@ export const getProfilePicture = async (token) => {
     }
 };
 
-export const deleteAccount = async (password, token) => {
-    return await axios.post(`/${API_URL}/delete-account`, { password },{
+export const deleteAccount = async (password,reason, token) => {
+    return await axios.post(`${API_URL}/delete-account`, { password, reason },{
         headers: {
             Authorization: `Bearer ${token}`
         }

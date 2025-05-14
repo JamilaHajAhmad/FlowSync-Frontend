@@ -12,13 +12,20 @@ import "react-toastify/dist/ReactToastify.css";
 import { getAllSignupRequests, approveSignupRequest, rejectSignupRequest } from "../../../../services/signupRequests";
 import { getAllFreezeRequests, approveFreezeRequest, rejectFreezeRequest } from "../../../../services/freezeRequests";
 import { getAllCompletionRequests, approveCompletionRequest } from "../../../../services/completionRequests";
+import { 
+    getAllDeleteAccountRequests, 
+    approveDeleteAccountRequest, 
+    rejectDeleteAccountRequest 
+} from "../../../../services/deleteAccountRequests";
+import DeleteMemberDialog from '../components/DeleteMemberDialog';
 
 const Requests = () => {
     const [currentTab, setCurrentTab] = useState(0);
     const [requests, setRequests] = useState({
         signup: [],
         freeze: [],
-        completion: []
+        completion: [],
+        deleteAccount: []
     });
     const [isLoading, setIsLoading] = useState(true);
     const [anchorEl, setAnchorEl] = React.useState(null);
@@ -30,6 +37,12 @@ const Requests = () => {
         actionType: '',
         requestId: null,
         requestType: ''
+    });
+    const [deleteMemberDialog, setDeleteMemberDialog] = useState({
+        open: false,
+        memberId: null,
+        memberName: '',
+        requestId: null
     });
     const token = localStorage.getItem('authToken');
 
@@ -49,6 +62,10 @@ const Requests = () => {
                 case 'completion':
                     response = await getAllCompletionRequests(token);
                     console.log(response.data);
+                    break;
+                case 'deleteAccount':
+                    response = await getAllDeleteAccountRequests(token);
+                    console.log('Delete account requests:', response.data);
                     break;
                 default:
                     return;
@@ -78,8 +95,19 @@ const Requests = () => {
             }
 
             const request = requests[type].find(req => req.requestId === id);
-            console.log(request);
             
+            if (type === 'deleteAccount') {
+                // Open delete member dialog instead of immediate approval
+                setDeleteMemberDialog({
+                    open: true,
+                    memberId: request.memberId,
+                    memberName: request.memberName,
+                    requestId: id
+                });
+                return;
+            }
+
+            // Handle other request types as before
             switch (type) {
                 case 'signup':
                     await approveSignupRequest(id, token);
@@ -94,7 +122,7 @@ const Requests = () => {
                     return;
             }
             
-            // Update local state
+            // Update local state and show success message
             setRequests(prev => ({
                 ...prev,
                 [type]: prev[type].filter(req => req.requestId !== id)
@@ -115,6 +143,9 @@ const Requests = () => {
             }
 
             switch (type) {
+                case 'deleteAccount':
+                    await rejectDeleteAccountRequest(id, token);
+                    break;
                 case 'signup':
                     await rejectSignupRequest(id, token);
                     break;
@@ -125,13 +156,12 @@ const Requests = () => {
                     return;
             }
             
-            // Update local state
             setRequests(prev => ({
                 ...prev,
                 [type]: prev[type].filter(req => req.requestId !== id)
             }));
             
-            toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} request rejected.`);
+            toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} request rejected successfully`);
             fetchRequests(type);
         } catch (error) {
             console.error('Error rejecting request:', error);
@@ -254,6 +284,13 @@ const Requests = () => {
                     header: "Notes",
                     size: 150,
                 },
+            ],
+            deleteAccount: [
+                {
+                    accessorKey: "reason",
+                    header: "Reason",
+                    size: 200,
+                }
             ]
         };
 
@@ -385,6 +422,37 @@ const Requests = () => {
         handleConfirmClose();
     };
 
+    const handleDeleteMemberDialogClose = () => {
+        setDeleteMemberDialog({
+            open: false,
+            memberId: null,
+            memberName: '',
+            requestId: null
+        });
+    };
+
+    const handleDeleteSuccess = async () => {
+        try {
+            // Call the approve API after successful deletion and reassignment
+            await approveDeleteAccountRequest(deleteMemberDialog.requestId, token);
+            
+            // Update local state
+            setRequests(prev => ({
+                ...prev,
+                deleteAccount: prev.deleteAccount.filter(req => 
+                    req.requestId !== deleteMemberDialog.requestId
+                )
+            }));
+            
+            toast.success('Account deletion request approved successfully');
+            handleDeleteMemberDialogClose();
+            fetchRequests('deleteAccount');
+        } catch (error) {
+            console.error('Error approving delete account request:', error);
+            toast.error('Failed to approve delete account request');
+        }
+    };
+
     return (
         <Box p={3}>
             <Tabs
@@ -407,6 +475,7 @@ const Requests = () => {
                 <Tab label="Sign Up" />
                 <Tab label="Freeze" />
                 <Tab label="Completion" />
+                <Tab label="Delete Account" />
             </Tabs>
 
             <Box sx={{ height: 400, width: "100%" }}>
@@ -475,6 +544,14 @@ const Requests = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            <DeleteMemberDialog
+                open={deleteMemberDialog.open}
+                memberId={deleteMemberDialog.memberId}
+                memberName={deleteMemberDialog.memberName}
+                onClose={handleDeleteMemberDialogClose}
+                onSuccess={handleDeleteSuccess}
+            />
         </Box>
     );
 };
