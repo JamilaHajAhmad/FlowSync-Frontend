@@ -25,6 +25,14 @@ export const getMemberTasks = async (token, type = 'Opened') => {
     });
 };
 
+export const getMemberTasksToReassign = async (memberId, token) => {
+    return await api.get(`/taskmanagement/get-member-tasks-to-reassign/${memberId}`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
+    });
+};
+
 export const createFreezeRequest = async (data, token) => {
     return await api.post(
         '/freezetaskrequests/create-freeze-request',
@@ -56,5 +64,20 @@ export const markTaskAsDelayed = async (frnNumber, token) => {
             'Content-Type': 'application/json'
         },
     });
+};
+
+export const reassignTask = async (frnNumber, newMemberId, token) => {
+    return await api.post('/taskmanagement/reassign-task', 
+        { 
+            frnNumber,
+            newMemberId 
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        }
+    );
 };
 
