@@ -3,12 +3,7 @@ import {
     MaterialReactTable,
     useMaterialReactTable,
 } from 'material-react-table';
-import { Box, IconButton, Stack, Chip, Button, Menu, MenuItem, Typography, 
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    DialogContentText,
+import { Box, Stack, Chip, Button, Menu, MenuItem, Typography, 
     Avatar
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
@@ -18,8 +13,8 @@ import jsPDF from 'jspdf';
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { getAllMembers } from "../../../../services/memberService";
-import { deleteMember } from "../../../../services/memberService";
 import { formatString } from "../../../../utils";
+import DeleteMemberDialog from '../components/DeleteMemberDialog';
 
 export default function Members({ showActions = true }) {
     const [rows, setRows] = useState([]);
@@ -43,6 +38,7 @@ export default function Members({ showActions = true }) {
                     email: member.email,
                     tasks: member.ongoingTasks,
                     pictureURL: member.pictureURL,
+                    isRemoved: member.isRemoved,
                 }));
                 setRows(formattedMembers);
             } catch (error) {
@@ -56,19 +52,10 @@ export default function Members({ showActions = true }) {
         fetchMembers();
     }, []);
 
-    const handleDelete = async (id) => {
-        try {
-            const token = localStorage.getItem('authToken');
-            await deleteMember(id, token); // You'll need to create this service function
-            setRows((prevRows) => prevRows.filter((row) => row.id !== id));
-            toast.success('Member removed successfully');
-        } catch (error) {
-            console.error('Error deleting member:', error);
-            toast.error('Failed to remove member');
+    const getStatusColor = (status, isRemoved) => {
+        if (isRemoved) {
+            return { color: "#ef4444", background: "#fef2f2" };
         }
-    };
-
-    const getStatusColor = (status) => {
         status = formatString(status);
         switch (status) {
             case "On Duty":
@@ -86,27 +73,30 @@ export default function Members({ showActions = true }) {
         {
             accessorKey: "name",
             header: "Users",
-            Cell: ({ cell }) => (
+            Cell: ({ cell, row }) => (
                 <Box
                     sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '12px'
+                        gap: '12px',
                     }}
                 >
-                    <Avatar
-                        alt={cell.getValue()}
-                        src={cell.row.original.pictureURL}
-                        sx={{
-                            width: 32,
-                            height: 32,
-                            border: '2px solid #f3f4f6'
-                        }}
-                    />
+                    <Box position="relative">
+                        <Avatar
+                            alt={cell.getValue()}
+                            src={cell.row.original.pictureURL}
+                            sx={{
+                                width: 32,
+                                height: 32,
+                                border: '2px solid #f3f4f6',
+                                filter: row.original.isRemoved ? 'grayscale(100%)' : 'none'
+                            }}
+                        />
+                    </Box>
                     <Typography
                         sx={{
                             fontWeight: 500,
-                            color: '#111827'
+                            color: row.original.isRemoved ? '#94a3b8' : '#111827',
                         }}
                     >
                         {cell.getValue()}
@@ -117,13 +107,13 @@ export default function Members({ showActions = true }) {
         {
             accessorKey: "status",
             header: "Status",
-            Cell: ({ cell }) => (
+            Cell: ({ cell, row }) => (
                 <Chip
-                    label={formatString(cell.getValue())}
+                    label={row.original.isRemoved ? "Removed" : formatString(cell.getValue())}
                     sx={{
                         fontSize: "12px",
-                        color: getStatusColor(cell.getValue()).color,
-                        backgroundColor: getStatusColor(cell.getValue()).background,
+                        color: getStatusColor(cell.getValue(), row.original.isRemoved).color,
+                        backgroundColor: getStatusColor(cell.getValue(), row.original.isRemoved).background,
                     }}
                 />
             ),
@@ -141,15 +131,44 @@ export default function Members({ showActions = true }) {
             header: "Actions",
             enableColumnFilter: false,
             Cell: ({ row }) => {
+                if (row.original.isRemoved) {
+                    return (
+                        <Button
+                            variant="contained"
+                            size="small"
+                            disabled
+                            sx={{
+                                backgroundColor: '#ef4444',
+                                minWidth: 'unset',
+                                padding: '4px 8px',
+                                '&:hover': {
+                                    backgroundColor: '#dc2626'
+                                }
+                            }}
+                            startIcon={<CloseIcon fontSize="small" />}
+                        >
+                            Remove
+                        </Button>
+                    );
+                }
                 return showActions ? (
                     <Stack direction="row" spacing={1}>
-                        <IconButton
+                        <Button
+                            variant="contained"
                             size="small"
                             onClick={() => handleDeleteClick(row.original.id, row.original.name)}
-                            sx={{ color: 'error.main' }}
+                            sx={{
+                                backgroundColor: '#ef4444',
+                                minWidth: 'unset',
+                                padding: '4px 8px',
+                                '&:hover': {
+                                    backgroundColor: '#dc2626'
+                                }
+                            }}
+                            startIcon={<CloseIcon fontSize="small" />}
                         >
-                            <CloseIcon fontSize="small" />
-                        </IconButton>
+                            Remove
+                        </Button>
                     </Stack>
                 ) : null;
             },
@@ -238,6 +257,20 @@ export default function Members({ showActions = true }) {
                 fontWeight: 'bold',
             },
         },
+        muiTableBodyRowProps: ({ row }) => ({
+            sx: {
+                backgroundColor: row.original.isRemoved ? '#f8fafc' : 'inherit',
+                '&:hover': {
+                    backgroundColor: row.original.isRemoved ? '#f1f5f9' : undefined,
+                },
+                opacity: row.original.isRemoved ? 0.75 : 1,
+            }
+        }),
+        muiTableBodyCellProps: ({ row }) => ({
+            sx: {
+                color: row.original.isRemoved ? '#94a3b8' : 'inherit',
+            }
+        }),
         renderTopToolbarCustomActions: () => (
             <Box sx={{ p: 2 }}>
                 <Button
@@ -278,69 +311,15 @@ export default function Members({ showActions = true }) {
         });
     };
 
-    const handleDeleteConfirm = async () => {
-        if (deleteDialog.memberId) {
-            try {
-                await handleDelete(deleteDialog.memberId);
-                handleDeleteCancel(); // Close the dialog after successful deletion
-            } catch (error) {
-                console.error('Error in delete confirmation:', error);
-                // Error is already handled in handleDelete function
-            }
-        }
-    };
-
     return (
         <Box sx={{ height: 520, width: "100%" }}>
             <MaterialReactTable table={table} />
-            <Dialog
+            <DeleteMemberDialog
                 open={deleteDialog.open}
+                memberName={deleteDialog.memberName}
+                memberId={deleteDialog.memberId}
                 onClose={handleDeleteCancel}
-                PaperProps={{
-                    sx: {
-                        width: '400px',
-                        p: 1
-                    }
-                }}
-            >
-                <DialogTitle sx={{ color: '#111827', fontWeight: 600 }}>
-                    Confirm Delete
-                </DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        Are you sure you want to remove {deleteDialog.memberName} from the team?
-                        This action cannot be undone.
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions sx={{ p: 2, pt: 0 }}>
-                    <Button
-                        onClick={handleDeleteCancel}
-                        variant="outlined"
-                        sx={{
-                            color: '#64748b',
-                            borderColor: '#64748b',
-                            '&:hover': {
-                                borderColor: '#475569',
-                                backgroundColor: 'rgba(100, 116, 139, 0.04)'
-                            }
-                        }}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        onClick={handleDeleteConfirm}
-                        variant="contained"
-                        color="error"
-                        sx={{
-                            '&:hover': {
-                                bgcolor: '#dc2626'
-                            }
-                        }}
-                    >
-                        Delete
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            />
         </Box>
     );
 }
