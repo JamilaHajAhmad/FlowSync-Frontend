@@ -23,6 +23,7 @@ import { handleLogout } from '../../../utils';
 
 const DeleteAccountModal = ({ open, onClose }) => {
     const [password, setPassword] = useState('');
+    const [reason, setReason] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -42,20 +43,25 @@ const DeleteAccountModal = ({ open, onClose }) => {
             setError('');
             const token = localStorage.getItem('authToken');
             
-            const response = await deleteAccount(password, token);
+            const response = await deleteAccount(password, reason, token);
             
-            if (response.data?.success) {
-                toast.success('Account deleted successfully');
+            if (response.data.status === 200) {
+                toast.success(response.data.detail);
                 handleLogout();
-            } else {
-                throw new Error(response.data?.message || 'Failed to delete account');
+            }
+            else {
+                const errorMessage = response.data.detail || response.data || 'Failed to delete account';
+                setError(errorMessage);
+                toast.error(errorMessage);
             }
         } catch (err) {
-            const errorMessage = err.response?.data?.message || err.message || 'Failed to delete account';
+            console.error('Error deleting account:', err);
+            const errorMessage = err.response.data.detail || err.response.data || 'Failed to delete account';
             setError(errorMessage);
             toast.error(errorMessage);
         } finally {
             setLoading(false);
+            onClose();
         }
     };
 
@@ -88,7 +94,7 @@ const DeleteAccountModal = ({ open, onClose }) => {
                 <Typography variant="body1" paragraph>
                     This action cannot be undone. Please enter your password to confirm.
                 </Typography>
-                
+
                 <TextField
                     fullWidth
                     type={showPassword ? "text" : "password"}
@@ -97,7 +103,6 @@ const DeleteAccountModal = ({ open, onClose }) => {
                     onChange={(e) => setPassword(e.target.value)}
                     error={!!error}
                     disabled={loading}
-                    sx={{ mt: 1 }}
                     InputProps={{
                         endAdornment: (
                             <InputAdornment position="end">
@@ -112,6 +117,18 @@ const DeleteAccountModal = ({ open, onClose }) => {
                             </InputAdornment>
                         )
                     }}
+                />
+
+                <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    label="Reason (Optional)"
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    disabled={loading}
+                    sx={{ mb: 2, mt: 2 }}
+                    placeholder="Please tell us why you're deleting your account..."
                 />
             </DialogContent>
 
