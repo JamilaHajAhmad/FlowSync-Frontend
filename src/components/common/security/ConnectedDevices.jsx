@@ -26,6 +26,7 @@ import { toast } from 'react-toastify';
 import { getConnectedDevices, logoutDevice } from '../../../services/connectedDevices';
 import { useNavigate } from 'react-router-dom';
 import logo from '../../../assets/images/logo.png';
+import { handleLogout } from '../../../utils';
 
 const ConnectedDevices = () => {
     const [devices, setDevices] = useState([]);
@@ -57,7 +58,8 @@ const ConnectedDevices = () => {
     const handleLogoutDevice = async (sessionId) => {
         try {
             const response = await logoutDevice(sessionId, token);
-            console.log('Logout response:', response);
+            console.log('Logout response:', response.data);
+            handleLogout();
             
             // Remove device from local state
             setDevices(devices.filter(device => device.sessionId !== sessionId));
