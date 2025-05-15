@@ -1,30 +1,37 @@
-import React from "react";
-import { Card, CardContent, Typography, Chip, Box } from "@mui/material";
-import TaskIcon from "@mui/icons-material/Task";
-import AcUnit from "@mui/icons-material/AcUnit";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import React,{ useState, useEffect } from "react";
+import { 
+    Card, CardContent, Typography, Chip, Box, CircularProgress,
+    Dialog, DialogTitle, DialogContent, List, ListItem, ListItemText,
+    ListItemIcon, Divider, IconButton
+} from "@mui/material";
+import {PauseCircleOutline, ErrorOutline} from '@mui/icons-material';
+import CelebrationIcon from '@mui/icons-material/Celebration';
+import CloseIcon from '@mui/icons-material/Close';
+import { getMemberTasks } from "../../../../../../services/taskService";
+import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 
 const getStatusColor = (status) => {
   switch (status) {
-    case "Ongoing":
+    case "Opened":
       return { 
         color: "#fff4e0",  // Light orange background
         textColor: "orange", // Orange text
-        icon: <TaskIcon sx={{ color: "#ed6c02" }} />,
+        icon: <RotateLeftIcon sx={{ color: "#ed6c02" }} />,
         borderLeftColor: "#ed6c02"
       };
     case "Frozen":
       return { 
         color: "#E3F2FD",  // Light blue background
         textColor: "#1976D2", // Blue text
-        icon: <AcUnit sx={{ color: "#1976D2" }} />,
+        icon: <PauseCircleOutline sx={{ color: "#1976D2" }} />,
         borderLeftColor: "#1976D2"
       };
+
     case "Delayed":
       return { 
         color: "#fde8e8",  // Light red background
         textColor: "red", // Red text
-        icon: <ErrorOutlineIcon sx={{ color: "#d32f2f" }} />,
+        icon: <ErrorOutline sx={{ color: "#d32f2f" }} />,
         borderLeftColor: "#d32f2f"
       };
     default:
@@ -37,73 +44,246 @@ const getStatusColor = (status) => {
   }
 };
 
-const tasks = [
-  {
-    title: "Develop Feature X",
-    description: "Implement and test the new feature.",
-    status: "Ongoing",
-    dueDate: "March 28, 2025",
-  },
-  {
-    title: "Server Migration",
-    description: "Move services to the new cloud provider.",
-    status: "Frozen",
-    dueDate: "April 5, 2025",
-  },
-  {
-    title: "Finalize Report",
-    description: "Submit the monthly performance report.",
-    status: "Delayed",
-    dueDate: "March 20, 2025",
-  },
-  {
-    title: "Finalize Report",
-    description: "Submit the monthly performance report.",
-    status: "Delayed",
-    dueDate: "March 20, 2025",
-  },
-];
-
-
 const TaskReminderCard = () => {
-  return (
-    <>
-      {tasks.map((task, index) => {
-        const { color, textColor, icon, borderLeftColor } = getStatusColor(task.status);
+    const [tasks, setTasks] = useState({
+        Opened: [],
+        Delayed: [],
+        Frozen: []
+    });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [selectedType, setSelectedType] = useState(null);
+    const [dialogOpen, setDialogOpen] = useState(false);
+
+    useEffect(() => {
+        const fetchTasks = async () => {
+            try {
+                const token = localStorage.getItem('authToken');
+                // Reorder task types to show Delayed first
+                const taskTypes = ['Delayed', 'Opened', 'Frozen'];
+                const tasksMap = {};
+
+                for (const type of taskTypes) {
+                    const response = await getMemberTasks(token, type);
+                    tasksMap[type] = response.data || [];
+                }
+
+                setTasks(tasksMap);
+            } catch (err) {
+                console.error('Error fetching tasks:', err);
+                setError('Failed to load tasks');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTasks();
+    }, []);
+
+    const handleTypeClick = (type) => {
+        setSelectedType(type);
+        setDialogOpen(true);
+    };
+
+    const renderTaskDialog = () => {
+        const typeTasks = selectedType ? tasks[selectedType] || [] : [];
+        
         return (
-          <Card 
-            key={index} 
-            sx={{ 
-              minWidth: 300, 
-              borderLeft: `5px solid ${borderLeftColor}`, 
-              mb: 2, 
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={1}>
-                {icon}
-                <Typography variant="h6">{task.title}</Typography>
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                {task.description}
-              </Typography>
-              <Box display="flex" justifyContent="space-between" mt={2}>
-                <Chip 
-                  label={task.status} 
-                  sx={{ 
-                    bgcolor: color,
-                    color: textColor,
-                    borderRadius: '16px'
-                  }} 
-                />
-                <Typography variant="body2">Due: {task.dueDate}</Typography>
-              </Box>
-            </CardContent>
-          </Card>
+            <Dialog 
+                open={dialogOpen} 
+                onClose={() => setDialogOpen(false)}
+                maxWidth="md"
+                fullWidth
+                PaperProps={{
+                    sx: { borderRadius: 2 }
+                }}
+            >
+                <DialogTitle 
+                    sx={{
+                        borderBottom: '1px solid #e2e8f0',
+                        bgcolor: getStatusColor(selectedType).color,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        pr: 2
+                    }}
+                >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        {getStatusColor(selectedType).icon}
+                        <Typography variant="h6" color={getStatusColor(selectedType).textColor}>
+                            {selectedType} Tasks ({typeTasks.length})
+                        </Typography>
+                    </Box>
+                    <IconButton
+                        onClick={() => setDialogOpen(false)}
+                        size="small"
+                        sx={{
+                            color: getStatusColor(selectedType).textColor,
+                            '&:hover': {
+                                bgcolor: 'rgba(0, 0, 0, 0.04)'
+                            }
+                        }}
+                    >
+                        <CloseIcon />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent sx={{ p: 0 }}>
+                    <List sx={{ p: 0 }}>
+                        {typeTasks.map((task, index) => (
+                            <React.Fragment key={task.frnNumber}>
+                                <ListItem sx={{
+                                    p: 3,
+                                    '&:hover': {
+                                        bgcolor: 'rgba(0, 0, 0, 0.02)'
+                                    }
+                                }}>
+                                    <ListItemIcon>
+                                        {getStatusColor(task.status).icon}
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary={
+                                            <Typography variant="subtitle1" fontWeight={500}>
+                                                {task.taskTitle}
+                                            </Typography>
+                                        }
+                                        secondary={
+                                            <Box sx={{ mt: 1 }}>
+                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                                    FRN: <span style={{ color: '#1976d2' }}>{task.frnNumber}</span>
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Due: {new Date(task.deadline).toLocaleDateString('en-US', {
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                    })}
+                                                </Typography>
+                                            </Box>
+                                        }
+                                    />
+                                </ListItem>
+                                {index < typeTasks.length - 1 && <Divider />}
+                            </React.Fragment>
+                        ))}
+                    </List>
+                </DialogContent>
+            </Dialog>
         );
-      })}
-    </>
-  );
+    };
+
+    if (loading) {
+        return (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
+                <CircularProgress />
+            </Box>
+        );
+    }
+
+    if (error) {
+        return (
+            <Card sx={{ minWidth: 300, mb: 2, bgcolor: '#fff4e0' }}>
+                <CardContent>
+                    <Typography color="error">{error}</Typography>
+                </CardContent>CardContent
+            </Card>
+        );
+    }
+
+    if (Object.values(tasks).every(typeArray => typeArray.length === 0)) {
+        return (
+            <Card sx={{ 
+                minWidth: 300, 
+                mb: 2, 
+                bgcolor: '#f0fdf4',
+                borderLeft: '5px solid #22c55e'
+            }}>
+                <CardContent>
+                    <Box display="flex" alignItems="center" gap={2} mb={2}>
+                        <CelebrationIcon sx={{ color: '#22c55e', fontSize: 40 }} />
+                        <Typography variant="h6" color="#15803d">
+                            All Caught Up!
+                        </Typography>
+                    </Box>
+                    <Typography variant="body1" color="#166534">
+                        You're doing great! No pending tasks to remind you of.
+                    </Typography>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    return (
+        <>
+            <Box 
+                display="flex" 
+                gap={4} 
+                sx={{ 
+                    overflowX: 'auto',
+                    pb: 2,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    '&::-webkit-scrollbar': {
+                        height: 8,
+                        borderRadius: 2
+                    },
+                    '&::-webkit-scrollbar-track': {
+                        bgcolor: '#f1f5f9'
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                        bgcolor: '#cbd5e1',
+                        borderRadius: 2
+                    },
+                }}
+            >
+                <Box 
+                    sx={{
+                        display: 'flex',
+                        gap: 4,
+                        px: 2 // 20
+                    }}
+                >
+                    {Object.entries(tasks).map(([type, typeTasks]) => {
+                        const { color, textColor, icon, borderLeftColor } = getStatusColor(type);
+                        return (
+                            <Card
+                                key={type}
+                                sx={{
+                                    minWidth: 300,
+                                    bgcolor: color,
+                                    borderLeft: `5px solid ${borderLeftColor}`,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease-in-out',
+                                    '&:hover': {
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: 3
+                                    }
+                                }}
+                                onClick={() => handleTypeClick(type)}
+                            >
+                                <CardContent>
+                                    <Box display="flex" alignItems="center" gap={2} mb={2}>
+                                        {icon}
+                                        <Typography variant="h6" color={textColor}>
+                                            {type} Tasks
+                                        </Typography>
+                                    </Box>
+                                    <Typography variant="h4" color={textColor}>
+                                        {typeTasks.length}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        {typeTasks.length === 1 ? 'task' : 'tasks'}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        );
+                    })}
+                </Box>
+            </Box>
+            {renderTaskDialog()}
+        </>
+    );
 };
 
 export default TaskReminderCard;
