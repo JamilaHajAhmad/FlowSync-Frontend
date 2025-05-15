@@ -8,11 +8,10 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import UnfreezeTaskForm from './UnfreezeTaskForm';
 import CompleteTaskForm from './CompleteTaskForm';
-import { useTaskTimer } from '../../../../hooks/useTaskTimer';
-import { getMemberTasks, markTaskAsDelayed } from '../../../../services/taskService';
+import { getMemberTasks } from '../../../../services/taskService';
 import { toast } from 'react-toastify';
 import RotateLeftIcon from '@mui/icons-material/RotateLeft';
-import React from 'react';
+import CountdownTimer from '../components/CountdownTimer';
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -132,15 +131,6 @@ const TaskCard = ({ task, isDragging }) => {
             </Box>
           )}
 
-          {/* For Delayed tasks - show days delayed */}
-          {task.status === "Delayed" && (
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <ErrorOutline sx={{ fontSize: 16, mr: 0.5, color: '#d32f2f' }} />
-              <Typography variant="body2" color="error">
-                Delayed by: {Math.floor(timeRemaining.delayDuration / (1000 * 60 * 60 * 24))} days
-              </Typography>
-            </Box>
-          )}
 
           {/* For Completed tasks - show completion date */}
           {task.status === "Completed" && (
@@ -160,11 +150,8 @@ const TaskCard = ({ task, isDragging }) => {
     );
   };
 
-  const { formattedTime, timeRemaining } = useTaskTimer(task);
-
   const renderDialogContent = () => (
     <Box sx={{ py: 1 }}>
-
       <Grid container spacing={2}>
         <Grid item xs={6}>
           <Typography variant="body2" color="text.secondary">
@@ -198,15 +185,6 @@ const TaskCard = ({ task, isDragging }) => {
           </Typography>
         </Grid>
 
-        {(task.status === "Opened" || task.status === 'Frozen') && <Grid item xs={6}>
-          <Typography variant="body2" color="text.secondary">
-            Days Left
-          </Typography>
-          <Typography variant="body1" gutterBottom>
-            {timeRemaining.daysLeft} days
-          </Typography>
-        </Grid>}
-
         {task.completedAt && (
           <Grid item xs={6}>
             <Typography variant="body2" color="text.secondary">
@@ -214,26 +192,12 @@ const TaskCard = ({ task, isDragging }) => {
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="body1" gutterBottom>
-              {new Date(task.completedAt).toLocaleDateString('en-US', {
+                {new Date(task.completedAt).toLocaleDateString('en-US', {
                   year: 'numeric',
                   day: '2-digit',
                   month: '2-digit',
                 })}
               </Typography>
-            </Box>
-          </Grid>
-        )}
-
-        {task.status === "Delayed" && (
-          <Grid item xs={6}>
-            <Typography variant="body2" color="text.secondary">
-              Days Delayed
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="body1" gutterBottom color="#d32f2f">
-                {timeRemaining.daysElapsed} days
-              </Typography>
-              <ErrorOutline sx={{ color: "#d32f2f", fontSize: 20 }} />
             </Box>
           </Grid>
         )}
@@ -275,39 +239,44 @@ const TaskCard = ({ task, isDragging }) => {
           </Grid>
         )}
 
+        {/* Add Counter section */}
+        {task.counter && (
+          <Grid item xs={12}>
+            <Typography 
+              variant="body2" Grid
+              color="text.secondary"
+              sx={{ mb: 1 }}
+            >
+              Time Remaining
+            </Typography>
+            <Box
+              sx={{
+                p: 2,
+                bgcolor: '#f8fafc',
+                borderRadius: 2,
+                border: '1px solid #e2e8f0'
+              }}
+            >
+              <CountdownTimer deadline={task.deadline} />
+            </Box>
+          </Grid>
+        )}
 
-      </Grid>
-
-      <Grid item xs={12}>
-        <Typography variant="body2" color="text.secondary">
-          Time Remaining
-        </Typography>
-        <Box sx={{
-          display: 'flex',
-          gap: 2,
-          alignItems: 'center',
-          color: task.status === 'Frozen'
-            ? '#1976D2'
-            : timeRemaining.status === 'critical' || timeRemaining.status === 'Delayed'
-              ? '#d32f2f'
-              : timeRemaining.status === 'warning'
-                ? '#ed6c02'
-                : '#059669'
-        }}>
-          <Typography variant="h6">
-            
-            {`${formattedTime.days}d ${formattedTime.hours}h ${formattedTime.minutes}m ${formattedTime.seconds}s`}
+        {/* Add Deadline section */}
+        <Grid item xs={6}>
+          <Typography variant="body2" color="text.secondary">
+            Deadline
           </Typography>
-          {task.status === 'Frozen' && (
-            <Schedule sx={{ color: '#1976D2' }} />
-          )}
-          {task.status === 'Completed' && (
-            <CheckCircleOutline sx={{ color: "#059669" }} />
-          )}
-          {timeRemaining.isDelayed && task.status !== 'Frozen' && (
-            <ErrorOutline color="error" />
-          )}
-        </Box>
+          <Typography variant="body1" gutterBottom>
+            {task.deadline ? new Date(task.deadline).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }) : 'No deadline set'}
+          </Typography>
+        </Grid>
       </Grid>
     </Box>
   );
@@ -521,59 +490,7 @@ const Tasks = () => {
     fetchAllTasks();
   }, []);
 
-  useEffect(() => {
-    const checkForDelayedTasks = async () => {
-        const token = localStorage.getItem('authToken');
-        if (!token) return;
-
-        const openedTasks = tasksList.filter(task => task.status === 'Opened');
-
-        for (const task of openedTasks) {
-            const now = new Date().getTime();
-            const openDate = new Date(task.createdAt).getTime();
-            
-            const limits = {
-                Regular: 15 * 60 * 1000,    // 15 minutes
-                Important: 10 * 60 * 1000,  // 10 minutes
-                Urgent: 1 * 60 * 1000       // 5 minutes
-            };
-
-            const priorityLimit = limits[task.priority];
-            const totalAllowedTime = openDate + priorityLimit;
-            const isDelayed = now >= totalAllowedTime; // Changed from > to >= for immediate detection
-
-            if (isDelayed && task.status !== 'Delayed') {
-                try {
-                    // Mark as delayed immediately
-                    await markTaskAsDelayed(task.frnNumber, token);
-                    
-                    // Update local state immediately
-                    setTasksList(prevTasks => prevTasks.map(t =>
-                        t.frnNumber === task.frnNumber
-                            ? { 
-                                ...t, 
-                                status: 'Delayed',
-                                delayedAt: new Date().toISOString() 
-                              }
-                            : t
-                    ));
-
-                    toast.warning(`Task ${task.frnNumber} has been marked as delayed`);
-                } catch (error) {
-                    console.error(`Failed to mark task ${task.frnNumber} as delayed:`, error);
-                }
-            }
-        }
-    };
-
-    // Check more frequently (every second instead of every minute)
-    const intervalId = setInterval(checkForDelayedTasks, 1000);
-
-    // Initial check
-    checkForDelayedTasks();
-
-    return () => clearInterval(intervalId);
-}, [tasksList]);
+  
 
   if (loading) {
     return (
@@ -690,7 +607,7 @@ const Tasks = () => {
         case 'complete':
           updatedTask = {
             ...task,
-            status: 'Opened',
+            status: 'Completed',
             completedDate: new Date().toLocaleDateString('en-US'),
             completionNotes: task.notes
           };
