@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
     Button,
     Dialog,
@@ -12,6 +12,7 @@ import {
     InputAdornment,
     IconButton
 } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import { 
     Warning as WarningIcon,
     Visibility as VisibilityIcon,
@@ -20,6 +21,24 @@ import {
 import { toast } from 'react-toastify';
 import { deleteAccount } from '../../../services/profileService';
 import { handleLogout } from '../../../utils';
+
+const StyledTextField = styled(TextField)(() => ({
+    '& .MuiOutlinedInput-root': {
+        '& fieldset': {
+            borderColor: '#e5e7eb',
+        },
+        '&:hover fieldset': {
+            borderColor: '#10B981',
+        },
+        '&.Mui-focused fieldset': {
+            borderColor: '#059669 !important',
+            borderWidth: '2px'
+        }
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+        color: '#059669'
+    }
+}));
 
 const DeleteAccountModal = ({ open, onClose }) => {
     const [password, setPassword] = useState('');
@@ -95,7 +114,7 @@ const DeleteAccountModal = ({ open, onClose }) => {
                     This action cannot be undone. Please enter your password to confirm.
                 </Typography>
 
-                <TextField
+                <StyledTextField
                     fullWidth
                     type={showPassword ? "text" : "password"}
                     label="Password"
@@ -119,7 +138,7 @@ const DeleteAccountModal = ({ open, onClose }) => {
                     }}
                 />
 
-                <TextField
+                <StyledTextField
                     fullWidth
                     multiline
                     rows={3}
@@ -136,6 +155,7 @@ const DeleteAccountModal = ({ open, onClose }) => {
                 <Button
                     onClick={onClose}
                     disabled={loading}
+                    sx={{ color: 'text.secondary' }}
                 >
                     Cancel
                 </Button>
