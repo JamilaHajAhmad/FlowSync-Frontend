@@ -1,4 +1,3 @@
-import React from "react";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
@@ -6,12 +5,12 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./ForgetPassword.css";
 import logo from '../../../assets/images/logo.png';
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion as Motion } from "framer-motion";
 import { forgetPasswordMotion } from "../../../variants";
 
 const ForgetPassword = () => {
-
+    const navigate = useNavigate();
     // Validation Schema
     const validationSchema = Yup.object({
         email: Yup.string()
@@ -33,6 +32,9 @@ const ForgetPassword = () => {
 
                 if (response.status === 200) {
                     toast.success('Password reset link has been sent to your email');
+                    setTimeout(() => {
+                        navigate('/login');
+                    }, 3000);
                 }
             } catch (error) {
                 console.error('Error sending reset link:', error);
@@ -41,6 +43,7 @@ const ForgetPassword = () => {
                 toast.error(errorMessage);
             } finally {
                 setSubmitting(false);
+
             }
         }
     });

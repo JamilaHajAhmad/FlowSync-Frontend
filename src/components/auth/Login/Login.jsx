@@ -42,10 +42,10 @@ const Login = () => {
 
         // Only show welcome message and navigate if 2FA is not enabled
         if (decodedToken.role === 'Leader') {
-            toast.success(`Welcome back, ${userData.displayName}!`);
+            toast.success(`Welcome, ${userData.displayName}!`);
             navigate('/leader-dashboard');
         } else {
-            toast.success(`Welcome back, ${userData.displayName}!`);
+            toast.success(`Welcome, ${userData.displayName}!`);
             navigate('/member-dashboard');
         }
     };

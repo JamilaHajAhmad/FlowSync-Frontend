@@ -20,7 +20,7 @@ const ResetPassword = () => {
     const token = queryParams.get("token");
     const userId = queryParams.get("userId");
 
-    const [showPassword, setShowPassword] = useState({
+    const [ showPassword, setShowPassword ] = useState({
         password: false,
         confirmPassword: false
     });
@@ -28,17 +28,21 @@ const ResetPassword = () => {
     const togglePasswordVisibility = (field) => {
         setShowPassword(prev => ({
             ...prev,
-            [field]: !prev[field]
+            [ field ]: !prev[ field ]
         }));
     };
 
     const validationSchema = Yup.object({
         password: Yup.string()
             .required('Password is required')
-            .min(8, 'Password must be at least 8 characters'),
+            .min(8, 'Password must be at least 8 characters')
+            .matches(
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+                'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+            ),
         confirmPassword: Yup.string()
             .required('Please confirm your password')
-            .oneOf([Yup.ref('password')], 'Passwords must match')
+            .oneOf([ Yup.ref('password') ], 'Passwords must match')
     });
 
     const formik = useFormik({
@@ -66,7 +70,7 @@ const ResetPassword = () => {
                 }
             } catch (error) {
                 console.error('Error resetting password:', error);
-                const errorMessage = error.response?.data?.message 
+                const errorMessage = error.response?.data?.message
                     || 'Failed to reset password. Please try again.';
                 toast.error(errorMessage);
             } finally {
@@ -90,18 +94,17 @@ const ResetPassword = () => {
             <div className="reset-password-right">
                 <form onSubmit={formik.handleSubmit} className="reset-password-form">
                     <h2 className="form-title">Reset Password</h2>
-                    
+
                     <div className="password-field">
                         <input
                             type={showPassword.password ? "text" : "password"}
                             name="password"
                             placeholder="New Password"
                             {...formik.getFieldProps('password')}
-                            className={`reset-password-input ${
-                                formik.touched.password && formik.errors.password ? 'error' : ''
-                            }`}
+                            className={`reset-password-input ${formik.touched.password && formik.errors.password ? 'error' : ''
+                                }`}
                         />
-                        <button 
+                        <button
                             type="button"
                             className="password-toggle"
                             onClick={() => togglePasswordVisibility('password')}
@@ -119,11 +122,10 @@ const ResetPassword = () => {
                             name="confirmPassword"
                             placeholder="Confirm New Password"
                             {...formik.getFieldProps('confirmPassword')}
-                            className={`reset-password-input ${
-                                formik.touched.confirmPassword && formik.errors.confirmPassword ? 'error' : ''
-                            }`}
+                            className={`reset-password-input ${formik.touched.confirmPassword && formik.errors.confirmPassword ? 'error' : ''
+                                }`}
                         />
-                        <button 
+                        <button
                             type="button"
                             className="password-toggle"
                             onClick={() => togglePasswordVisibility('confirmPassword')}
@@ -135,8 +137,8 @@ const ResetPassword = () => {
                         <div className="error-message">{formik.errors.confirmPassword}</div>
                     )}
 
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         className="reset-password-button"
                         disabled={formik.isSubmitting}
                     >
