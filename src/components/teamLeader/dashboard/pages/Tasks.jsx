@@ -15,7 +15,8 @@ import Box from "@mui/material/Box";
 import { useState, useEffect } from "react";
 import CreateTaskForm from './CreateTaskForm';
 import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { getAllTasks } from '../../../../services/taskService';
 import { toast } from 'react-toastify';
 
@@ -182,58 +183,97 @@ export default function Tasks({
     const handleDownload = (fileType) => {
         const exportData = tasks.map(task => ({
             Name: task.name,
+            Title: task.title,
             Status: task.status,
             Priority: task.priority,
             'FRN Number': task.frnNumber,
             'OSS Number': task.ossNumber,
             'Open Date': task.openDate,
-            'Case Type': task.caseType,
-            'Case Source': task.caseSource
+            ...(activeTab === 'Completed' && { 
+                'Completed At': task.completedAt,
+                'Notes': task.notes 
+            }),
+            ...(activeTab === 'Frozen' && { 
+                'Frozen At': task.frozenAt,
+                'Reason': task.reason 
+            }),
+            ...(activeTab === 'All' && {
+                'Case Type': task.caseType,
+                'Case Source': task.caseSource
+            })
         }));
 
         if (fileType === 'pdf') {
-            const pdf = new jsPDF('landscape');
+            const doc = new jsPDF('landscape');
             
-            const tableColumn = ["Name", "Status", "Priority", "FRN Number", "OSS Number", "Open Date", "Case Type", "Case Source"];
-            const tableRows = exportData.map(item => [
-                item.Name,
-                item.Status,
-                item.Priority,
-                item["FRN Number"],
-                item["OSS Number"],
-                item["Open Date"],
-                item["Case Type"],
-                item["Case Source"]
-            ]);
+            // Add title
+            doc.setFontSize(16);
+            doc.setTextColor(5, 150, 105);
+            doc.text(`${activeTab} Tasks`, 14, 15);
 
-            pdf.autoTable({
-                head: [tableColumn],
-                body: tableRows,
-                startY: 20,
+            // Get columns based on active tab
+            const columns = Object.keys(exportData[0]);
+
+            autoTable(doc, {
+                head: [columns],
+                body: exportData.map(item => Object.values(item)),
+                startY: 25,
                 theme: 'grid',
                 styles: {
                     fontSize: 8,
-                    cellPadding: 2,
-                    overflow: 'linebreak'
+                    cellPadding: 3,
+                    overflow: 'linebreak',
+                    halign: 'left'
                 },
                 headStyles: {
-                    fillColor: [25, 118, 210],
+                    fillColor: [5, 150, 105],
                     textColor: 255,
                     fontSize: 9,
-                    fontStyle: 'bold'
-                }
+                    fontStyle: 'bold',
+                    halign: 'left'
+                },
+                columnStyles: {
+                    0: { cellWidth: 35 }, // Name
+                    1: { cellWidth: 35 }, // Title
+                    2: { cellWidth: 25 }, // Status
+                    3: { cellWidth: 25 }, // Priority
+                    4: { cellWidth: 30 }, // FRN
+                    5: { cellWidth: 30 }, // OSS
+                    6: { cellWidth: 25 }, // Open Date
+                    ...(columns.length > 7 && {
+                        7: { cellWidth: 30 },
+                        8: { cellWidth: 35 }
+                    })
+                },
+                margin: { top: 25 }
             });
-            
-            pdf.save('tasks-list.pdf');
+
+            doc.save(`${activeTab.toLowerCase()}-tasks.pdf`);
         } 
         else if (fileType === 'excel') {
             try {
+                // Create worksheet with custom column widths
                 const ws = XLSX.utils.json_to_sheet(exportData);
                 const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Tasks");
-                XLSX.writeFile(wb, "tasks-list.xlsx");
+
+                // Set column widths
+                ws['!cols'] = [
+                    { wch: 20 }, // Name
+                    { wch: 30 }, // Title
+                    { wch: 15 }, // Status
+                    { wch: 15 }, // Priority
+                    { wch: 15 }, // FRN
+                    { wch: 15 }, // OSS
+                    { wch: 15 }, // Open Date
+                    { wch: 20 }, // Additional columns
+                    { wch: 25 }  // Additional columns
+                ];
+
+                XLSX.utils.book_append_sheet(wb, ws, `${activeTab} Tasks`);
+                XLSX.writeFile(wb, `${activeTab.toLowerCase()}-tasks.xlsx`);
             } catch (error) {
                 console.error("Error creating Excel file:", error);
+                toast.error("Failed to create Excel file");
             }
         }
         handleExportClose();

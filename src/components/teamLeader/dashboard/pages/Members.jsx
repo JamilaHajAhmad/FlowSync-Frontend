@@ -8,8 +8,9 @@ import { Box, Stack, Chip, Button, Menu, MenuItem, Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { getAllMembers } from "../../../../services/memberService";
@@ -124,7 +125,7 @@ export default function Members({ showActions = true }) {
         },
         {
             accessorKey: "tasks",
-            header: "Ongoing Tasks",
+            header: "Opened Tasks",
         },
         {
             accessorKey: "actions",
@@ -187,52 +188,72 @@ export default function Members({ showActions = true }) {
     };
 
     const handleDownload = (fileType) => {
-        const exportData = rows.map(row => ({
-            Name: row.name,
-            Status: row.status,
-            Email: row.email,
-            'Ongoing Tasks': row.tasks
-        }));
+        // Filter out removed members and prepare export data
+        const exportData = rows
+            .filter(row => !row.isRemoved)
+            .map(row => ({
+                Name: row.name,
+                Status: formatString(row.status),
+                Email: row.email,
+                'Opened Tasks': row.tasks
+            }));
 
         if (fileType === 'pdf') {
-            const pdf = new jsPDF('landscape');
+            const doc = new jsPDF('landscape');
             
-            const tableColumn = ["Name", "Status", "Email", "Ongoing Tasks"];
-            const tableRows = exportData.map(item => [
-                item.Name,
-                item.Status,
-                item.Email,
-                item["Ongoing Tasks"]
-            ]);
+            // Add title
+            doc.setFontSize(16);
+            doc.setTextColor(5, 150, 105);
+            doc.text('Team Members List', 14, 15);
 
-            pdf.autoTable({
-                head: [tableColumn],
-                body: tableRows,
-                startY: 20,
+            autoTable(doc, {
+                head: [Object.keys(exportData[0])],
+                body: exportData.map(item => Object.values(item)),
+                startY: 25,
                 theme: 'grid',
                 styles: {
                     fontSize: 8,
-                    cellPadding: 2,
-                    overflow: 'linebreak'
+                    cellPadding: 3,
+                    overflow: 'linebreak',
+                    halign: 'left'
                 },
                 headStyles: {
-                    fillColor: [25, 118, 210],
+                    fillColor: [5, 150, 105], // FlowSync green color
                     textColor: 255,
                     fontSize: 9,
-                    fontStyle: 'bold'
-                }
+                    fontStyle: 'bold',
+                    halign: 'left'
+                },
+                columnStyles: {
+                    0: { cellWidth: 50 }, // Name
+                    1: { cellWidth: 30 }, // Status
+                    2: { cellWidth: 70 }, // Email
+                    3: { cellWidth: 30 }  // Ongoing Tasks
+                },
+                margin: { top: 25 }
             });
-            
-            pdf.save('members-list.pdf');
+
+            doc.save('team-members.pdf');
         } 
         else if (fileType === 'excel') {
             try {
+                // Create worksheet with custom column widths
                 const ws = XLSX.utils.json_to_sheet(exportData);
                 const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Members");
-                XLSX.writeFile(wb, "members-list.xlsx");
+
+                // Set column widths
+                ws['!cols'] = [
+                    { wch: 30 }, // Name
+                    { wch: 20 }, // Status
+                    { wch: 40 }, // Email
+                    { wch: 15 }  // Ongoing Tasks
+                ];
+
+                XLSX.utils.book_append_sheet(wb, ws, "Team Members");
+                XLSX.writeFile(wb, "team-members.xlsx");
             } catch (error) {
                 console.error("Error creating Excel file:", error);
+                toast.error("Failed to create Excel file");
             }
         }
         handleExportClose();

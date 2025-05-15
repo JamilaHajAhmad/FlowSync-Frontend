@@ -5,7 +5,9 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -179,48 +181,108 @@ const Requests = () => {
 
     const handleDownload = (fileType) => {
         const currentType = Object.keys(requests)[currentTab];
-        const exportData = requests[currentType].map(row => ({
-            Name: row.MemberName,
-            Email: row.email,
-            Date: row.RequestedAt,
-            ...(row.frn && { FRN: row.frn }),
-            ...(row.reason && { Reason: row.reason })
-        }));
+        
+        // Get all possible columns based on request type
+        const getExportColumns = (type) => {
+            const baseColumns = {
+                'Name': row => row.memberName,
+                'Email': row => row.email,
+                'Request Date': row => new Date(row.requestedAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                })
+            };
+
+            const typeSpecificColumns = {
+                'signup': {},
+                'freeze': {
+                    'FRN': row => row.frnNumber,
+                    'Reason': row => row.reason
+                },
+                'completion': {
+                    'FRN': row => row.frnNumber,
+                    'Notes': row => row.notes
+                },
+                'deleteAccount': {
+                    'Reason': row => row.reason
+                }
+            };
+
+            return { ...baseColumns, ...typeSpecificColumns[type] };
+        };
+
+        const columns = getExportColumns(currentType);
+        const exportData = requests[currentType].map(row => {
+            const rowData = {};
+            Object.entries(columns).forEach(([header, getter]) => {
+                rowData[header] = getter(row);
+            });
+            return rowData;
+        });
 
         if (fileType === 'pdf') {
-            const pdf = new jsPDF('landscape');
-
-            const tableColumn = Object.keys(exportData[0]);
+            const doc = new jsPDF('landscape');
+            const tableColumn = Object.keys(columns);
             const tableRows = exportData.map(item => Object.values(item));
 
-            pdf.autoTable({
+            // Add title to PDF
+            doc.setFontSize(16);
+            doc.setTextColor(5, 150, 105);
+            doc.text(`${currentType.charAt(0).toUpperCase() + currentType.slice(1)} Requests`, 14, 15);
+
+            // Add table
+            autoTable(doc, {
                 head: [tableColumn],
                 body: tableRows,
-                startY: 20,
+                startY: 25,
                 theme: 'grid',
                 styles: {
                     fontSize: 8,
-                    cellPadding: 2,
-                    overflow: 'linebreak'
+                    cellPadding: 3,
+                    overflow: 'linebreak',
+                    halign: 'left'
                 },
                 headStyles: {
                     fillColor: [5, 150, 105],
                     textColor: 255,
                     fontSize: 9,
-                    fontStyle: 'bold'
-                }
+                    fontStyle: 'bold',
+                    halign: 'left'
+                },
+                columnStyles: {
+                    0: { cellWidth: 40 }, // Name
+                    1: { cellWidth: 60 }, // Email
+                    2: { cellWidth: 30 }, // Date
+                    3: { cellWidth: 30 }, // FRN (if exists)
+                    4: { cellWidth: 70 }  // Reason/Notes (if exists)
+                },
+                margin: { top: 25 }
             });
 
-            pdf.save(`${currentType}-requests.pdf`);
+            doc.save(`${currentType}-requests.pdf`);
         }
         else if (fileType === 'excel') {
             try {
+                // Add headers style
                 const ws = XLSX.utils.json_to_sheet(exportData);
                 const wb = XLSX.utils.book_new();
+
+                // Set column widths
+                const colWidths = [
+                    { wch: 20 }, // Name
+                    { wch: 30 }, // Email
+                    { wch: 15 }, // Date
+                    { wch: 15 }, // FRN
+                    { wch: 40 }  // Reason/Notes
+                ];
+                ws['!cols'] = colWidths;
+
                 XLSX.utils.book_append_sheet(wb, ws, "Requests");
                 XLSX.writeFile(wb, `${currentType}-requests.xlsx`);
             } catch (error) {
                 console.error("Error creating Excel file:", error);
+                toast.error("Failed to create Excel file");
             }
         }
         handleExportClose();
