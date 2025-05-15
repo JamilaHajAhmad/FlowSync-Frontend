@@ -25,6 +25,7 @@ const DeleteMemberDialog = ({
     memberId,
     memberName, 
     onClose,
+    onSuccess
 }) => {
     const token = localStorage.getItem('authToken');
     const [loading, setLoading] = useState(true);
@@ -106,6 +107,7 @@ const DeleteMemberDialog = ({
                 // No tasks to reassign, show success immediately
                 toast.success('Member removed successfully');
                 onClose();
+                onSuccess();
             }
         } catch (err) {
             setError('Failed to delete member');
@@ -117,6 +119,7 @@ const DeleteMemberDialog = ({
         if (deletionCompleted) {
             toast.success('Member removed and tasks reassigned successfully');
             onClose();
+            onSuccess();
         }
     };
 
