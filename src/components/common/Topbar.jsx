@@ -1,4 +1,4 @@
-import React, { useState, useContext, useMemo } from 'react';
+import React, { useState, useContext, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
     LightModeOutlined,
@@ -28,7 +28,8 @@ import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import { NotificationContext } from "./notification/NotificationContext.js";
 import NotificationList from './notification/NotificationList';
 import SearchResults from './search/SearchResults';
-import { searchItems as searchablePages } from './search/data.js'; 
+import { getSearchItems } from './search/data';
+import { decodeToken } from '../../utils';
 
 const Search = styled('div')(({ theme }) => ({
     position: 'relative',
@@ -112,8 +113,11 @@ const TopbarOffset = styled('div')(({ theme }) => ({
 
 export default function Topbar({ open, handleDrawerOpen, setMode }) {
     const theme = useTheme();
+    const token = localStorage.getItem('authToken');
+    const decodedToken = decodeToken(token);
+    const role = decodedToken?.role; // Add null check
     // eslint-disable-next-line no-unused-vars
-    const { notifications, unreadCount } = useContext(NotificationContext); // Access unreadCount from context
+    const { notifications, unreadCount } = useContext(NotificationContext);
     const [anchorEl, setAnchorEl] = useState(null);
     const navigate = useNavigate();
 
@@ -121,7 +125,19 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [showResults, setShowResults] = useState(false);
 
-    const searchItems = searchablePages; 
+    // Updated searchItems with proper role check
+    const searchItems = useMemo(() => {
+        if (!role) return [];
+        return getSearchItems(role); // Convert role to lowercase
+    }, [role]);
+
+    // Debug log to verify role and items
+    useEffect(() => {
+        console.log('Current role:', role);
+        console.log('Search items:', searchItems);
+    }, [role, searchItems]);
+
+    // Updated search results filtering
     const searchResults = useMemo(() => {
         if (!searchTerm) return [];
         
@@ -175,6 +191,13 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
     };
 
     const handleClose = () => setAnchorEl(null);
+
+    // Add handler for clicking search items
+    const handleSearchItemClick = (item) => {
+        navigate(item.path);
+        setShowResults(false);
+        setSearchTerm('');
+    };
 
     return (
         <>
@@ -263,11 +286,8 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                                         results={searchResults}
                                         searchTerm={searchTerm}
                                         selectedIndex={selectedIndex}
-                                        onSelect={(item) => {
-                                            navigate(item.path);
-                                            setShowResults(false);
-                                            setSearchTerm('');
-                                        }}
+                                        onSelect={handleSearchItemClick}
+                                        onItemHover={(index) => setSelectedIndex(index)}
                                     />
                                 </Box>
                             </ClickAwayListener>

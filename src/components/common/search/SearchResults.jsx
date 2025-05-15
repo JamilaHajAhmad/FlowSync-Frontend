@@ -10,6 +10,8 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import * as Icons from '@mui/icons-material';
+import { getSearchItems } from './data';
+import { decodeToken } from '../../../utils';
 
 const ResultPaper = styled(Paper)(({ theme }) => ({
     position: 'absolute',
@@ -88,8 +90,19 @@ const IconWrapper = styled(ListItemIcon)(({ theme }) => ({
     }
 }));
 
-const SearchResults = ({ results, searchTerm, selectedIndex, onSelect }) => {
+const SearchResults = ({ results, searchTerm, selectedIndex, onSelect, onItemHover }) => {
     const selectedRef = useRef(null);
+    const token = localStorage.getItem('authToken');
+    const decodedToken = decodeToken(token);
+    const role = decodedToken.role;
+
+    // Get role-specific search items
+    const searchItems = getSearchItems(role);
+
+    // Filter results based on role-specific items
+    const filteredResults = results.filter(result => 
+        searchItems.some(item => item.objectID === result.objectID)
+    );
 
     useEffect(() => {
         if (selectedRef.current) {
@@ -124,7 +137,7 @@ const SearchResults = ({ results, searchTerm, selectedIndex, onSelect }) => {
 
     return (
         <ResultPaper elevation={0}>
-            {results.length === 0 ? (
+            {filteredResults.length === 0 ? (
                 <Box sx={{ 
                     p: 3, 
                     textAlign: 'center', 
@@ -156,7 +169,7 @@ const SearchResults = ({ results, searchTerm, selectedIndex, onSelect }) => {
                         wordWrap: 'break-word' // Handle long words
                     }
                 }}>
-                    {results.map((item, index) => {
+                    {filteredResults.map((item, index) => {
                         const IconComponent = Icons[item.icon] || Icons.Circle;
                         return (
                             <StyledListItem
@@ -165,9 +178,26 @@ const SearchResults = ({ results, searchTerm, selectedIndex, onSelect }) => {
                                 button
                                 selected={selectedIndex === index}
                                 onClick={() => onSelect(item)}
+                                onMouseEnter={() => onItemHover(index)}
+                                sx={{
+                                    cursor: 'pointer',
+                                    '&:hover': {
+                                        backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                                    },
+                                    '&.Mui-selected': {
+                                        backgroundColor: 'rgba(5, 150, 105, 0.08)',
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(5, 150, 105, 0.12)'
+                                        }
+                                    }
+                                }}
                             >
                                 <IconWrapper>
-                                    <IconComponent fontSize="small" />
+                                    <IconComponent 
+                                        sx={{ 
+                                            color: selectedIndex === index ? '#059669' : 'text.secondary'
+                                        }} 
+                                    />
                                 </IconWrapper>
                                 <ListItemText
                                     primary={
