@@ -24,7 +24,7 @@ const About = () => {
                         <li>✅ <strong>Smart Notifications</strong> - Never miss a deadline with intelligent alerts and reminders.</li>
                         <li>✅ <strong>Secure & Reliable</strong> - Your data is safe with top-tier security measures.</li>
                     </ul>
-                    <Link href="/register" className="cta-button">Get Started</Link>
+                    <Link to="/register" className="cta-button">Get Started</Link>
                 </div>
                 <div className="about-image">
                     <Motion.img src={aboutImg}
