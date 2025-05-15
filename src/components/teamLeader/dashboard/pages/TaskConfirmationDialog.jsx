@@ -204,7 +204,7 @@ const TaskConfirmationDialog = ({ open, onClose, taskData, onConfirm, loading })
                                         </Typography>
                                         <Typography variant="subtitle2" fontWeight={600}>
                                             {taskData?.priority === 'Urgent' ? '2 days' :
-                                                taskData?.priority === 'Important' ? '5 days' : '7 days'}
+                                                taskData?.priority === 'Important' ? '10 days' : '10 days'}
                                         </Typography>
                                     </Box>
                                 </Box>
