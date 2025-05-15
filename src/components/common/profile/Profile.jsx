@@ -147,7 +147,7 @@ const Profile = () => {
           address: convertNullToText(profileData.address),
           bio: convertNullToText(profileData.bio),
           major: convertNullToText(profileData.major),
-          dateOfBirth: convertNullToText(profileData.dateOfBirth),
+          dateOfBirth: profileData.dateOfBirth || null,
           picture: profileData.pictureURL || '/path/to/default-avatar.jpg', // Default avatar if not provided
           // Convert status and role
           status: profileData.status,
@@ -348,7 +348,8 @@ const Profile = () => {
                     <InfoField
                       fullWidth
                       variant="outlined"
-                      value={formatDate(profileData.dateOfBirth)}
+                        value={profileData.dateOfBirth ? formatDate(profileData.dateOfBirth) : 'Not added yet'}
+
                       InputProps={{
                         readOnly: true
                       }}
