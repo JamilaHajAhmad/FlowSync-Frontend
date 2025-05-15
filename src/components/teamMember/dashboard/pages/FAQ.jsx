@@ -35,16 +35,16 @@ const FAQ = () => {
       icon: <Book sx={{ color: '#2196f3' }} />,
       items: [
         {
-          question: "How do I register for FlowSync?",
-          answer: "Registration requires a Dubai Police email address and an agency code. Submit your details and wait for team leader approval to access the platform."
+          question: "How do I reset my password?",
+          answer: "Click on 'Forgot Password?' on the login page, enter your email, and follow the instructions sent to your inbox."
         },
         {
-          question: "What email format is accepted?",
-          answer: "FlowSync only accepts official Dubai Police email addresses (@dubaipolice.gov.ae) for registration."
+          question: "How do I update my profile?",
+          answer: "Go to 'Settings' from your dashboard, click on 'Profile', and update your information. Don't forget to save changes."
         },
         {
-          question: "How long does account approval take?",
-          answer: "Account approval typically takes 1-2 business days, depending on your team leader's availability."
+          question: "How do I change my password?",
+          answer: "In the 'Settings' menu, go to 'Security', then click on 'Change Password'. Enter your current password and the new one."
         }
       ]
     },
@@ -54,16 +54,20 @@ const FAQ = () => {
       items: [
         {
           question: "How do I view my assigned tasks?",
-          answer: "Access your dashboard and navigate to 'My Tasks' section to view all tasks assigned to you, sorted by priority and due date."
+          answer: "Access your dashboard and navigate to 'Tasks' section to view all tasks assigned to you."
         },
         {
-          question: "How do I update task progress?",
-          answer: "Open the task card, click on 'Update Status', and select your current progress percentage. You can also add comments for your team leader."
+          question: "How does the drag and drop functionality work?",
+          answer: "You can click on ⋮⋮ and hold on a task to drag it to a different status column. Release the mouse button to drop it in the new column."
         },
         {
-          question: "Can I reassign my tasks?",
-          answer: "Task reassignment requests must go through your team leader. Use the 'Request Reassignment' option in the task details page."
-        }
+          question: "How do I mark a task as completed?",
+          answer: "After dragging a task to the 'Completed' column, it will send a request to the leader so you must wait for his approval."
+        },
+        {
+          question: "How do I mark a task as frozen?",
+          answer: "After dragging a task to the 'Frozen' column, it will send a request to the leader so you must wait for his approval."
+        },
       ]
     },
     {
@@ -89,16 +93,20 @@ const FAQ = () => {
       icon: <Security sx={{ color: '#f44336' }} />,
       items: [
         {
-          question: "How is my data protected?",
-          answer: "FlowSync uses end-to-end encryption and follows Dubai Police security protocols to protect all user data and communications."
+          question: "How do I find the connected devices?",
+          answer: "In the 'Security' section of your settings, click on 'Connected Devices' to view and manage all devices linked to your account."
         },
         {
           question: "What are the password requirements?",
-          answer: "Passwords must be at least 12 characters long, including uppercase and lowercase letters, numbers, and special characters."
+          answer: "Passwords must be at least 8 characters long, including uppercase and lowercase letters, numbers, and special characters."
         },
         {
-          question: "How often should I change my password?",
-          answer: "For security purposes, you'll be prompted to change your password every 90 days. You can also change it manually at any time."
+          question: "How do I enable two-factor authentication?",
+          answer: "In the 'Security' section of your settings, toggle on 'Two-Factor Authentication' and follow the setup instructions."
+        },
+        {
+          question: "How do I get the login notifications?",
+          answer: "In the 'Security' section of your settings, toggle on 'Login Notifications' to receive alerts for new logins from unrecognized devices."
         }
       ]
     }
