@@ -1,22 +1,21 @@
-import React from 'react';
 import { ListItem, ListItemText, IconButton, Typography, Box, ListItemIcon } from '@mui/material';
-import { CheckCircle, Error, Info, Warning } from '@mui/icons-material';
+import { CheckCircle, Error, Info, Warning, DoneAll as DoneAllIcon } from '@mui/icons-material';
 import { NotificationTypes } from './NotificationContext';
 import { formatDistanceToNow } from 'date-fns';
 import { formatLoginNotification } from '../../../utils/notificationFormatters';
 import SecurityIcon from '@mui/icons-material/Security';
 
-const getIcon = (type) => {
-    switch (type) {
-        case NotificationTypes.Error:
-            return <Error color="error" />;
-        case NotificationTypes.Warning:
-            return <Warning color="warning" />;
-        case NotificationTypes.Info:
-            return <Info color="info" />;
-        default:
-            return <CheckCircle color="success" />;
-    }
+const getIcon = () => {
+    return (
+        <DoneAllIcon 
+            sx={{ 
+                color: '#059669',
+                '&:hover': {
+                    color: '#047857'
+                }
+            }} 
+        />
+    );
 };
 
 export const NotificationItem = ({ notification, onMarkAsRead }) => {
@@ -44,7 +43,6 @@ export const NotificationItem = ({ notification, onMarkAsRead }) => {
             case NotificationTypes.Error:
                 return {
                     icon: <Error color="error" />,
-                    title: 'Error',
                     content: <Typography variant="body2">{notification.message}</Typography>,
                     timestamp: notification.createdAt,
                     severity: 'error'
@@ -52,7 +50,6 @@ export const NotificationItem = ({ notification, onMarkAsRead }) => {
             case NotificationTypes.Warning:
                 return {
                     icon: <Warning color="warning" />,
-                    title: 'Warning',
                     content: <Typography variant="body2">{notification.message}</Typography>,
                     timestamp: notification.createdAt,
                     severity: 'warning'
@@ -60,7 +57,6 @@ export const NotificationItem = ({ notification, onMarkAsRead }) => {
             case NotificationTypes.Info:
                 return {
                     icon: <Info color="info" />,
-                    title: 'Info',
                     content: <Typography variant="body2">{notification.message}</Typography>,
                     timestamp: notification.createdAt,
                     severity: 'info'
@@ -68,7 +64,6 @@ export const NotificationItem = ({ notification, onMarkAsRead }) => {
             default:
                 return {
                     icon: <CheckCircle color="success" />,
-                    title: 'Success',
                     content: <Typography variant="body2">{notification.message}</Typography>,
                     timestamp: notification.createdAt,
                     severity: 'success'
@@ -94,8 +89,13 @@ export const NotificationItem = ({ notification, onMarkAsRead }) => {
                         edge="end" 
                         onClick={() => onMarkAsRead(notification.id)}
                         size="small"
+                        sx={{
+                            '&:hover': {
+                                bgcolor: 'rgba(5, 150, 105, 0.08)'
+                            }
+                        }}
                     >
-                        {getIcon(notification.type)}
+                        {getIcon()}
                     </IconButton>
                 )
             }
@@ -105,16 +105,25 @@ export const NotificationItem = ({ notification, onMarkAsRead }) => {
             </ListItemIcon>
             <ListItemText
                 primary={
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <Typography variant="subtitle2" sx={{ color: `${severity}.main` }}>
-                            {title}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                    <Typography variant="subtitle2" sx={{ color: `${severity}.main` }}>
+                        {title}
+                    </Typography>
+                }
+                secondary={
+                    <Box sx={{ mt: 0.5 }}>
+                        {content}
+                        <Typography 
+                            variant="caption" 
+                            color="text.secondary"
+                            sx={{ 
+                                display: 'block',
+                                mt: 0.5
+                            }}
+                        >
                             {formatDistanceToNow(new Date(timestamp), { addSuffix: true })}
                         </Typography>
                     </Box>
                 }
-                secondary={content}
             />
         </ListItem>
     );
