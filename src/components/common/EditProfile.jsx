@@ -205,8 +205,9 @@ const EditProfile = () => {
                     updatedFields.status = statusMapping[updatedFields.status];
                 }
             
-                await updateProfile(updatedFields, token);
-                toast.success('Profile updated successfully');
+                const response = await updateProfile(updatedFields, token);
+                console.log('Profile updated successfully:', response.data);
+                toast.success(response.data);
                 
                 // Add delay before navigation
                 setTimeout(() => {
