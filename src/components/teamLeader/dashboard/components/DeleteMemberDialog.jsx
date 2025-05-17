@@ -25,8 +25,12 @@ const DeleteMemberDialog = ({
     memberId,
     memberName, 
     onClose,
-    onSuccess
+    onSuccess,
+    type, // Remove default value to help debug
+    excludeMemberId, 
 }) => {
+    // Add debug logging at the start of component
+    console.log('DeleteMemberDialog received type:', type);
     const token = localStorage.getItem('authToken');
     const [loading, setLoading] = useState(true);
     const [tasksToReassign, setTasksToReassign] = useState(null);
@@ -97,37 +101,51 @@ const DeleteMemberDialog = ({
     console.log('Has tasks to reassign:', hasTasksToReassign);
     console.log('Tasks to reassign:', tasksToReassign);
 
-    const handleDeleteConfirm = async () => {
+    const handleConfirmAction = async () => {
         try {
-            await deleteMember(memberId, token);
+            console.log('Handling action for type:', type);
+            if (type === 'deleteAccount') { // Change condition to match the actual type
+                await deleteMember(memberId, token);
+            }
             setDeletionCompleted(true);
+            
             if (tasksToReassign && Object.values(tasksToReassign).some(tasks => tasks.length > 0)) {
                 setShowReassign(true);
             } else {
-                // No tasks to reassign, show success immediately
-                toast.success('Member removed successfully');
+                toast.success(type === 'deleteAccount' ? 
+                    'Member removed successfully' : 
+                    'Member status changed successfully'
+                );
                 onClose();
                 onSuccess();
             }
+        // eslint-disable-next-line no-unused-vars
         } catch (err) {
-            setError('Failed to delete member');
-            console.error('Error deleting member:', err);
+            setError(type === 'deleteAccount' ? 
+                'Failed to delete member' : 
+                'Failed to change member status'
+            );
         }
     };
 
     const handleReassignComplete = () => {
         if (deletionCompleted) {
-            toast.success('Member removed and tasks reassigned successfully');
+            toast.success(type === 'delete' ?
+                'Member removed and tasks reassigned successfully' :
+                'Member status changed and tasks reassigned successfully'
+            );
             onClose();
             onSuccess();
         }
     };
 
+    // Update showReassign section to pass excludeMemberId based on type
     if (showReassign) {
         return (
             <ReassignTasks 
                 tasks={Object.values(tasksToReassign).flat()}
                 onComplete={handleReassignComplete}
+                excludeMemberId={type === 'delete' ? memberId : excludeMemberId}
             />
         );
     }
@@ -153,11 +171,14 @@ const DeleteMemberDialog = ({
                 }}
             >
                 <WarningAmberIcon color="warning" />
-                Confirm Member Removal
+                {type === 'deleteAccount' ? 'Confirm Member Removal' : 'Confirm Status Change'}
             </DialogTitle>
             <DialogContent>
                 <DialogContentText sx={{ mb: 2 }}>
-                    Are you sure you want to remove <strong>{memberName}</strong> from the team?
+                    {type === 'deleteAccount' ? 
+                        `Are you sure you want to remove ${memberName} from the team?` :
+                        `Are you sure you want to change ${memberName}'s status?`
+                    }
                 </DialogContentText>
 
                 {loading ? (
@@ -174,13 +195,21 @@ const DeleteMemberDialog = ({
                         sx={{ mb: 2 }}
                     >
                         <Typography variant="body2" sx={{ mb: 1 }}>
-                            <strong>This member has the following tasks that need reassignment:</strong>
+                            <strong>
+                                {type === 'deleteAccount' ?
+                                    'This member has the following tasks that need reassignment:' :
+                                    'Before changing status, the following tasks need reassignment:'
+                                }
+                            </strong>
                         </Typography>
                         <List dense sx={{ mt: 1, mb: 0 }}>
                             {renderTasksList()}
                         </List>
                         <Typography variant="body2" sx={{ mt: 1, color: 'warning.dark' }}>
-                            These tasks must be reassigned before removing the member.
+                            {type === 'deleteAccount' ?
+                                'These tasks must be reassigned before removing the member.' :
+                                'These tasks must be reassigned before changing status.'
+                            }
                         </Typography>
                     </Alert>
                 ) : (
@@ -189,13 +218,15 @@ const DeleteMemberDialog = ({
                     </Alert>
                 )}
 
-                <Typography 
-                    variant="body2" 
-                    color="error" 
-                    sx={{ mt: 2, fontWeight: 500 }}
-                >
-                    This action cannot be undone.
-                </Typography>
+                {type === 'delete' && (
+                    <Typography 
+                        variant="body2" 
+                        color="error" 
+                        sx={{ mt: 2, fontWeight: 500 }}
+                    >
+                        This action cannot be undone.
+                    </Typography>
+                )}
             </DialogContent>
             <DialogActions sx={{ p: 2, pt: 0 }}>
                 <Button
@@ -213,16 +244,17 @@ const DeleteMemberDialog = ({
                     Cancel
                 </Button>
                 <Button
-                    onClick={handleDeleteConfirm}
+                    onClick={handleConfirmAction}
                     variant="contained"
-                    color="error"
+                    color={type === 'deleteAccount' ? 'error' : 'primary'}
                     sx={{
+                        bgcolor: type === 'deleteAccount' ? undefined : '#059669',
                         '&:hover': {
-                            bgcolor: '#dc2626'
+                            bgcolor: type === 'deleteAccount' ? '#dc2626' : '#047857'
                         }
                     }}
                 >
-                    Remove Member
+                    {type === 'deleteAccount' ? 'Remove Member' : 'Change Status'}
                 </Button>
             </DialogActions>
         </Dialog>

@@ -19,15 +19,21 @@ import {
     approveDeleteAccountRequest, 
     rejectDeleteAccountRequest 
 } from "../../../../services/deleteAccountRequests";
+import { 
+    getAllChangeStatusRequests, 
+    approveChangeStatusRequest, 
+    rejectChangeStatusRequest 
+} from "../../../../services/changeStatusRequests";
 import DeleteMemberDialog from '../components/DeleteMemberDialog';
-
+import { formatString } from "../../../../utils";
 const Requests = () => {
     const [currentTab, setCurrentTab] = useState(0);
     const [requests, setRequests] = useState({
         signup: [],
         freeze: [],
         completion: [],
-        deleteAccount: []
+        deleteAccount: [],
+        changeStatus: []
     });
     const [isLoading, setIsLoading] = useState(true);
     const [anchorEl, setAnchorEl] = React.useState(null);
@@ -44,7 +50,8 @@ const Requests = () => {
         open: false,
         memberId: null,
         memberName: '',
-        requestId: null
+        requestId: null,
+        type: null
     });
     const token = localStorage.getItem('authToken');
 
@@ -68,6 +75,10 @@ const Requests = () => {
                 case 'deleteAccount':
                     response = await getAllDeleteAccountRequests(token);
                     console.log('Delete account requests:', response.data);
+                    break;
+                case 'changeStatus':
+                    response = await getAllChangeStatusRequests(token);
+                    console.log('Change status requests:', response.data);
                     break;
                 default:
                     return;
@@ -97,14 +108,15 @@ const Requests = () => {
             }
 
             const request = requests[type].find(req => req.requestId === id);
+            console.log('Request type:', type); // Debug log
             
-            if (type === 'deleteAccount') {
-                // Open delete member dialog instead of immediate approval
+            if (type === 'deleteAccount' || type === 'changeStatus') {
                 setDeleteMemberDialog({
                     open: true,
                     memberId: request.memberId,
                     memberName: request.memberName,
-                    requestId: id
+                    requestId: id,
+                    type: type // This should now match exactly with what we're checking for
                 });
                 return;
             }
@@ -134,7 +146,7 @@ const Requests = () => {
             fetchRequests(type);
         } catch (error) {
             console.error('Error approving request:', error);
-            toast.error(error?.response?.data?.title || 'Failed to approve request');
+            toast.error(error?.response?.data?.message || 'Failed to approve request');
         }
     };
 
@@ -154,6 +166,9 @@ const Requests = () => {
                 case 'freeze':
                     await rejectFreezeRequest(id, token);
                     break;
+                case 'changeStatus':
+                    await rejectChangeStatusRequest(id, token);
+                    break;
                 default:
                     return;
             }
@@ -167,7 +182,7 @@ const Requests = () => {
             fetchRequests(type);
         } catch (error) {
             console.error('Error rejecting request:', error);
-            toast.error(error?.response?.data?.message || 'Failed to reject request');
+            toast.error(error.response.data || 'Failed to reject request');
         }
     };
 
@@ -205,6 +220,11 @@ const Requests = () => {
                     'Notes': row => row.notes
                 },
                 'deleteAccount': {
+                    'Reason': row => row.reason
+                },
+                'changeStatus': {
+                    'Current Status': row => formatString(row.previousStatus), // Changed from currentStatus
+                    'Requested Status': row => formatString(row.newStatus), // Changed from requestedStatus
                     'Reason': row => row.reason
                 }
             };
@@ -353,6 +373,20 @@ const Requests = () => {
                     header: "Reason",
                     size: 200,
                 }
+            ],
+            changeStatus: [
+                {
+                    accessorKey: "previousStatus",
+                    header: "Current Status",
+                    size: 120,
+                    Cell: ({ cell }) => formatString(cell.getValue())
+                },
+                {
+                    accessorKey: "newStatus",
+                    header: "Requested Status",
+                    size: 120,
+                    Cell: ({ cell }) => formatString(cell.getValue())
+                }
             ]
         };
 
@@ -489,7 +523,8 @@ const Requests = () => {
             open: false,
             memberId: null,
             memberName: '',
-            requestId: null
+            requestId: null,
+            type: null
         });
     };
 
@@ -512,6 +547,29 @@ const Requests = () => {
         } catch (error) {
             console.error('Error approving delete account request:', error);
             toast.error('Failed to approve delete account request');
+        }
+    };
+
+    // Update handleReassignSuccess function to fix the typo and handle the approval correctly
+    const handleReassignSuccess = async () => {
+        try {
+            // Call the approve API after successful reassignment
+            await approveChangeStatusRequest(deleteMemberDialog.requestId, token);
+            
+            // Update local state
+            setRequests(prev => ({
+                ...prev,
+                changeStatus: prev.changeStatus.filter(req => 
+                    req.requestId !== deleteMemberDialog.requestId
+                )
+            }));
+            
+            toast.success('Status change request approved successfully');
+            handleDeleteMemberDialogClose(); // Use the existing close handler
+            fetchRequests('changeStatus');
+        } catch (error) {
+            console.error('Error approving change status request:', error);
+            toast.error('Failed to approve change status request');
         }
     };
 
@@ -538,6 +596,7 @@ const Requests = () => {
                 <Tab label="Freeze" />
                 <Tab label="Completion" />
                 <Tab label="Delete Account" />
+                <Tab label="Change Status" />
             </Tabs>
 
             <Box sx={{ height: 400, width: "100%" }}>
@@ -611,8 +670,10 @@ const Requests = () => {
                 open={deleteMemberDialog.open}
                 memberId={deleteMemberDialog.memberId}
                 memberName={deleteMemberDialog.memberName}
-                onClose={handleDeleteMemberDialogClose}
-                onSuccess={handleDeleteSuccess}
+                onClose={() => setDeleteMemberDialog(prev => ({ ...prev, open: false }))}
+                onSuccess={deleteMemberDialog.type === 'deleteAccount' ? handleDeleteSuccess : handleReassignSuccess}
+                type={deleteMemberDialog.type} // Pass the type directly
+                excludeMemberId={deleteMemberDialog.memberId}
             />
         </Box>
     );

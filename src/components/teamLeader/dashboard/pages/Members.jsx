@@ -340,6 +340,7 @@ export default function Members({ showActions = true }) {
                 memberName={deleteDialog.memberName}
                 memberId={deleteDialog.memberId}
                 onClose={handleDeleteCancel}
+                type="deleteAccount"
             />
         </Box>
     );

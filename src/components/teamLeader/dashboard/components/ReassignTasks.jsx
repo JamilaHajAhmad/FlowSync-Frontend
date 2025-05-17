@@ -16,7 +16,7 @@ import {
 import { getEmployeesWithTasks } from '../../../../services/employeeService';
 import { reassignTask } from '../../../../services/taskService';
 
-const ReassignTasks = ({ tasks, onComplete }) => {
+const ReassignTasks = ({ tasks, onComplete, excludeMemberId }) => {
     const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
     const [members, setMembers] = useState([]);
     const [selectedMember, setSelectedMember] = useState('');
@@ -33,14 +33,20 @@ const ReassignTasks = ({ tasks, onComplete }) => {
                 const token = localStorage.getItem('authToken');
                 const response = await getEmployeesWithTasks(token);
                 console.log('Fetched members:', response.data);
-                setMembers(response.data);
+                
+                // Filter out the requesting member
+                const filteredMembers = response.data.filter(
+                    member => member.id !== excludeMemberId
+                );
+                
+                setMembers(filteredMembers);
             } catch (err) {
                 setError('Failed to fetch members');
                 console.error(err);
             }
         };
         fetchMembers();
-    }, []);
+    }, [excludeMemberId]);
 
     const handleReassign = async () => {
         if (!selectedMember) return;
@@ -158,6 +164,10 @@ const ReassignTasks = ({ tasks, onComplete }) => {
             </DialogContent>
         </Dialog>
     );
+};
+
+ReassignTasks.defaultProps = {
+    excludeMemberId: null
 };
 
 export default ReassignTasks;
