@@ -94,6 +94,7 @@ const CreateTaskForm = ({ open, onClose }) => {
         try {
             setEmployeesLoading(true);
             const data = await getEmployeesWithTasks(token);
+            console.log('Fetched employees:', data.data);
             // Sort by tasks count, then alphabetically
             const sortedEmployees = data.data.sort((a, b) => {
                 const taskDiff = a.ongoingTasks - b.ongoingTasks;
