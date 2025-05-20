@@ -1,89 +1,66 @@
-import { useState, useEffect } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 
-const CountdownTimer = ({ deadline }) => {
-    const [timeLeft, setTimeLeft] = useState({
-        days: 0,
-        hours: 0,
-        minutes: 0,
-        seconds: 0,
-        milliseconds: 0
-    });
+const CountdownTimer = ({ counter }) => {
+    const parseCounter = (counterStr) => {
+        if (!counterStr) {
+            return {
+                days: 0,
+                hours: 0,
+                minutes: 0
+            };
+        }
 
-    useEffect(() => {
-        const timer = setInterval(() => {
-            const now = new Date().getTime();
-            const deadlineTime = new Date(deadline).getTime();
-            const difference = deadlineTime - now;
+        try {
+            const [dayPart, timePart] = counterStr.split('.');
+            const [hours, minutes] = timePart.split(':');
 
-            if (difference <= 0) {
-                clearInterval(timer);
-                setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, milliseconds: 0 });
-                return;
-            }
+            return {
+                days: parseInt(dayPart, 10),
+                hours: parseInt(hours, 10),
+                minutes: parseInt(minutes, 10)
+            };
+        } catch (error) {
+            console.error('Error parsing counter:', error);
+            return {
+                days: 0,
+                hours: 0,
+                minutes: 0
+            };
+        }
+    };
 
-            setTimeLeft({
-                days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-                hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-                minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-                seconds: Math.floor((difference % (1000 * 60)) / 1000),
-                milliseconds: difference % 1000
-            });
-        }, 100);
+    const { days, hours, minutes } = parseCounter(counter);
 
-        return () => clearInterval(timer);
-    }, [deadline]);
+    const formatTimeRemaining = (days, hours, minutes) => {
+        if (!counter) {
+            return 'Counter not available';
+        }
+
+        const parts = [];
+        
+        if (days > 0) {
+            parts.push(`${days} ${days === 1 ? 'day' : 'days'}`);
+        }
+        if (hours > 0) {
+            parts.push(`${hours} ${hours === 1 ? 'hour' : 'hours'}`);
+        }
+        if (minutes > 0) {
+            parts.push(`${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`);
+        }
+
+        return parts.join(' ') || 'Less than a minute';
+    };
 
     return (
-        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mt: 1 }}>
-            <TimeUnit value={timeLeft.days} label="DAYS" />
-            <TimeUnit value={timeLeft.hours} label="HOURS" />
-            <TimeUnit value={timeLeft.minutes} label="MIN" />
-            <TimeUnit value={timeLeft.seconds} label="SEC" />
-            <TimeUnit 
-                value={Math.floor(timeLeft.milliseconds / 100)} 
-                label="MS" 
-                isMilliseconds 
-            />
-        </Box>
+        <Typography
+            sx={{
+                color: counter ? 'text.primary' : 'text.secondary',
+                fontFamily: 'system-ui'
+            }}
+        >
+            {formatTimeRemaining(days, hours, minutes)}
+        </Typography>
     );
 };
-
-const TimeUnit = ({ value, label, isMilliseconds }) => (
-    <Box
-        sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            bgcolor: 'background.paper',
-            borderRadius: 1,
-            p: 1,
-            minWidth: isMilliseconds ? 40 : 60,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            border: '1px solid rgba(0,0,0,0.1)'
-        }}
-    >
-        <Typography
-            variant="h6"
-            sx={{
-                fontWeight: 'bold',
-                color: value === 0 ? 'text.disabled' : 'primary.main',
-                fontFamily: 'monospace'
-            }}
-        >
-            {isMilliseconds ? value : value.toString().padStart(2, '0')}
-        </Typography>
-        <Typography
-            variant="caption"
-            sx={{
-                color: 'text.secondary',
-                fontSize: '0.6rem',
-                letterSpacing: '0.1em'
-            }}
-        >
-            {label}
-        </Typography>
-    </Box>
-);
 
 export default CountdownTimer;
