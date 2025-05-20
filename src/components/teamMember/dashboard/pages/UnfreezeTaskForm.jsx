@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -40,9 +40,9 @@ const UnfreezeTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
         } catch (error) {
             console.error('Error in handleConfirm:', error);
             const errorMessage = error.response?.data?.errors?.$?.[0] || 
-                               error.response?.data?.errors?.dto?.[0] ||
-                               error.message || 
-                               'Failed to unfreeze task';
+                            error.response?.data?.errors?.dto?.[0] ||
+                            error.message || 
+                            'Failed to unfreeze task';
             toast.error(errorMessage);
         } finally {
             setLoading(false);
