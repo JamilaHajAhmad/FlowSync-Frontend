@@ -1,5 +1,5 @@
 import { Box, Typography, Card, Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, CircularProgress } from "@mui/material";
-import { Schedule, CalendarToday, ErrorOutline, CheckCircleOutline, PauseCircleOutline } from "@mui/icons-material";
+import { CalendarToday, ErrorOutline, CheckCircleOutline, PauseCircleOutline } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import FreezeTaskForm from './FreezeTaskForm';
 import { DndContext, DragOverlay, closestCorners, useDroppable } from '@dnd-kit/core';
@@ -214,55 +214,46 @@ const TaskCard = ({ task, isDragging }) => {
         )}
 
         {task.frozenAt && (
+          <>
+            <Grid item xs={6}>
+              <Typography variant="body2" color="text.secondary">
+                Frozen At
+              </Typography>
+              <Typography variant="body1" gutterBottom>
+                {new Date(task.frozenAt).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  day: '2-digit',
+                  month: '2-digit',
+                })}
+              </Typography>
+            </Grid>
+
+            {/* Move reason to be beside frozenAt */}
+            {task.reason && (
+              <Grid item xs={6}>
+                <Typography variant="body2" color="text.secondary">
+                  Freezing Reason
+                </Typography>
+                <Typography variant="body1" gutterBottom>
+                  {task.reason}
+                </Typography>
+              </Grid>
+            )}
+          </>
+        )}
+
+        {/* Move Counter section to be on the same row as Deadline */}
+        {task.counter && task.status !== 'Completed' && (
           <Grid item xs={6}>
             <Typography variant="body2" color="text.secondary">
-              Frozen At
-            </Typography>
-            <Typography variant="body1" gutterBottom>
-              {new Date(task.frozenAt).toLocaleDateString('en-US', {
-                year: 'numeric',
-                day: '2-digit',
-                month: '2-digit',
-              })}
-            </Typography>
-          </Grid>
-        )}
-
-        {task.reason && (
-          <Grid item xs={12}>
-            <Typography variant="body2" color="text.secondary">
-              Freezing Reason
-            </Typography>
-            <Typography variant="body1" gutterBottom>
-              {task.reason}
-            </Typography>
-          </Grid>
-        )}
-
-        {/* Add Counter section */}
-        {task.counter && (
-          <Grid item xs={12}>
-            <Typography 
-              variant="body2" Grid
-              color="text.secondary"
-              sx={{ mb: 1 }}
-            >
               Time Remaining
             </Typography>
-            <Box
-              sx={{
-                p: 2,
-                bgcolor: '#f8fafc',
-                borderRadius: 2,
-                border: '1px solid #e2e8f0'
-              }}
-            >
-              <CountdownTimer deadline={task.deadline} />
-            </Box>
+            <Typography variant="body1" gutterBottom>
+              <CountdownTimer counter={task.counter} />
+            </Typography>
           </Grid>
         )}
 
-        {/* Add Deadline section */}
         <Grid item xs={6}>
           <Typography variant="body2" color="text.secondary">
             Deadline
@@ -601,13 +592,12 @@ const Tasks = () => {
             freezeRequestedAt: null
           };
           success = true;
-          toast.success('Task unfrozen successfully');
           break;
 
         case 'complete':
           updatedTask = {
             ...task,
-            status: 'Completed',
+            status: 'Opened',
             completedDate: new Date().toLocaleDateString('en-US'),
             completionNotes: task.notes
           };
