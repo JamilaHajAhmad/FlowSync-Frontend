@@ -54,7 +54,7 @@ const ResetPassword = () => {
         onSubmit: async (values, { setSubmitting }) => {
             try {
                 const response = await axios.post(
-                    'https://localhost:55914/reset-password',
+                    'https://localhost:49798/reset-password',
                     {
                         token: token,
                         userId: userId,

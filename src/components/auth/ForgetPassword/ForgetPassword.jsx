@@ -26,7 +26,7 @@ const ForgetPassword = () => {
         onSubmit: async (values, { setSubmitting }) => {
             try {
                 const response = await axios.post(
-                    'https://localhost:55914/forgot-password',
+                    'https://localhost:49798/forgot-password',
                     { email: values.email }
                 );
 
