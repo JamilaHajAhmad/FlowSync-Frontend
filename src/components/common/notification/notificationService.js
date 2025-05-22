@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://localhost:55914/api';
+const BASE_URL = 'https://localhost:49798/api';
 
 export const getNotifications = async (token) => {
     return await axios.get(`${BASE_URL}/notifications`, {
