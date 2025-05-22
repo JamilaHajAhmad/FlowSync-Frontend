@@ -1,109 +1,15 @@
-const data =
-[
-    {
-      "country": "AD",
-      "hot dog": 158,
-      "hot dogColor": "hsl(57, 70%, 50%)",
-      "burger": 126,
-      "burgerColor": "hsl(319, 70%, 50%)",
-      "sandwich": 158,
-      "sandwichColor": "hsl(357, 70%, 50%)",
-      "kebab": 45,
-      "kebabColor": "hsl(54, 70%, 50%)",
-      "fries": 61,
-      "friesColor": "hsl(12, 70%, 50%)",
-      "donut": 1,
-      "donutColor": "hsl(156, 70%, 50%)"
-    },
-    {
-      "country": "AE",
-      "hot dog": 127,
-      "hot dogColor": "hsl(23, 70%, 50%)",
-      "burger": 189,
-      "burgerColor": "hsl(198, 70%, 50%)",
-      "sandwich": 29,
-      "sandwichColor": "hsl(222, 70%, 50%)",
-      "kebab": 106,
-      "kebabColor": "hsl(348, 70%, 50%)",
-      "fries": 90,
-      "friesColor": "hsl(263, 70%, 50%)",
-      "donut": 71,
-      "donutColor": "hsl(359, 70%, 50%)"
-    },
-    {
-      "country": "AF",
-      "hot dog": 92,
-      "hot dogColor": "hsl(225, 70%, 50%)",
-      "burger": 33,
-      "burgerColor": "hsl(250, 70%, 50%)",
-      "sandwich": 16,
-      "sandwichColor": "hsl(268, 70%, 50%)",
-      "kebab": 197,
-      "kebabColor": "hsl(128, 70%, 50%)",
-      "fries": 123,
-      "friesColor": "hsl(304, 70%, 50%)",
-      "donut": 175,
-      "donutColor": "hsl(27, 70%, 50%)"
-    },
-    {
-      "country": "AG",
-      "hot dog": 14,
-      "hot dogColor": "hsl(70, 70%, 50%)",
-      "burger": 84,
-      "burgerColor": "hsl(139, 70%, 50%)",
-      "sandwich": 137,
-      "sandwichColor": "hsl(86, 70%, 50%)",
-      "kebab": 135,
-      "kebabColor": "hsl(203, 70%, 50%)",
-      "fries": 134,
-      "friesColor": "hsl(331, 70%, 50%)",
-      "donut": 149,
-      "donutColor": "hsl(19, 70%, 50%)"
-    },
-    {
-      "country": "AI",
-      "hot dog": 24,
-      "hot dogColor": "hsl(287, 70%, 50%)",
-      "burger": 14,
-      "burgerColor": "hsl(7, 70%, 50%)",
-      "sandwich": 168,
-      "sandwichColor": "hsl(299, 70%, 50%)",
-      "kebab": 62,
-      "kebabColor": "hsl(130, 70%, 50%)",
-      "fries": 159,
-      "friesColor": "hsl(91, 70%, 50%)",
-      "donut": 133,
-      "donutColor": "hsl(82, 70%, 50%)"
-    },
-    {
-      "country": "AL",
-      "hot dog": 118,
-      "hot dogColor": "hsl(318, 70%, 50%)",
-      "burger": 46,
-      "burgerColor": "hsl(348, 70%, 50%)",
-      "sandwich": 55,
-      "sandwichColor": "hsl(184, 70%, 50%)",
-      "kebab": 99,
-      "kebabColor": "hsl(319, 70%, 50%)",
-      "fries": 13,
-      "friesColor": "hsl(328, 70%, 50%)",
-      "donut": 147,
-      "donutColor": "hsl(204, 70%, 50%)"
-    },
-    {
-      "country": "AM",
-      "hot dog": 178,
-      "hot dogColor": "hsl(140, 70%, 50%)",
-      "burger": 70,
-      "burgerColor": "hsl(193, 70%, 50%)",
-      "sandwich": 41,
-      "sandwichColor": "hsl(223, 70%, 50%)",
-      "kebab": 71,
-      "kebabColor": "hsl(108, 70%, 50%)",
-      "fries": 138,
-      "friesColor": "hsl(77, 70%, 50%)",
-      "donut": 8,
-      "donutColor": "hsl(167, 70%, 50%)"
-    }
-  ]
-  export default data;
+
+
+const transformApiData = (apiData) => {
+    // Transform the API data into the format needed for the stacked chart
+    return apiData.map(item => ({
+        date: new Date(item.date).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric'
+        }),
+        activities: item.count,
+        activitiesColor: 'hsl(163, 70%, 50%)'
+    }));
+};
+
+export { transformApiData };
