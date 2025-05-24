@@ -2,21 +2,30 @@ import { useState, useEffect } from 'react';
 import { ResponsiveBar } from '@nivo/bar';
 import axios from 'axios';
 import { transformApiData } from './data';
+import { useChartData } from '../../../../context/ChartDataContext';
 
 const Bar = () => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const { updateChartData } = useChartData();
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await axios.get('https://localhost:49798/api/reports/tak-distribution-by-member', {
+                const response = await axios.get('https://localhost:49798/api/reports/task-distribution-by-member', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 const transformedData = transformApiData(response.data);
+                console.log('Transformed Data:', response.data);
                 setData(transformedData);
+                // Store the original response data for exports
+                updateChartData({
+                    type: 'bar',
+                    rawData: response.data,
+                    transformedData: transformedData
+                });
             } catch (err) {
                 setError(err.message);
                 console.error('Error fetching data:', err);
@@ -26,7 +35,7 @@ const Bar = () => {
         };
 
         fetchData();
-    }, []);
+    }, [updateChartData]);
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;

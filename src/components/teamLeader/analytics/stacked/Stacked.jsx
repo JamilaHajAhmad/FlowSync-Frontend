@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { ResponsiveBar } from '@nivo/bar';
 import axios from 'axios';
 import { transformApiData } from './data';
+import { useChartData } from '../../../../context/ChartDataContext';
 
 const Stacked = () => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const { updateChartData } = useChartData();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -17,6 +19,13 @@ const Stacked = () => {
                 });
                 const transformedData = transformApiData(response.data);
                 setData(transformedData);
+
+                // Update chart data context with both raw and transformed data
+                updateChartData({
+                    type: 'stacked',
+                    rawData: response.data,
+                    transformedData: transformedData
+                });
             } catch (err) {
                 setError(err.message);
                 console.error('Error fetching data:', err);
@@ -26,7 +35,7 @@ const Stacked = () => {
         };
 
         fetchData();
-    }, []);
+    }, [updateChartData]);
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;

@@ -29,7 +29,7 @@ import Bar from './components/teamLeader/analytics/bar/Bar';
 import HeatMap from './components/teamLeader/analytics/heatmap/HeatMap';
 import Line from './components/teamLeader/analytics/line/Line';
 import Pie from './components/teamLeader/analytics/pie/Pie';
-import Stream from './components/teamLeader/analytics/stream/Stream';
+import AreaBump from './components/teamLeader/analytics/areabump/AreaBump';
 import Stacked from './components/teamLeader/analytics/stacked/Stacked';
 import NotificationsPage from './components/common/notification/NotificationsPage';
 import FAQ from './components/teamMember/dashboard/components/FAQ';
@@ -40,11 +40,13 @@ import TwoFactorAuth from './components/common/security/TwoFactorAuth';
 import ToggleTwoFactorAuth from './components/common/security/ToggleTwoFactorAuth';
 import ConnectedDevices from './components/common/security/ConnectedDevices';
 import LoginNotifications from './components/common/security/LoginNotifications';
+import { ChartDataProvider } from './context/ChartDataContext';
 
 const App = () => {
     return (
         <LocalizationProvider dateAdapter={AdapterDateFns}>
         <NotificationProvider>
+            <ChartDataProvider>
             <BrowserRouter>
                 <Routes>
                     {/* Public routes */}
@@ -75,7 +77,7 @@ const App = () => {
                     <Route path="/analytics/bar" element={<ProtectedRouter><Layout children={<Bar />} /></ProtectedRouter>} />
                     <Route path="/analytics/line" element={<ProtectedRouter><Layout children={<Line />} /></ProtectedRouter>} />
                     <Route path="/analytics/pie" element={<ProtectedRouter><Layout children={<Pie />} /></ProtectedRouter>} />
-                    <Route path="/analytics/stream" element={<ProtectedRouter><Layout children={<Stream />} /></ProtectedRouter>} />
+                    <Route path="/analytics/areabump" element={<ProtectedRouter><Layout children={<AreaBump />} /></ProtectedRouter>} />
                     <Route path="/analytics/stacked" element={<ProtectedRouter><Layout children={<Stacked />} /></ProtectedRouter>} />
                     <Route path="/analytics/heatmap" element={<ProtectedRouter><Layout children={<HeatMap />} /></ProtectedRouter>} />
                     <Route path="/notifications" element={<ProtectedRouter><NotificationsPage /></ProtectedRouter>} />
@@ -85,6 +87,7 @@ const App = () => {
                 <ToastContainer />
             </BrowserRouter>
             <ChatbotButton />
+            </ChartDataProvider>
         </NotificationProvider>
         </LocalizationProvider>
     );

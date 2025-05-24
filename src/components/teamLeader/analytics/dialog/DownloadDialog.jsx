@@ -11,7 +11,7 @@ import {
     Box,
     Typography
 } from '@mui/material';
-import { PictureAsPdf, TableView } from '@mui/icons-material';
+import { PictureAsPdf, TableView, InsertDriveFile } from '@mui/icons-material'; // Add InsertDriveFile import
 import { useState } from 'react';
 
 const DownloadDialog = ({ open, handleClose, handleDownload }) => {
@@ -25,6 +25,25 @@ const DownloadDialog = ({ open, handleClose, handleDownload }) => {
         handleDownload(fileType);
         handleClose();
         setFileType('');
+    };
+
+    const fileTypes = [
+        { value: 'pdf', label: 'PDF Document' },
+        { value: 'excel', label: 'Excel Spreadsheet' },
+        { value: 'csv', label: 'CSV File' } // Add CSV option
+    ];
+
+    const getFileIcon = (type) => {
+        switch (type) {
+            case 'pdf':
+                return <PictureAsPdf color="error" />;
+            case 'excel':
+                return <TableView color="success" />;
+            case 'csv':
+                return <InsertDriveFile color="primary" />;
+            default:
+                return null;
+        }
     };
 
     return (
@@ -69,18 +88,14 @@ const DownloadDialog = ({ open, handleClose, handleDownload }) => {
                             }
                         }}
                     >
-                        <MenuItem value="pdf">
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <PictureAsPdf color="error" />
-                                <Typography>PDF Document</Typography>
-                            </Box>
-                        </MenuItem>
-                        <MenuItem value="excel">
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <TableView color="success" />
-                                <Typography>Excel Spreadsheet</Typography>
-                            </Box>
-                        </MenuItem>
+                        {fileTypes.map((type) => (
+                            <MenuItem key={type.value} value={type.value}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    {getFileIcon(type.value)}
+                                    <Typography>{type.label}</Typography>
+                                </Box>
+                            </MenuItem>
+                        ))}
                     </Select>
                 </FormControl>
             </DialogContent>
