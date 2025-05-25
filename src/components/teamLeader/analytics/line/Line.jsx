@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ResponsiveLine } from '@nivo/line';
 import axios from 'axios';
 import { transformApiData } from './data';
@@ -10,7 +10,11 @@ const Line = () => {
     const [error, setError] = useState(null);
     const { updateChartData } = useChartData();
 
+    const hasFetched = useRef(false); // Track if we've fetched
+
     useEffect(() => {
+        if (hasFetched.current) return; // Skip if already fetched
+        
         const fetchData = async () => {
             try {
                 const token = localStorage.getItem('authToken');
@@ -19,13 +23,12 @@ const Line = () => {
                 });
                 const transformedData = transformApiData(response.data);
                 setData(transformedData);
-
-                // Update chart data context with both raw and transformed data
                 updateChartData({
                     type: 'line',
                     rawData: response.data,
                     transformedData: transformedData
                 });
+                hasFetched.current = true; // Mark as fetched
             } catch (err) {
                 setError(err.message);
                 console.error('Error fetching data:', err);
@@ -35,7 +38,7 @@ const Line = () => {
         };
 
         fetchData();
-    }, [updateChartData]);
+    }, [updateChartData]); // Keep the dependency but prevent re-fetching
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;

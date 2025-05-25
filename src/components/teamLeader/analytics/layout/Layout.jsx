@@ -1,10 +1,11 @@
 import { Box, IconButton, Tooltip } from '@mui/material';
-import { Download, ArrowBack } from '@mui/icons-material';  // Add ArrowBack import
+import { Download, ArrowBack } from '@mui/icons-material';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import Sidebar from '../../dashboard/components/Sidebar';
 import Topbar from '../../../common/Topbar';
 import DownloadDialog from '../dialog/DownloadDialog';
 import { useState } from 'react';
-import { jsPDF } from 'jspdf';
 import * as XLSX from 'xlsx';
 import { toast } from 'react-toastify';
 import html2canvas from 'html2canvas';
@@ -16,7 +17,7 @@ const Layout = ({ children }) => {
     const [ open, setOpen ] = useState(false);
     const [ mode, setMode ] = useState('light');
     const [downloadOpen, setDownloadOpen] = useState(false);
-    const { chartData } = useChartData();
+    const { chartData, getCurrentReportType } = useChartData();
 
     const handleDrawerOpen = () => {
         setOpen(!open);
@@ -132,37 +133,51 @@ const Layout = ({ children }) => {
                     
                     return row;
                 }); }
-
-            case 'areabump':
-                { const areaBumpData = data.rawData;
-                const periods = [...new Set(areaBumpData.map(item => `${item.year}-${item.month}`))].sort();
-                const types = [...new Set(areaBumpData.map(item => item.type))];
                 
-                return periods.map(period => {
-                    const [year, month] = period.split('-');
-                    const periodData = areaBumpData.filter(
-                        item => item.year === parseInt(year) && item.month === parseInt(month)
-                    );
-                    
-                    const row = {
-                        'Period': `${year}-${month.padStart(2, '0')}`
-                    };
-                    
-                    // Add count for each request type
-                    types.forEach(type => {
-                        const typeData = periodData.find(d => d.type === type);
-                        row[`${type} Requests`] = typeData?.count || 0;
-                    });
-                    
-                    // Add total for the period
-                    row['Total Requests'] = periodData.reduce((sum, item) => sum + item.count, 0);
-                    
-                    return row;
-                }); }
+            case 'funnel':
+                // First group data by type to combine counts from different months
+                { const groupedByType = data.rawData.reduce((acc, item) => {
+                    const key = item.type;
+                    if (!acc[key]) {
+                        acc[key] = {
+                            type: item.type,
+                            count: 0,
+                            dates: []
+                        };
+                    }
+                    acc[key].count += item.count;
+                    acc[key].dates.push(`${item.year}-${item.month.toString().padStart(2, '0')}`);
+                    return acc;
+                }, {});
+
+                // Convert grouped data back to array and sort by count
+                const sortedData = Object.values(groupedByType)
+                    .sort((a, b) => b.count - a.count);
+
+                // Calculate conversion rates and format the data
+                return sortedData.map((item) => ({
+                    'Request Type': item.type,
+                    'Count': item.count,
+                    'Dates': item.dates.join(', '),
+                    'Conversion Rate': calculateConversionRate(sortedData, item),
+                    'Most Recent Date': item.dates[item.dates.length - 1]
+                })); }
                 
             default:
                 return data.rawData;
         }
+    };
+
+    const calculateConversionRate = (data, currentItem) => {
+        const sortedData = [...data].sort((a, b) => b.count - a.count);
+        const currentIndex = sortedData.findIndex(item => item.type === currentItem.type);
+        
+        if (currentIndex === 0) return '100%';
+        
+        const previousCount = sortedData[currentIndex - 1].count;
+        const conversionRate = (currentItem.count / previousCount) * 100;
+        
+        return `${conversionRate.toFixed(2)}%`;
     };
 
     const handleDownload = async (fileType) => {
@@ -193,20 +208,21 @@ const Layout = ({ children }) => {
 
                 const csvContent = [headers.join(','), ...rows].join('\n');
                 
-                // Create and trigger download
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `chart-data-${new Date().toISOString().slice(0,10)}.csv`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(link.href);
+                const fileName = `chart-data-${new Date().toISOString().slice(0,10)}.csv`;
                 
-                toast.success('CSV file generated successfully');
+                // Create File object with correct type
+                const file = new File([blob], fileName, { type: 'text/csv' });
+
+                return {
+                    file,
+                    fileName,
+                    fileType: 'csv'
+                };
             } catch (error) {
                 console.error('CSV generation error:', error);
                 toast.error(`Failed to generate CSV file: ${error.message}`);
+                return null;
             }
         } else if (fileType === 'excel') {
             try {
@@ -259,37 +275,97 @@ const Layout = ({ children }) => {
                     XLSX.utils.book_append_sheet(wb, ws_viz, "Visualization");
                 }
 
-                // Save the workbook
-                XLSX.writeFile(wb, `chart-report-${new Date().toISOString().slice(0,10)}.xlsx`);
-                toast.success('Excel file generated successfully');
+                // Save the workbook and get the blob
+                const excelBlob = XLSX.write(wb, { bookType: 'xlsx', type: 'blob' });
+                const fileName = `chart-report-${new Date().toISOString().slice(0,10)}.xlsx`;
+                
+                // Create File object with correct type
+                const file = new File([excelBlob], fileName, { 
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+                });
+
+                return {
+                    file,
+                    fileName,
+                    fileType: 'excel'
+                };
             } catch (error) {
                 console.error('Excel generation error:', error);
                 toast.error(`Failed to generate Excel file: ${error.message}`);
+                return null;
             }
         } else if (fileType === 'pdf') {
             try {
-                // Render the chart container to canvas using html2canvas
+                if (!exportData || exportData.length === 0) {
+                    throw new Error('No data to export');
+                }
+
+                // Render the chart container to canvas
                 const chartContainer = document.querySelector('.chart-container');
                 if (!chartContainer) {
                     toast.error('Chart container not found');
-                    return;
+                    return null;
                 }
+
                 const canvas = await html2canvas(chartContainer);
-                // Convert to image
                 const imageData = canvas.toDataURL('image/png');
 
-                // Create PDF with proper dimensions
-                const imgWidth = 290; // A4 landscape width - margins
+                // Create PDF in landscape orientation
+                const doc = new jsPDF('landscape');
+                
+                // Add chart image on first page
+                const imgWidth = 270;
                 const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                doc.addImage(imageData, 'PNG', 10, 10, imgWidth, imgHeight);
+
+                // Add a new page for the table
+                doc.addPage();
+
+                // Add title for data table
+                doc.setFontSize(16);
+                doc.setTextColor(5, 150, 105);
+                doc.text('Data Overview', 14, 15);
+
+                // Add table using autoTable on the new page
+                autoTable(doc, {
+                    head: [Object.keys(exportData[0])],
+                    body: exportData.map(row => Object.values(row)),
+                    startY: 25, // Start below the title
+                    theme: 'grid',
+                    styles: {
+                        fontSize: 8,
+                        cellPadding: 3,
+                        overflow: 'linebreak',
+                        halign: 'left'
+                    },
+                    headStyles: {
+                        fillColor: [5, 150, 105],
+                        textColor: 255,
+                        fontSize: 9,
+                        fontStyle: 'bold',
+                        halign: 'left'
+                    },
+                    margin: { top: 25, right: 10, bottom: 10, left: 10 }
+                });
+
                 
-                const pdf = new jsPDF('landscape');
-                pdf.addImage(imageData, 'PNG', 10, 10, imgWidth, imgHeight);
-                pdf.save('chart-report.pdf');
+                // Create blob for API
+                const pdfBlob = doc.output('blob');
+                const fileName = `chart-report-${new Date().toISOString().slice(0,10)}.pdf`;
+
+                // Save locally
+                doc.save(fileName);
                 
-                toast.success('PDF generated successfully');
+                // Create File object with correct type
+                const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+                return {
+                    file
+                };
             } catch (error) {
                 console.error('PDF generation error:', error);
                 toast.error('Failed to generate PDF');
+                return null;
             }
         }
     };
@@ -366,6 +442,7 @@ const Layout = ({ children }) => {
                 open={downloadOpen}
                 handleClose={() => setDownloadOpen(false)}
                 handleDownload={handleDownload}
+                reportType={getCurrentReportType()}
             />
         </Box>
     );

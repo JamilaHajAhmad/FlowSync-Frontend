@@ -22,6 +22,7 @@ import {
     ListItemText,
     styled
 } from '@mui/material';
+import FeedIcon from '@mui/icons-material/Feed';
 import defaultImg from '../../../../assets/images/default.jpg';
 import { handleLogout } from '../../../../utils';
 import { decodeToken } from '../../../../utils';
@@ -103,7 +104,8 @@ const links = [
     { text: "Team Members", icon: <GroupOutlined />, path: "/team" },
     { text: "Calendar", icon: <CalendarMonthOutlined />, path: "/calendar" },
     { text: "Profile", icon: <AccountCircleOutlined />, path: "/profile" },
-    { text: "Analytics", icon: <Analytics />, path: "/analytics" }
+    { text: "Analytics", icon: <Analytics />, path: "/analytics" },
+    { text: "Reports", icon: <FeedIcon />, path: "/reports" },
 ];
 
 export default function Sidebar({ open }) {

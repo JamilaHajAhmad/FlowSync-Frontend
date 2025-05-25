@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card, CardContent, CardActionArea, Typography, Grid, Container, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import Bar from '../../analytics/bar/Bar';
@@ -6,7 +5,7 @@ import Line from '../../analytics/line/Line';
 import Stacked from '../../analytics/stacked/Stacked';
 import Pie from '../../analytics/pie/Pie';
 import HeatMap from '../../analytics/heatmap/HeatMap';
-import AreaBump from '../../analytics/areabump/AreaBump';
+import Funnel from '../../analytics/funnel/Funnel';
 
 const charts = [
     {
@@ -59,8 +58,8 @@ const charts = [
         subtitle: 'Historical Sales Pattern',
         value: '847 Sales',
         trend: '+6.8%',
-        path: '/analytics/areabump',
-        component: <AreaBump />,
+        path: '/analytics/funnel',
+        component: <Funnel />,
         gridSize: { xs: 12, md: 7 }
     }
 ];

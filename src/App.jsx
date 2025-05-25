@@ -1,4 +1,3 @@
-import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { LocalizationProvider } from '@mui/x-date-pickers';
@@ -29,9 +28,10 @@ import Bar from './components/teamLeader/analytics/bar/Bar';
 import HeatMap from './components/teamLeader/analytics/heatmap/HeatMap';
 import Line from './components/teamLeader/analytics/line/Line';
 import Pie from './components/teamLeader/analytics/pie/Pie';
-import AreaBump from './components/teamLeader/analytics/areabump/AreaBump';
+import Funnel from './components/teamLeader/analytics/funnel/Funnel';
 import Stacked from './components/teamLeader/analytics/stacked/Stacked';
 import NotificationsPage from './components/common/notification/NotificationsPage';
+import Reports from './components/teamLeader/dashboard/components/Reports';
 import FAQ from './components/teamMember/dashboard/components/FAQ';
 import FeedbackSupport from './components/teamMember/dashboard/components/FeedbackSupport';
 import ChatbotButton from './components/common/chat/ChatbotButton';
@@ -77,9 +77,10 @@ const App = () => {
                     <Route path="/analytics/bar" element={<ProtectedRouter><Layout children={<Bar />} /></ProtectedRouter>} />
                     <Route path="/analytics/line" element={<ProtectedRouter><Layout children={<Line />} /></ProtectedRouter>} />
                     <Route path="/analytics/pie" element={<ProtectedRouter><Layout children={<Pie />} /></ProtectedRouter>} />
-                    <Route path="/analytics/areabump" element={<ProtectedRouter><Layout children={<AreaBump />} /></ProtectedRouter>} />
+                    <Route path="/analytics/funnel" element={<ProtectedRouter><Layout children={<Funnel />} /></ProtectedRouter>} />
                     <Route path="/analytics/stacked" element={<ProtectedRouter><Layout children={<Stacked />} /></ProtectedRouter>} />
                     <Route path="/analytics/heatmap" element={<ProtectedRouter><Layout children={<HeatMap />} /></ProtectedRouter>} />
+                    <Route path="/reports" element={<ProtectedRouter><Reports /></ProtectedRouter>} />
                     <Route path="/notifications" element={<ProtectedRouter><NotificationsPage /></ProtectedRouter>} />
                     <Route path="/faq" element={<ProtectedRouter><FAQ /></ProtectedRouter>} />
                     <Route path="/feedback&support" element={<ProtectedRouter><FeedbackSupport /></ProtectedRouter>} />
