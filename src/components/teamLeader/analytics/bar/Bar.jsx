@@ -50,7 +50,32 @@ const hasFetched = useRef(false); // Track if we've fetched
             padding={0.3}
             valueScale={{ type: 'linear' }}
             indexScale={{ type: 'band', round: true }}
-            colors={{ scheme: 'nivo' }}
+            colors={({ id }) => {
+                // Updated color mapping to match the provided grades
+                const colorMap = {
+                    'Opened': '#ed6c02',    // Orange from status colors
+                    'Completed': '#059669',  // Green from status colors
+                    'Frozen': '#1976D2',   // Blue from status colors
+                    'Delayed': '#d32f2f'       // Red from status colors
+                };
+                return colorMap[id];
+            }}
+            theme={{
+                // Add gradient background colors
+                bars: {
+                    gradient: {
+                        colors: ({ id }) => {
+                            const gradientMap = {
+                                'Opened': '#fff4e0',    // Orange background
+                                'Completed': '#e0f7e9',  // Green background
+                                'Frozen': '#E3F2FD',     // Blue background
+                                'Delayed': '#fde8e8'     // Red background
+                            };
+                            return [gradientMap[id], gradientMap[id]];
+                        }
+                    }
+                }
+            }}
             borderColor={{
                 from: 'color',
                 modifiers: [['darker', 1.6]]

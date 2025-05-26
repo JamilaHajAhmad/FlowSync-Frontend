@@ -52,10 +52,27 @@ const Stacked = () => {
             padding={0.3}
             valueScale={{ type: 'linear' }}
             indexScale={{ type: 'band', round: true }}
-            colors={{ scheme: 'nivo' }}
+            colors={'#ed6c02'} // Use the orange color from your data
+            theme={{
+                background: 'transparent',
+                textColor: '#333333',
+                fontSize: 11,
+                axis: {
+                    ticks: {
+                        text: {
+                            fill: '#666666'
+                        }
+                    },
+                    legend: {
+                        text: {
+                            fill: '#333333'
+                        }
+                    }
+                }
+            }}
             borderColor={{
                 from: 'color',
-                modifiers: [['darker', 1.6]]
+                modifiers: [['darker', 0.2]]
             }}
             axisTop={null}
             axisRight={null}

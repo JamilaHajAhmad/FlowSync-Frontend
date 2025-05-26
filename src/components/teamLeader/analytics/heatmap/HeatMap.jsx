@@ -73,7 +73,7 @@ const hasFetched = useRef(false); // Track if we've fetched
             }}
             colors={{
                 type: 'diverging',
-                scheme: 'red_yellow_blue',
+                scheme: 'spectral',
                 divergeAt: 0.5,
                 minValue: 0,
                 maxValue: 10

@@ -55,6 +55,16 @@ const Line = () => {
                 stacked: false,
                 reverse: false
             }}
+            colors={({ id }) => {
+                switch (id) {
+                    case 'Created Tasks':
+                        return '#ed6c02';    // Orange
+                    case 'Completed Tasks':
+                        return '#059669';    // Green
+                    default:
+                        return '#999999';
+                }
+            }}
             yFormat=" >-.2f"
             axisTop={null}
             axisRight={null}
@@ -85,7 +95,7 @@ const Line = () => {
                     anchor: 'bottom-right',
                     direction: 'column',
                     justify: false,
-                    translateX: 100,
+                    translateX: 85,
                     translateY: 0,
                     itemsSpacing: 0,
                     itemDirection: 'left-to-right',

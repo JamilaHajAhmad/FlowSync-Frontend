@@ -5,13 +5,13 @@ const transformApiData = (apiData) => {
             acc[item.member] = {
                 member: item.member,
                 Opened: 0,
-                OpenedColor: "hsl(200, 70%, 50%)",
+                OpenedColor: "#ed6c02",     // Changed to orange
                 Completed: 0,
-                CompletedColor: "hsl(120, 70%, 50%)",
+                CompletedColor: "#059669",  // Kept green
                 Frozen: 0,
-                FrozenColor: "hsl(240, 70%, 50%)",
+                FrozenColor: "#1976D2",     // Changed to blue
                 Delayed: 0,
-                DelayedColor: "hsl(0, 70%, 50%)"
+                DelayedColor: "#d32f2f"       // Kept red
             };
         }
         acc[item.member][item.status] = item.count;
