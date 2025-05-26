@@ -1,10 +1,13 @@
 import * as React from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import GaugeChart from 'react-gauge-chart';
 import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   display: 'flex',
@@ -21,15 +24,86 @@ const StyledGaugeChart = styled(GaugeChart)(() => ({
   width: '100%',
 }));
 
-const getColor = (value) => {
-  if (value < 0.5) return '#FF0000'; // Red for values less than 50%
-  if (value < 0.9) return '#F59E0B'; // Yellow for values between 50% and 90%
-  return '#059669'; // Green for values 90% and above
+const colors = {
+  gauge: {
+    red: '#EF4444',    // Low performance
+    orange: '#F59E0B', // Medium performance
+    green: '#10B981'   // High performance
+  }
 };
 
-const KpiCard = ({ title, value }) => {
-  const percentage = value / 100;
-  const color = getColor(percentage);
+const getColor = (value) => {
+  if (value < 0.34) return colors.gauge.red;
+  if (value < 0.67) return colors.gauge.orange;
+  return colors.gauge.green;
+};
+
+const KpiCard = ({ title }) => {
+  const [kpiData, setKpiData] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchKPI = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+
+        const response = await axios.get(
+          'https://localhost:49798/api/kpi/member/annual-kpi',
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/json',
+              'Cache-Control': 'no-cache'
+            }
+          }
+        );
+
+        if (response.status === 401) {
+          throw new Error('Session expired. Please log in again.');
+        }
+
+        const kpiValue = response.data?.kpi || 0;
+        console.log('KPI Value:', kpiValue);
+        setKpiData(kpiValue);
+
+      } catch (err) {
+        console.error('Error fetching KPI:', err);
+        setError(err.message || 'Failed to load KPI data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchKPI();
+  }, []);
+
+  const percentage = kpiData / 100;
+
+  if (loading) {
+    return (
+      <StyledCard variant="outlined">
+        <CardContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
+          <CircularProgress sx={{ color: '#059669' }} />
+        </CardContent>
+      </StyledCard>
+    );
+  }
+
+  if (error) {
+    return (
+      <StyledCard variant="outlined">
+        <CardContent>
+          <Typography color="error" align="center">
+            {error}
+          </Typography>
+        </CardContent>
+      </StyledCard>
+    );
+  }
 
   return (
     <StyledCard variant="outlined">
@@ -41,7 +115,7 @@ const KpiCard = ({ title, value }) => {
           <StyledGaugeChart
             id="gauge-chart"
             nrOfLevels={30}
-            colors={[color, '#E0E0E0']} // Grey color for the remaining part
+            colors={[getColor(percentage), '#E0E0E0']}
             arcWidth={0.3}
             percent={percentage}
             needleColor="#464A4F"

@@ -14,6 +14,11 @@ const colors = {
   completed: '#059669',
   delayed: '#F59E0B',
   ongoing: '#10B981',
+  gauge: {
+    red: '#EF4444',
+    orange: '#F59E0B',
+    green: '#10B981'
+  }
 };
 
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -156,13 +161,11 @@ export default function OverallProgress() {
           <StyledGaugeChart
             id="gauge-chart"
             nrOfLevels={3}
-            colors={[colors.completed, colors.delayed, colors.ongoing]}
+            colors={[colors.gauge.red, colors.gauge.orange, colors.gauge.green]}
             arcWidth={0.3}
-            // Fix 1: Ensure KPI value is between 0-1
             percent={Math.min(kpiData?.kpi || 0, 100) / 100}
             needleColor="#059669"
             textColor="#059669"
-            // Fix 2: Ensure display value doesn't exceed 100%
             formatTextValue={value => `${Math.min(Math.round(kpiData?.kpi || 0), 100)}%`}
           />
         </Box>
