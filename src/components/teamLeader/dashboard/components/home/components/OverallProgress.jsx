@@ -38,33 +38,87 @@ export default function OverallProgress() {
 
   useEffect(() => {
     const fetchKPI = async () => {
-      try {
-        const token = localStorage.getItem('authToken');
-        const decodedToken = decodeToken(token);
-        const leaderId = decodedToken.id;
-        const response = await axios.get(
-          `https://localhost:49798/api/kpi/leader/${leaderId}/annual-kpi`,
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        );
-        console.log('KPI Data:', response.data);
+        try {
+            console.log('Fetching KPI data...');
+            const token = localStorage.getItem('authToken');
+            
+            // Log token structure (safely)
+            console.log('Token parts:', token ? token.split('.').length : 0);
+            
+            if (!token) {
+              setError('No authentication token found. Please log in.');
+              setLoading(false);
+              return;
+            }
 
-        // Calculate progress (value between 0 and 1)
-        const total = response.data.totalCases || 0;
-        const completed = response.data.completed || 0;
-        const progress = total > 0 ? completed / total : 0;
+            // Validate token structure before making request
+            if (token.split('.').length !== 3) {
+              setError('Invalid token format. Please log in again.');
+              setLoading(false);
+              return;
+            }
 
-        setKpiData({
-          ...response.data,
-          progress: progress
-        });
-      } catch (err) {
-        console.error('Error fetching KPI:', err);
-        setError('Failed to load KPI data');
-      } finally {
-        setLoading(false);
-      }
+            const response = await axios.get(
+              `https://localhost:49798/api/kpi/leader/annual-kpi`,
+              {
+                  headers: { 
+                      'Authorization': `Bearer ${token}`,
+                      'Accept': 'application/json',
+                      'Cache-Control': 'no-cache'
+                  }
+              }
+            );
+
+            // Check authentication first
+            if (response.status === 401) {
+              setError('Session expired. Please log in again.');
+              localStorage.removeItem('authToken');
+              return;
+            }
+
+            if (!response.data) {
+              throw new Error('No data received from server');
+            }
+
+            // Log raw KPI value from response
+            console.log('Raw KPI value:', response.data.kpi);
+
+            // Process the data once
+            const processedData = {
+                totalCases: response.data.totalCases || 0,
+                completed: response.data.completed || 0,
+                delayed: response.data.delayed || 0,
+                ongoing: response.data.ongoing || 0,
+                kpi: response.data.kpi || 0
+            };
+
+            // Log processed KPI value
+            console.log('Processed KPI value:', processedData.kpi);
+
+            // Calculate progress once
+            const progress = processedData.totalCases > 0 
+                ? (processedData.completed / processedData.totalCases)
+                : 0;
+
+            const finalData = {
+                ...processedData,
+                progress: Math.min(progress, 1)
+            };
+
+            // Log final KPI value being set to state
+            console.log('Final KPI value:', finalData.kpi);
+            setKpiData(finalData);
+
+        } catch (err) {
+            console.error('Detailed error:', {
+                message: err.message,
+                status: err.response?.status,
+                data: err.response?.data
+            });
+            setError(err.response?.data?.message || err.message || 'Failed to load KPI data');
+        } finally {
+            setLoading(false);
+        }
     };
 
     fetchKPI();
@@ -104,9 +158,12 @@ export default function OverallProgress() {
             nrOfLevels={3}
             colors={[colors.completed, colors.delayed, colors.ongoing]}
             arcWidth={0.3}
-            percent={kpiData.progress}
+            // Fix 1: Ensure KPI value is between 0-1
+            percent={Math.min(kpiData?.kpi || 0, 100) / 100}
             needleColor="#059669"
             textColor="#059669"
+            // Fix 2: Ensure display value doesn't exceed 100%
+            formatTextValue={value => `${Math.min(Math.round(kpiData?.kpi || 0), 100)}%`}
           />
         </Box>
         <Stack direction="row" justifyContent="space-between" sx={{ mt: 2, gap: 1 }}>
