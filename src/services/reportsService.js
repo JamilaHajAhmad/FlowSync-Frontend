@@ -13,7 +13,8 @@ export const saveReport = async (reportType, description, file) => {
         const token = localStorage.getItem('authToken');
         const formData = new FormData();
         formData.append('description', description);
-        formData.append('file', file);
+        formData.append('file', file.file);
+        console.log('Form Data:', formData);
 
         const response = await api.post(
             `/reports/save-report/${reportType}`,
