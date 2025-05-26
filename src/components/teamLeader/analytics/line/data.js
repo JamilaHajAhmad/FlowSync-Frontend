@@ -2,13 +2,13 @@ const transformApiData = (apiData) => {
     // Create data series for created and completed tasks
     const created = {
         id: "Created Tasks",
-        color: "hsl(163, 70%, 50%)",
+        color: "#ed6c02",
         data: []
     };
     
     const completed = {
         id: "Completed Tasks",
-        color: "hsl(348, 70%, 50%)",
+        color: "#059669",
         data: []
     };
 

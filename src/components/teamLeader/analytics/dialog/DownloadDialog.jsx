@@ -149,6 +149,7 @@ const DownloadDialog = ({ open, handleClose, handleDownload, reportType }) => {
                 open={snackbar.open}
                 autoHideDuration={6000}
                 onClose={() => setSnackbar({ ...snackbar, open: false })}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} // Add this line
             >
                 <Alert severity={snackbar.severity} sx={{ width: '100%' }}>
                     {snackbar.message}

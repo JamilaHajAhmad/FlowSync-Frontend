@@ -8,7 +8,7 @@ const transformApiData = (apiData) => {
             day: 'numeric'
         }),
         activities: item.count,
-        activitiesColor: 'hsl(163, 70%, 50%)'
+        activitiesColor: '#ed6c02'
     }));
 };
 
