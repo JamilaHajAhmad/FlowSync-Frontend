@@ -214,6 +214,16 @@ const Layout = ({ children }) => {
                 // Create File object with correct type
                 const file = new File([blob], fileName, { type: 'text/csv' });
 
+                // Trigger download
+                const downloadUrl = URL.createObjectURL(file);
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(downloadUrl);
+
                 return {
                     file,
                     fileName,
@@ -242,7 +252,7 @@ const Layout = ({ children }) => {
                 // Add the data worksheet
                 XLSX.utils.book_append_sheet(wb, ws_data, "Data");
 
-                // Create chart image worksheet
+                // Create chart image worksheet if chart container exists
                 const chartContainer = document.querySelector('.chart-container');
                 if (chartContainer) {
                     const canvas = await html2canvas(chartContainer, {
@@ -275,14 +285,30 @@ const Layout = ({ children }) => {
                     XLSX.utils.book_append_sheet(wb, ws_viz, "Visualization");
                 }
 
-                // Save the workbook and get the blob
-                const excelBlob = XLSX.write(wb, { bookType: 'xlsx', type: 'blob' });
+                // Generate array buffer instead of blob
+                const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                
+                // Convert buffer to blob
+                const blob = new Blob([excelBuffer], { 
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+                });
+                
                 const fileName = `chart-report-${new Date().toISOString().slice(0,10)}.xlsx`;
                 
                 // Create File object with correct type
-                const file = new File([excelBlob], fileName, { 
+                const file = new File([blob], fileName, { 
                     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
                 });
+
+                // Trigger download
+                const downloadUrl = URL.createObjectURL(file);
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(downloadUrl);
 
                 return {
                     file,
