@@ -61,7 +61,7 @@ export default function Members({ showActions = true }) {
         switch (status) {
             case "On Duty":
                 return { color: "green", background: "#e0f7e9" };
-            case "Annual Leave":
+            case "Annually Leave":
                 return { color: "red", background: "#fde8e8" };
             case "Temporarily Leave":
                 return { color: "orange", background: "#fff4e0" };
