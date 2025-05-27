@@ -193,24 +193,46 @@ const TaskReminderCard = () => {
 
     if (Object.values(tasks).every(typeArray => typeArray.length === 0)) {
         return (
-            <Card sx={{ 
-                minWidth: 300, 
-                mb: 2, 
-                bgcolor: '#f0fdf4',
-                borderLeft: '5px solid #22c55e'
-            }}>
-                <CardContent>
-                    <Box display="flex" alignItems="center" gap={2} mb={2}>
-                        <CelebrationIcon sx={{ color: '#22c55e', fontSize: 40 }} />
-                        <Typography variant="h6" color="#15803d">
-                            All Caught Up!
-                        </Typography>
-                    </Box>
-                    <Typography variant="body1" color="#166534">
-                        You're doing great! No pending tasks to remind you of.
-                    </Typography>
-                </CardContent>
-            </Card>
+            <Box
+                sx={{
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    px: 2
+                }}
+            >
+                <CelebrationIcon 
+                    sx={{ 
+                        color: '#22c55e', 
+                        fontSize: { xs: 48, sm: 64 },
+                        mb: 3
+                    }} 
+                />
+                <Typography 
+                    variant="h4" 
+                    color="#15803d"
+                    sx={{ 
+                        mb: 2,
+                        fontWeight: 600,
+                        fontSize: { xs: '1.5rem', sm: '2rem' }
+                    }}
+                >
+                    All Caught Up!
+                </Typography>
+                <Typography 
+                    variant="h6" 
+                    sx={{ 
+                        maxWidth: 500,
+                        lineHeight: 1.5,
+                        fontSize: { xs: '1rem', sm: '1.25rem' }
+                    }}
+                >
+                    You're doing great! No pending tasks to remind you of
+                </Typography>
+            </Box>
         );
     }
 

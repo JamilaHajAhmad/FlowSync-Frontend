@@ -1,9 +1,8 @@
-import * as React from 'react';
 import Grid from '@mui/material/Grid2';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import KpiCard from './KpiCard';
+import KPI from './KPI';
 import TasksOverview from './TasksOverview';
 import PageViewsBarChart from './PageViewsBarChart';
 import SessionsChart from './SessionsChart';
@@ -92,7 +91,7 @@ export default function MainGrid() {
           <TasksOverview />
         </Grid>
         <Grid item xs={12} md={6} sx={{  position: 'sticky', mt: 14, ml: 5 }}>
-          <KpiCard title="KPI" value={72} />
+          <KPI />
         </Grid>
       </Grid>
     </Box>
