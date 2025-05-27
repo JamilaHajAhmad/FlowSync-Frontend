@@ -114,8 +114,12 @@ const KpiCard = ({ title }) => {
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <StyledGaugeChart
             id="gauge-chart"
-            nrOfLevels={30}
-            colors={[getColor(percentage), '#E0E0E0']}
+            nrOfLevels={3}
+            colors={[
+              colors.gauge.red,     // Left segment (Red)
+              colors.gauge.orange,  // Middle segment (Orange) 
+              colors.gauge.green    // Right segment (Green)
+            ]}
             arcWidth={0.3}
             percent={percentage}
             needleColor="#464A4F"
