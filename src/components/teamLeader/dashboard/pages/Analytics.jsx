@@ -10,12 +10,12 @@ import HeatMap from '../../analytics/heatmap/HeatMap';
 import Funnel from '../../analytics/funnel/Funnel';
 
 const Analytics = () => {
-    const [barChartStats, setBarChartStats] = useState({ value: '0', trend: '0%' });
-    const [pieChartStats, setPieChartStats] = useState({ value: '0', trend: '0%' });
-    const [lineChartStats, setLineChartStats] = useState({ value: '0', trend: '0%' });
-    const [heatmapStats, setHeatmapStats] = useState({ value: '0', trend: '0%' });
-    const [stackedStats, setStackedStats] = useState({ value: '0', trend: '0%' });
-    const [funnelStats, setFunnelStats] = useState({ value: '0', trend: '0%' });
+    const [ barChartStats, setBarChartStats ] = useState({ value: '0', trend: '0%' });
+    const [ pieChartStats, setPieChartStats ] = useState({ value: '0', trend: '0%' });
+    const [ lineChartStats, setLineChartStats ] = useState({ value: '0', trend: '0%' });
+    const [ heatmapStats, setHeatmapStats ] = useState({ value: '0', trend: '0%' });
+    const [ stackedStats, setStackedStats ] = useState({ value: '0', trend: '0%' });
+    const [ funnelStats, setFunnelStats ] = useState({ value: '0', trend: '0%' });
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -31,14 +31,16 @@ const Analytics = () => {
 
                 // Calculate total tasks
                 const totalTasks = response.data.reduce((sum, item) => sum + item.count, 0);
-                
-                // Calculate previous period total (assuming we have historical data)
-                // For this example, we'll use a simple calculation
-                const previousTotal = totalTasks * 0.95; // Assumes 5% growth
-                
-                // Calculate trend
-                const trendPercentage = ((totalTasks - previousTotal) / previousTotal) * 100;
-                const trend = `${trendPercentage >= 0 ? '+' : ''}${trendPercentage.toFixed(1)}%`;
+
+                // Get highest and lowest task counts
+                const maxTasks = Math.max(...response.data.map(item => item.count));
+                const minTasks = Math.min(...response.data.map(item => item.count));
+
+                // Calculate distribution trend
+                const distributionRange = maxTasks - minTasks;
+                const avgTasks = totalTasks / response.data.length;
+                const distributionIndex = (distributionRange / avgTasks) * 100;
+                const trend = `${distributionIndex > 50 ? '+' : '-'}${Math.abs(distributionIndex - 50).toFixed(1)}%`;
 
                 setBarChartStats({
                     value: totalTasks.toString(),
@@ -50,33 +52,57 @@ const Analytics = () => {
         };
 
         const fetchPieChartData = async () => {
-            try {
-                const token = localStorage.getItem('authToken');
-                const response = await axios.get(
-                    'https://localhost:49798/api/reports/task-status-summary',
-                    {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }
-                );
-
-                // Calculate total tasks
-                const totalTasks = response.data.reduce((sum, item) => sum + item.count, 0);
-                
-                // Calculate total completed tasks
-                const completedTasks = response.data.find(item => item.type === 'Completed')?.count || 0;
-                
-                // Calculate completion rate and trend
-                const completionRate = ((completedTasks / totalTasks) * 100).toFixed(1);
-                const trend = `+${completionRate}%`;
-
-                setPieChartStats({
-                    value: totalTasks.toString(),
-                    trend: trend
-                });
-            } catch (error) {
-                console.error('Error fetching pie chart data:', error);
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await axios.get(
+            'https://localhost:49798/api/reports/task-status-summary',
+            {
+                headers: { Authorization: `Bearer ${token}` }
             }
-        };
+        );
+
+        // First, ensure the response data is in array format
+        // If the API returns separate objects, you might need to transform them
+        const responseData = Array.isArray(response.data) ? response.data : [
+            response.data.status?.type === "Opened" && { type: "Opened", count: response.data.count },
+            response.data.status?.type === "Completed" && { type: "Completed", count: response.data.count },
+            response.data.status?.type === "Delayed" && { type: "Delayed", count: response.data.count },
+            response.data.status?.type === "Frozen" && { type: "Frozen", count: response.data.count }
+        ].filter(Boolean);
+
+        // Calculate total tasks
+        const totalTasks = responseData.reduce((sum, item) => sum + item.count, 0);
+
+        // Calculate status distribution
+        const statusCounts = responseData.reduce((acc, item) => {
+            acc[item.status.type] = item.count;
+            return acc;
+        }, {});
+
+        // Calculate completion rate
+        const completedTasks = statusCounts['Completed'] || 0;
+        // Using 'Opened' as in-progress tasks since that's what your API returns
+        const inProgressTasks = statusCounts['Opened'] || 0;
+        
+        // Only calculate rates if there are tasks
+        let completionRate = 0;
+        let progressRate = 0;
+        let trend = "0%";
+        
+        if (totalTasks > 0) {
+            completionRate = (completedTasks / totalTasks) * 100;
+            progressRate = (inProgressTasks / totalTasks) * 100;
+            trend = `${completionRate > progressRate ? '+' : '-'}${Math.abs(completionRate - progressRate).toFixed(1)}%`;
+        }
+
+        setPieChartStats({
+            value: totalTasks.toString(),
+            trend: trend
+        });
+    } catch (error) {
+        console.error('Error fetching pie chart data:', error);
+    }
+};
 
         const fetchLineChartData = async () => {
             try {
@@ -90,10 +116,10 @@ const Analytics = () => {
 
                 // Calculate total created tasks
                 const totalCreated = response.data.reduce((sum, item) => sum + item.created, 0);
-                
+
                 // Calculate total completed tasks
                 const totalCompleted = response.data.reduce((sum, item) => sum + item.completed, 0);
-                
+
                 // Calculate completion trend
                 const completionRate = ((totalCompleted / totalCreated) * 100).toFixed(1);
                 const trend = `${completionRate}%`;
@@ -118,14 +144,14 @@ const Analytics = () => {
                 );
 
                 // Get unique departments
-                const departments = [...new Set(response.data.map(item => item.department))];
-                
+                const departments = [ ...new Set(response.data.map(item => item.department)) ];
+
                 // Calculate total tasks
                 const totalTasks = response.data.reduce((sum, item) => sum + item.count, 0);
-                
+
                 // Calculate average tasks per department
                 const avgTasksPerDepartment = totalTasks / departments.length;
-                
+
                 // Calculate trend based on department distribution
                 const trend = ((departments.length / 10) * 100).toFixed(1); // Assuming 10 is a baseline
 
@@ -150,11 +176,11 @@ const Analytics = () => {
 
                 // Calculate total tasks
                 const totalTasks = response.data.reduce((sum, item) => sum + item.count, 0);
-                
+
                 // Calculate average daily tasks
-                const uniqueDays = [...new Set(response.data.map(item => item.date))];
+                const uniqueDays = [ ...new Set(response.data.map(item => item.date)) ];
                 const avgDailyTasks = totalTasks / uniqueDays.length;
-                
+
                 // Calculate trend based on daily average
                 const trend = ((avgDailyTasks / 10) * 100).toFixed(1); // Assuming 10 tasks per day is baseline
 
@@ -179,18 +205,18 @@ const Analytics = () => {
 
                 // Group by request type and calculate totals
                 const requestCounts = response.data.reduce((acc, item) => {
-                    if (!acc[item.type]) {
-                        acc[item.type] = 0;
+                    if (!acc[ item.type ]) {
+                        acc[ item.type ] = 0;
                     }
-                    acc[item.type] += item.count;
+                    acc[ item.type ] += item.count;
                     return acc;
                 }, {});
 
                 // Calculate total requests
                 const totalRequests = Object.values(requestCounts).reduce((sum, count) => sum + count, 0);
-                
+
                 // Calculate completion rate (CompleteTask type)
-                const completedTasks = requestCounts['CompleteTask'] || 0;
+                const completedTasks = requestCounts[ 'CompleteTask' ] || 0;
                 const completionRate = ((completedTasks / totalRequests) * 100).toFixed(1);
 
                 setFunnelStats({
