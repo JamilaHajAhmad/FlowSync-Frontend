@@ -12,6 +12,9 @@ import { getMemberTasks } from '../../../../services/taskService';
 import { toast } from 'react-toastify';
 import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 import CountdownTimer from '../components/CountdownTimer';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
+import ReactPlayer from 'react-player';
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -67,7 +70,6 @@ const TaskCard = ({ task, isDragging }) => {
   };
 
   const renderCardInfo = () => {
-
     return (
       <Box>
         {/* Existing title and status icon */}
@@ -100,24 +102,63 @@ const TaskCard = ({ task, isDragging }) => {
         )}
 
         {/* Status-specific information */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
-          {/* For Opened tasks - show open date and days left */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}>
+          {/* For Opened tasks */}
           {task.status === "Opened" && (
-            <>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <CalendarToday sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
-                <Typography variant="body2" color="text.secondary">
-                  Opened: {new Date(task.createdAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    day: '2-digit',
-                    month: '2-digit',
-                  })}
-                </Typography>
-              </Box>
-            </>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <CalendarToday sx={{ fontSize: 16, mr: 0.5, color: '#ed6c02' }} />
+              <Typography variant="body2" color="text.secondary">
+                Opened: {new Date(task.createdAt).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  day: '2-digit',
+                  month: '2-digit',
+                })}
+              </Typography>
+            </Box>
           )}
 
-          {/* For Frozen tasks - show frozen date */}
+          {/* For Delayed tasks - show overdue timer */}
+          {task.status === "Delayed" && task.counter && (
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              whiteSpace: 'nowrap' // Prevent line breaks
+            }}>
+              <ErrorOutline sx={{ 
+                fontSize: 16, 
+                mr: 0.5, 
+                color: '#d32f2f' 
+              }} />
+              <Typography 
+                variant="body2" 
+                component="div" 
+                sx={{ 
+                  color: '#d32f2f',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                Overdue By:
+                <span style={{ marginLeft: '4px' }}>
+                  <CountdownTimer 
+                    counter={task.counter} 
+                    isOverdue={true}
+                    format={(value, unit) => {
+                      switch(unit) {
+                        case 'days': return `${value}D`;
+                        case 'hours': return `${value}H`;
+                        case 'minutes': return `${value}M`;
+                        default: return value;
+                      }
+                    }}
+                  />
+                </span>
+              </Typography>
+            </Box>
+          )}
+
+          {/* For Frozen tasks */}
           {task.status === "Frozen" && (
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <PauseCircleOutline sx={{ fontSize: 16, mr: 0.5, color: '#1976D2' }} />
@@ -131,8 +172,7 @@ const TaskCard = ({ task, isDragging }) => {
             </Box>
           )}
 
-
-          {/* For Completed tasks - show completion date */}
+          {/* For Completed tasks */}
           {task.status === "Completed" && (
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <CheckCircleOutline sx={{ fontSize: 16, mr: 0.5, color: '#059669' }} />
@@ -243,13 +283,22 @@ const TaskCard = ({ task, isDragging }) => {
         )}
 
         {/* Move Counter section to be on the same row as Deadline */}
-        {task.counter && task.status !== 'Completed' && (
+        {task.counter && task.status != 'Completed' && (
           <Grid item xs={6}>
             <Typography variant="body2" color="text.secondary">
-              Time Remaining
+              {task.status === "Delayed" ? "Overdue By" : "Time Remaining"}
             </Typography>
-            <Typography variant="body1" gutterBottom>
-              <CountdownTimer counter={task.counter} />
+            <Typography 
+              variant="body1" 
+              gutterBottom
+              sx={{ 
+                color: task.status === "Delayed" ? "#d32f2f" : "inherit"
+              }}
+            >
+              <CountdownTimer 
+                counter={task.counter} 
+                isOverdue={task.status === "Delayed"} 
+              />
             </Typography>
           </Grid>
         )}
@@ -418,6 +467,96 @@ const DroppableColumn = ({ status, children }) => {
   );
 };
 
+const DragDropHelpDialog = ({ open, onClose }) => {
+  return (
+    <Dialog 
+      open={open} 
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+    >
+      <DialogTitle sx={{ 
+        borderBottom: '1px solid #e0e0e0',
+        backgroundColor: '#f5f5f5'
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <HelpOutlineIcon />
+          <Typography variant="h6">Task Board Help Guide</Typography>
+        </Box>
+      </DialogTitle>
+      <DialogContent sx={{ mt: 2 }}>
+        <Typography variant="h6" gutterBottom>Drag and Drop Rules:</Typography>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="body1" gutterBottom>• Tasks can be dragged between columns based on these rules:</Typography>
+          <Box sx={{ pl: 3 }}>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              - Opened tasks can be moved to Frozen or Completed
+            </Typography>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              - Frozen tasks can only be moved back to Opened
+            </Typography>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              - Delayed tasks can only be moved to Completed
+            </Typography>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              - Completed tasks cannot be moved
+            </Typography>
+          </Box>
+        </Box>
+        
+        <Typography variant="h6" gutterBottom>How to Use:</Typography>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            1. Click and hold the drag handle (⋮⋮) on any task card
+          </Typography>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            2. Drag the task to the desired column
+          </Typography>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            3. Complete any required forms when prompted
+          </Typography>
+        </Box>
+
+        <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>Demo Video:</Typography>
+        <Box sx={{ 
+          position: 'relative',
+          paddingTop: '56.25%', // 16:9 aspect ratio
+          backgroundColor: '#f5f5f5',
+          borderRadius: 1,
+          overflow: 'hidden',
+          mb: 2
+        }}>
+          <ReactPlayer
+            url="/videos/drag-drop-demo.mp4" // Update path to start from public folder
+            width="100%"
+            height="100%"
+            controls={true}
+            playing={false}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0
+            }}
+            config={{
+              file: {
+                attributes: {
+                  controlsList: 'download',
+                  disablePictureInPicture: true
+                },
+                forceVideo: true
+              }
+            }}
+            onError={(e) => console.error('Video player error:', e)}
+          />
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Close</Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 const Tasks = () => {
   const [ tasksList, setTasksList ] = useState([]);
   const [ loading, setLoading ] = useState(true);
@@ -426,6 +565,7 @@ const Tasks = () => {
   const [ openUnfreezeDialog, setOpenUnfreezeDialog ] = useState(false);
   const [ openCompleteDialog, setOpenCompleteDialog ] = useState(false);
   const [ selectedTask, setSelectedTask ] = useState(null);
+  const [ helpDialogOpen, setHelpDialogOpen ] = useState(false);
   // eslint-disable-next-line no-unused-vars
   const [ pendingStatusChange, setPendingStatusChange ] = useState(null);
 
@@ -629,90 +769,125 @@ const Tasks = () => {
     }
   };
 
-  return (
-    <DndContext
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      collisionDetection={closestCorners}
+  const renderHelpLink = () => (
+    <Box
+      sx={{
+        position: 'absolute',
+        bottom: -230,
+        paddingBottom: 2,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        cursor: 'pointer',
+        color: 'text.secondary',
+        '&:hover': {
+          color: 'primary.main',
+          textDecoration: 'underline'
+        }
+      }}
+      onClick={() => setHelpDialogOpen(true)}
     >
-      <Box
-        sx={{
-          height: 'calc(100vh - 32px)',
-          display: 'flex',
-          gap: 2,
-          p: 2,
-          overflowX: 'hidden',
-          overflowY: 'hidden',
-          width: '100%',
-          boxSizing: 'border-box',
-        }}
+      <HelpOutlineIcon fontSize="small" />
+      <Typography variant="body2">
+        If you got stuck, click here
+      </Typography>
+    </Box>
+  );
+
+  // Modify the return statement to include both the help link and dialog
+  return (
+    <>
+      <DndContext
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        collisionDetection={closestCorners}
       >
-        {statusColumns.map((status) => (
-          <DroppableColumn key={status} status={status}>
-            <SortableContext
-              items={tasksList
-                .filter((task) => task.status === status)
-                .map((task) => task.frnNumber.toString())}
-              strategy={verticalListSortingStrategy}
-            >
-              {tasksList
-                .filter((task) => task.status === status)
-                .map((task) => (
-                  <TaskCard
-                    key={task.frnNumber}
-                    task={task}
-                    isDragging={activeId === task.frnNumber.toString()}
-                  />
-                ))}
-            </SortableContext>
-          </DroppableColumn>
-        ))}
-      </Box>
+        <Box
+          sx={{
+            height: 'calc(100vh - 32px)',
+            display: 'flex',
+            gap: 2,
+            p: 2,
+            overflowX: 'hidden',
+            overflowY: 'hidden',
+            width: '100%',
+            boxSizing: 'border-box',
+          }}
+        >
+          {statusColumns.map((status) => (
+            <DroppableColumn key={status} status={status}>
+              <SortableContext
+                items={tasksList
+                  .filter((task) => task.status === status)
+                  .map((task) => task.frnNumber.toString())}
+                strategy={verticalListSortingStrategy}
+              >
+                {tasksList
+                  .filter((task) => task.status === status)
+                  .map((task) => (
+                    <TaskCard
+                      key={task.frnNumber}
+                      task={task}
+                      isDragging={activeId === task.frnNumber.toString()}
+                    />
+                  ))}
+              </SortableContext>
+            </DroppableColumn>
+          ))}
+        </Box>
 
-      <DragOverlay>
-        {activeId ? (
-          <TaskCard
-            task={tasksList.find(task => task.frnNumber.toString() === activeId)}
-            isDragging={true}
-          />
-        ) : null}
-      </DragOverlay>
+        <DragOverlay>
+          {activeId ? (
+            <TaskCard
+              task={tasksList.find(task => task.frnNumber.toString() === activeId)}
+              isDragging={true}
+            />
+          ) : null}
+        </DragOverlay>
 
-      {/* Forms */}
-      <FreezeTaskForm
-        open={openFreezeDialog}
-        onClose={() => {
-          setOpenFreezeDialog(false);
-          setSelectedTask(null);
-          setPendingStatusChange(null);
-        }}
-        task={selectedTask}
-        onSubmitSuccess={(updatedTask) => handleTaskAction('freeze', updatedTask)}
+        {/* Forms */}
+        <FreezeTaskForm
+          open={openFreezeDialog}
+          onClose={() => {
+            setOpenFreezeDialog(false);
+            setSelectedTask(null);
+            setPendingStatusChange(null);
+          }}
+          task={selectedTask}
+          onSubmitSuccess={(updatedTask) => handleTaskAction('freeze', updatedTask)}
+        />
+
+        <UnfreezeTaskForm
+          open={openUnfreezeDialog}
+          onClose={() => {
+            setOpenUnfreezeDialog(false);
+            setSelectedTask(null);
+            setPendingStatusChange(null);
+
+          }}
+          task={selectedTask}
+          onSubmitSuccess={(updatedTask) => handleTaskAction('unfreeze', updatedTask)}
+        />
+
+        <CompleteTaskForm
+          open={openCompleteDialog}
+          onClose={() => {
+            setOpenCompleteDialog(false);
+            setSelectedTask(null);
+            setPendingStatusChange(null);
+          }}
+          task={selectedTask}
+          onSubmitSuccess={(updatedTask) => handleTaskAction('complete', updatedTask)}
+        />
+      </DndContext>
+      {renderHelpLink()}
+      <DragDropHelpDialog 
+        open={helpDialogOpen}
+        onClose={() => setHelpDialogOpen(false)}
       />
-
-      <UnfreezeTaskForm
-        open={openUnfreezeDialog}
-        onClose={() => {
-          setOpenUnfreezeDialog(false);
-          setSelectedTask(null);
-          setPendingStatusChange(null);
-
-        }}
-        task={selectedTask}
-        onSubmitSuccess={(updatedTask) => handleTaskAction('unfreeze', updatedTask)}
-      />
-
-      <CompleteTaskForm
-        open={openCompleteDialog}
-        onClose={() => {
-          setOpenCompleteDialog(false);
-          setSelectedTask(null);
-          setPendingStatusChange(null);
-        }}
-        task={selectedTask}
-        onSubmitSuccess={(updatedTask) => handleTaskAction('complete', updatedTask)}
-      />
-    </DndContext>
+    </>
   );
 };
 
