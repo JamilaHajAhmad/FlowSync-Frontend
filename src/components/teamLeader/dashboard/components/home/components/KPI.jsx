@@ -8,12 +8,12 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import CircularProgress from '@mui/material/CircularProgress';
 import axios from 'axios';
-import { decodeToken } from '../../../../../../utils'
 
 const colors = {
   completed: '#059669',
-  delayed: '#F59E0B',
-  ongoing: '#10B981',
+  delayed: '#EF4444',
+  opened: '#F59E0B',
+  frozen: '#1976D2',
   gauge: {
     red: '#EF4444',
     orange: '#F59E0B',
@@ -36,7 +36,7 @@ const StyledGaugeChart = styled(GaugeChart)(() => ({
   width: '100%',
 }));
 
-export default function OverallProgress() {
+export default function KPI() {
   const [kpiData, setKpiData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -44,25 +44,7 @@ export default function OverallProgress() {
   useEffect(() => {
     const fetchKPI = async () => {
         try {
-            console.log('Fetching KPI data...');
             const token = localStorage.getItem('authToken');
-            
-            // Log token structure (safely)
-            console.log('Token parts:', token ? token.split('.').length : 0);
-            
-            if (!token) {
-              setError('No authentication token found. Please log in.');
-              setLoading(false);
-              return;
-            }
-
-            // Validate token structure before making request
-            if (token.split('.').length !== 3) {
-              setError('Invalid token format. Please log in again.');
-              setLoading(false);
-              return;
-            }
-
             const response = await axios.get(
               `https://localhost:49798/api/kpi/leader/annual-kpi`,
               {
@@ -74,26 +56,18 @@ export default function OverallProgress() {
               }
             );
 
-            // Check authentication first
-            if (response.status === 401) {
-              setError('Session expired. Please log in again.');
-              localStorage.removeItem('authToken');
-              return;
-            }
-
-            if (!response.data) {
-              throw new Error('No data received from server');
-            }
-
             // Log raw KPI value from response
             console.log('Raw KPI value:', response.data.kpi);
+                        console.log('Raw KPI value:', response.data);
+
 
             // Process the data once
             const processedData = {
-                totalCases: response.data.totalCases || 0,
-                completed: response.data.completed || 0,
-                delayed: response.data.delayed || 0,
-                ongoing: response.data.ongoing || 0,
+                totalTasks: response.data.totalTasks || 0,
+                completedTasks: response.data.completedTasks || 0,
+                delayedTasks: response.data.delayedTasks || 0,
+                ongoingTasks: response.data.ongoingTasks || 0,
+                frozenTasks: response.data.frozenTasks || 0,
                 kpi: response.data.kpi || 0
             };
 
@@ -101,8 +75,8 @@ export default function OverallProgress() {
             console.log('Processed KPI value:', processedData.kpi);
 
             // Calculate progress once
-            const progress = processedData.totalCases > 0 
-                ? (processedData.completed / processedData.totalCases)
+            const progress = processedData.totalTasks > 0 
+                ? (processedData.completedTasks / processedData.totalTasks)
                 : 0;
 
             const finalData = {
@@ -115,11 +89,7 @@ export default function OverallProgress() {
             setKpiData(finalData);
 
         } catch (err) {
-            console.error('Detailed error:', {
-                message: err.message,
-                status: err.response?.status,
-                data: err.response?.data
-            });
+            console.error('Error fetching KPI data:', err);
             setError(err.response?.data?.message || err.message || 'Failed to load KPI data');
         } finally {
             setLoading(false);
@@ -155,7 +125,7 @@ export default function OverallProgress() {
     <StyledCard variant="outlined">
       <CardContent>
         <Typography component="h2" variant="subtitle2" sx={{ mb: 2 }}>
-          Overall Progress
+          KPI
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <StyledGaugeChart
@@ -166,38 +136,46 @@ export default function OverallProgress() {
             percent={Math.min(kpiData?.kpi || 0, 100) / 100}
             needleColor="#059669"
             textColor="#059669"
-            formatTextValue={value => `${Math.min(Math.round(kpiData?.kpi || 0), 100)}%`}
+            formatTextValue={() => `${Math.min(Math.round(kpiData?.kpi || 0), 100)}%`}
           />
         </Box>
         <Stack direction="row" justifyContent="space-between" sx={{ mt: 2, gap: 1 }}>
           <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="h6">{kpiData.totalCases}</Typography>
+            <Typography variant="h6">{kpiData.totalTasks}</Typography>
             <Typography sx={{fontSize: 12 }} variant="body2" color="text.secondary">
               Total
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'center'}}>
-            <Typography variant="h6" color={colors.completed}>
-              {kpiData.completed}
+            <Typography variant="h6" color={colors.opened}>
+              {kpiData.ongoingTasks}
             </Typography>
             <Typography sx={{fontSize: 12 }} variant="body2" color="text.secondary">
-              Completed
+              Opened
+            </Typography>
+          </Box>
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography variant="h6" color={colors.frozen}>
+              {kpiData.frozenTasks}
+            </Typography>
+            <Typography sx={{fontSize: 12 }} variant="body2" color="text.secondary">
+              Frozen
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'center' }}>
             <Typography variant="h6" color={colors.delayed}>
-              {kpiData.delayed}
+              {kpiData.delayedTasks}
             </Typography>
             <Typography sx={{fontSize: 12 }} variant="body2" color="text.secondary">
               Delayed
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="h6" color={colors.ongoing}>
-              {kpiData.ongoing}
+            <Typography variant="h6" color={colors.completed}>
+              {kpiData.completedTasks}
             </Typography>
             <Typography sx={{fontSize: 12 }} variant="body2" color="text.secondary">
-              Ongoing
+              Completed
             </Typography>
           </Box>
         </Stack>

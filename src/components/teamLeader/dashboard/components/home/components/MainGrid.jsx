@@ -1,9 +1,8 @@
-import * as React from 'react';
 import Grid from '@mui/material/Grid2';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import OverallProgress from './OverallProgress';
+import KPI from './KPI';
 import Members from '../../../pages/Members';
 import PageViewsBarChart from './PageViewsBarChart';
 import SessionsChart from './SessionsChart';
@@ -95,7 +94,7 @@ export default function MainGrid() {
         </Grid>
         <Grid size={{ xs: 12, lg: 3 }}>
           <Stack gap={2} direction={{ xs: 'column', sm: 'row', lg: 'column' }}>
-            <OverallProgress />
+            <KPI />
           </Stack>
         </Grid>
       </Grid>
