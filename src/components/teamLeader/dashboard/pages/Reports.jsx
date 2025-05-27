@@ -159,7 +159,8 @@ const Reports = () => {
                             color: 'primary.main',
                             cursor: 'pointer',
                             '&:hover': {
-                                textDecoration: 'underline'
+                                textDecoration: 'underline',
+                                color: 'blue',
                             }
                         }}
                         onClick={handleFileDownload}
