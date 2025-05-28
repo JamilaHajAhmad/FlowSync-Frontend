@@ -1,4 +1,3 @@
-import React from 'react';
 import './Footer.css';
 import logo from '../../../../assets/images/logo.png';
 import facebook from '../../../../assets/images/facebook.png';
@@ -7,8 +6,35 @@ import x from '../../../../assets/images/x.png';
 import { motion as Motion } from 'framer-motion';
 import { itemVariants, containerVariants } from '../../../../variants';
 import { scrollIntoSection } from '../../../../utils';
+import { useState } from 'react';
+import axios from 'axios';
 
 const Footer = () => {
+    const [email, setEmail] = useState('');
+    const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [subscribed, setSubscribed] = useState(false);
+
+    const handleSubscribe = async (e) => {
+        e.preventDefault();
+        setError('');
+        setIsSubmitting(true);
+
+        try {
+            await axios.post('https://localhost:49798/api/subscribe', { email });
+            setSubscribed(true);
+            setEmail('');
+        } catch (error) {
+            if (error.response?.status === 400) {
+                setError(error.response.data.errors?.Email?.[0] || 'Invalid email format');
+            } else {
+                setError('Something went wrong. Please try again later.');
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     return (
         <footer className="footer">
             <Motion.div 
@@ -41,10 +67,23 @@ const Footer = () => {
                 <Motion.div className="footer-newsletter" variants={itemVariants}>
                     <h3>Stay Updated</h3>
                     <p>Subscribe to get the latest updates and news.</p>
-                    <form>
-                        <input type="email" placeholder="Enter your email" required />
-                        <button type="submit">Subscribe</button>
-                    </form>
+                    {subscribed ? (
+                        <p className="success-message">Thank you for subscribing!</p>
+                    ) : (
+                        <form onSubmit={handleSubscribe}>
+                            <input 
+                                type="email" 
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Enter your email" 
+                                required 
+                            />
+                            <button type="submit" disabled={isSubmitting}>
+                                {isSubmitting ? 'Subscribing...' : 'Subscribe'}
+                            </button>
+                            {error && <p className="error-message">{error}</p>}
+                        </form>
+                    )}
                 </Motion.div>
             </Motion.div>
             <Motion.div 

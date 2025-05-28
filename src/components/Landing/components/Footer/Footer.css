@@ -60,12 +60,21 @@
     color: #fff;
 }
 
+.footer-newsletter {
+    position: relative;
+}
+
 .footer-newsletter input {
     width: 100%;
     padding: 10px;
     margin-top: 10px;
-    border: none;
+    border: 1px solid #ddd;
     border-radius: 5px;
+}
+
+.footer-newsletter input:focus {
+    border-color: #0066cc;
+    outline: none;
 }
 
 .footer-newsletter button {
@@ -81,6 +90,23 @@
 
 .footer-newsletter button:hover {
     background: #065F46;
+}
+
+.footer-newsletter .error-message {
+    color: white;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+.footer-newsletter .success-message {
+    color: white;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+.footer-newsletter button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
 }
 
 .footer-bottom {
