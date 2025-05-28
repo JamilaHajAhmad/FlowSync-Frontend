@@ -737,7 +737,7 @@ const Tasks = () => {
         case 'complete':
           updatedTask = {
             ...task,
-            status: 'Opened',
+            status: task.status === 'Delayed' ? 'Delayed' : 'Opened',
             completedDate: new Date().toLocaleDateString('en-US'),
             completionNotes: task.notes
           };
