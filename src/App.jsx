@@ -41,6 +41,9 @@ import ToggleTwoFactorAuth from './components/common/security/ToggleTwoFactorAut
 import ConnectedDevices from './components/common/security/ConnectedDevices';
 import LoginNotifications from './components/common/security/LoginNotifications';
 import { ChartDataProvider } from './context/ChartDataContext';
+import HelpCenter from './components/Landing/components/Support/HelpCenter';
+import PrivacyPolicy from './components/Landing/components/Support/PrivacyPolicy';
+import TermsOfService from './components/Landing/components/Support/TermsOfService';
 
 const App = () => {
     return (
@@ -55,6 +58,9 @@ const App = () => {
                     <Route path="/login" element={<Login />} />
                     <Route path="/forgot-password" element={<ForgetPassword />} />
                     <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/help" element={<HelpCenter />} />
+                    <Route path="/privacy" element={<PrivacyPolicy />} />
+                    <Route path="/terms" element={<TermsOfService />} />
 
                     {/* Protected routes */}
                     <Route path="/leader-dashboard" element={<ProtectedRouter><Home /></ProtectedRouter>} />
