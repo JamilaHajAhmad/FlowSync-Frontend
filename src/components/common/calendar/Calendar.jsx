@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { formatDate } from '@fullcalendar/core';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -8,6 +8,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } 
 import { toast } from 'react-toastify';
 import './Calendar.css';
 import { decodeToken } from '../../../utils';
+import { createEvent, deleteEvent } from '../../../services/calendarService';
 
 export default function Calendar() {
     const [ currentEvents, setCurrentEvents ] = useState([]);
@@ -98,23 +99,19 @@ export default function Calendar() {
         });
     }
 
-    function handleAddEvent() {
-        if (!newEventTitle.trim()) {
-            toast.error('Event title is required');
-            return;
-        }
-
-        if (!newEventTime) {
-            toast.error('Event time is required');
+    async function handleAddEvent() {
+        if (!newEventTitle.trim() || !newEventTime) {
+            toast.error('Event title and time are required');
             return;
         }
 
         let calendarApi = selectedEvent.view.calendar;
         calendarApi.unselect();
 
+        // Create date with selected date and time
         const startDate = new Date(selectedEvent.startStr);
-        const [ hours, minutes ] = newEventTime.split(':');
-        startDate.setHours(parseInt(hours), parseInt(minutes));
+        const [hours, minutes] = newEventTime.split(':');
+        startDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
         const endDate = new Date(startDate);
         endDate.setHours(endDate.getHours() + 1);
@@ -124,19 +121,38 @@ export default function Calendar() {
             return;
         }
 
-        const newEvent = {
-            id: String(Date.now()),
+        // Create temporary event object
+        const tempEvent = {
             title: newEventTitle.trim(),
+            eventDate: startDate.toISOString(),
             start: startDate.toISOString(),
             end: endDate.toISOString(),
             allDay: false,
             userId: userId
         };
 
-        setCurrentEvents(prevEvents => [ ...prevEvents, newEvent ]);
-        setIsAddEventModalOpen(false);
-        setNewEventTitle('');
-        setNewEventTime('');
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await createEvent({
+                title: tempEvent.title,
+                eventDate: tempEvent.eventDate
+            }, token);
+
+            // Create final event object with backend-generated ID
+            const newEvent = {
+                ...tempEvent,
+                id: response.data.id.toString() // Use the backend-generated ID
+            };
+
+            console.log('Event created:', response.data);
+            setCurrentEvents(prevEvents => [...prevEvents, newEvent]);
+            setIsAddEventModalOpen(false);
+            setNewEventTitle('');
+            setNewEventTime('');
+            toast.success('Event created successfully');
+        } catch (error) {
+            toast.error('Failed to create event: ' + (error.response?.data?.message || error.message));
+        }
     }
 
     function handleEventClick(clickInfo) {
@@ -148,21 +164,42 @@ export default function Calendar() {
         setIsConfirmModalOpen(true);
     }
 
-    function handleConfirmDelete() {
+    async function handleConfirmDelete() {
         if (selectedEvent.extendedProps.userId !== userId) {
             toast.error('Cannot delete events from other users');
             setIsConfirmModalOpen(false);
             return;
         }
 
-        selectedEvent.remove();
+        try {
+            const token = localStorage.getItem('authToken');
+            console.log('Selected event:', selectedEvent);
+            console.log('selected id:', selectedEvent.id);
+            const response = await deleteEvent(selectedEvent.id, token);
+            console.log('Event deleted:', response.data);
+            
+            // Remove from calendar
+            selectedEvent.remove();
 
-        const updatedEvents = currentEvents.filter(event => event.id !== selectedEvent.id);
-        setCurrentEvents(updatedEvents);
+            // Update local state
+            const updatedEvents = currentEvents.filter(event => event.id !== selectedEvent.id);
+            setCurrentEvents(updatedEvents);
 
-        localStorage.setItem(`events_${userId}`, JSON.stringify(updatedEvents));
+            // Update localStorage
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user) {
+                localStorage.setItem(`events_${user.displayName}`, JSON.stringify(updatedEvents));
+            }
 
-        setIsConfirmModalOpen(false);
+            setIsConfirmModalOpen(false);
+            toast.success('Event deleted successfully');
+        } catch (error) {
+            console.log('Selected event:', selectedEvent);
+            console.log('selected id:', selectedEvent.id);
+            console.error('Error deleting event:', error);
+            toast.error('Failed to delete event: ' + (error.response?.data?.message || error.message));
+            setIsConfirmModalOpen(false);
+        }
     }
 
     const isPastDate = (date) => {
