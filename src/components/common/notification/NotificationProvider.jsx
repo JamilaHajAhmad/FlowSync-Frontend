@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { NotificationContext, NotificationTypes } from './NotificationContext';
 import { getNotifications, markAsRead as markAsReadApi } from './notificationService';
 

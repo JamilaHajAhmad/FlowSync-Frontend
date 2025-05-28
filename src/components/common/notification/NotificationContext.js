@@ -11,6 +11,7 @@ export const NotificationTypes = {
     Warning: 'Warning',
     Error: 'Error',
     Security: 'Security',
+    Reminder: 'Reminder',
 };
 
 export const NotificationContext = createContext({
