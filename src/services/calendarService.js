@@ -17,3 +17,30 @@ export const deleteEvent = async (eventId, token) => {
         }
     });
 }
+
+export const getTaskDeadlines = async (token) => {
+    return await api.get('/calender/task-deadlines-events', {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    });
+};
+
+export const getEvents = async (token) => {
+    return await api.get('/calender', {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    });
+};
+
+export const updateEvent = async (id, eventData, token) => {
+    return await api.patch(`/calender/${id}`, eventData, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    });
+};

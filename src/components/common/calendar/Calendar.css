@@ -13,10 +13,14 @@
 }
 
 .calendar-page .calendar-sidebar {
-    width: 280px;
-    background: white !important;
-    color: white;
-    padding: 2em;
+    flex: 0 0 300px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-right: 1px solid #e9ecef;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 .calendar-page .calendar-sidebar h2 {
@@ -61,58 +65,59 @@
 }
 
 .calendar-page .calendar-sidebar-section {
-    background: #b2d3b2;
-    color: white;
-    padding: 1.5em;
+    background: white;
+    padding: 15px;
     border-radius: 8px;
-    margin-bottom: 1.5em;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    height: calc(50vh - 40px); /* Half viewport height minus padding */
+    display: flex;
+    flex-direction: column;
 }
 
 .calendar-page .calendar-sidebar-section h2 {
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 1em;
-    color: #ffffff;
+    margin: 0 0 15px 0;
+    font-size: 1.1rem;
+    color: #333;
+    position: sticky;
+    top: 0;
+    background: white;
+    padding: 5px 0;
+    z-index: 1;
 }
 
 .calendar-page .calendar-sidebar-section ul {
-    padding-left: 1.2em;
     list-style: none;
-}
-
-.calendar-page .calendar-sidebar-section li {
-    margin: 0.8em 0;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-}
-
-.calendar-page .calendar-sidebar-section li::before {
-    content: "\2713";
-    color: #10b981;
-    font-weight: bold;
-    margin-right: 8px;
-}
-
-.calendar-page .calendar-sidebar-section label {
-    display: flex;
-    align-items: center;
-    font-size: 14px;
-    gap: 8px;
-    cursor: pointer;
-}
-
-.calendar-page .calendar-sidebar-section ul {
-    max-height: 200px;
+    padding: 0;
+    margin: 0;
     overflow-y: auto;
-    padding-right: 10px;
-    -ms-overflow-style: none; 
-    scrollbar-width: none;  
+    flex-grow: 1;
+    /* Scrollbar styling */
+    scrollbar-width: thin;
+    scrollbar-color: #90a4ae #e9ecef;
 }
 
 .calendar-page .calendar-sidebar-section ul::-webkit-scrollbar {
-    display: none;
+    width: 8px;
+}
+
+.calendar-page .calendar-sidebar-section ul::-webkit-scrollbar-track {
+    background: #e9ecef;
+    border-radius: 4px;
+}
+
+.calendar-page .calendar-sidebar-section ul::-webkit-scrollbar-thumb {
+    background-color: #90a4ae;
+    border-radius: 4px;
+    border: 2px solid #e9ecef;
+}
+
+.calendar-page .calendar-sidebar-section ul li {
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.calendar-page .calendar-sidebar-section ul li:last-child {
+    border-bottom: none;
 }
 
 /* Style for calendar header (days) */
