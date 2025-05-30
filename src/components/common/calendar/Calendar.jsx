@@ -45,20 +45,38 @@ export default function Calendar() {
 
     const fetchAllEvents = async (token, currentUserId, role) => {
         try {
-            // Get user events from API
             const eventsResponse = await getEvents(token);
-            console.log("Fetched events:", eventsResponse.data);
             
             // Transform API events to calendar events format
             let events = eventsResponse.data.map(event => {
-                const eventDate = new Date(event.eventDate);
-                const endDate = new Date(eventDate.getTime() + 60 * 60 * 1000); // Add 1 hour
+                // إنشاء كائن تاريخ جديد من التاريخ المخزن
+                const serverDate = new Date(event.eventDate);
                 
+                // إنشاء تاريخ البداية مع الحفاظ على التوقيت المحلي
+                const startDate = new Date(
+                    serverDate.getFullYear(),
+                    serverDate.getMonth(),
+                    serverDate.getDate(),
+                    serverDate.getHours(),
+                    serverDate.getMinutes(),
+                    0,
+                    0
+                );
+
+                // إنشاء تاريخ النهاية
+                const endDate = new Date(startDate);
+                if (startDate.getHours() === 23) {
+                    endDate.setHours(23);
+                    endDate.setMinutes(59);
+                } else {
+                    endDate.setTime(startDate.getTime() + (60 * 60 * 1000));
+                }
+
                 return {
                     id: event.id.toString(),
                     title: event.title,
-                    start: eventDate.toISOString(),
-                    end: endDate.toISOString(),
+                    start: startDate,
+                    end: endDate,
                     allDay: false,
                     userId: currentUserId,
                     isDeadline: false
@@ -148,11 +166,12 @@ export default function Calendar() {
         let calendarApi = selectedEvent.view.calendar;
         calendarApi.unselect();
 
-        // Create date with selected date and time using proper date construction
-        const selectedDate = new Date(selectedEvent.start);
         const [hours, minutes] = newEventTime.split(':');
         
-        // Create start date in local timezone
+        // إنشاء كائن تاريخ جديد من التاريخ المحدد
+        const selectedDate = new Date(selectedEvent.startStr || selectedEvent.start);
+        
+        // ضبط التوقيت مع الحفاظ على نفس اليوم
         const startDate = new Date(
             selectedDate.getFullYear(),
             selectedDate.getMonth(),
@@ -163,14 +182,13 @@ export default function Calendar() {
             0
         );
 
+        // إنشاء تاريخ النهاية في نفس اليوم
         const endDate = new Date(startDate);
-        endDate.setHours(startDate.getHours()+1);
-
-        // Check for overlap with non-deadline events only
-        const nonDeadlineEvents = currentEvents.filter(event => !event.isDeadline);
-        if (checkEventOverlap(startDate, nonDeadlineEvents)){
-            toast.error('Cannot add event: Time slot is already occupied');
-            return;
+        if (parseInt(hours) === 23) {
+            endDate.setHours(23);
+            endDate.setMinutes(59);
+        } else {
+            endDate.setTime(startDate.getTime() + (60 * 60 * 1000));
         }
 
         try {
@@ -180,12 +198,11 @@ export default function Calendar() {
                 eventDate: startDate.toISOString()
             }, token);
 
-            // Create final event object with backend-generated ID
             const newEvent = {
                 id: response.data.id.toString(),
                 title: newEventTitle.trim(),
-                start: startDate.toISOString(),
-                end: endDate.toISOString(),
+                start: startDate,
+                end: endDate,
                 allDay: false,
                 userId: userId,
                 isDeadline: false
