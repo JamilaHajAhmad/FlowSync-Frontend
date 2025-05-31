@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Container,
@@ -28,6 +28,7 @@ import {
   SentimentVerySatisfied,
   SentimentVeryDissatisfied,
 } from '@mui/icons-material';
+import { submitFeedback, submitSupport } from '../../../../services/feedbackSupportService';
 
 const FeedbackSupport = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -68,18 +69,27 @@ const FeedbackSupport = () => {
     setLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const token = localStorage.getItem('authToken');
+      const response = await submitFeedback({
+        rating: feedbackRating,
+        message: feedbackComment,
+        canFollowUp: followUp === 'yes'
+      }, token);
+      console.log(response.data);
+
       setSnackbar({
         open: true,
         message: 'Thank you for your feedback!',
         severity: 'success',
       });
+      // Reset form
       setFeedbackRating(null);
       setFeedbackComment('');
+      setFollowUp('yes');
     } catch (error) {
       setSnackbar({
         open: true,
-        message: `Failed to submit feedback. ${error.message}. Please try again.`,
+        message: error.response?.data?.message || 'Failed to submit feedback. Please try again.',
         severity: 'error',
       });
     } finally {
@@ -92,12 +102,21 @@ const FeedbackSupport = () => {
     setLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const token = localStorage.getItem('authToken');
+      const response = await submitSupport({
+        requestType: formData.type,
+        subject: formData.subject,
+        description: formData.description,
+        priorityLevel: formData.priority
+      }, token);
+      console.log(response.data);
+
       setSnackbar({
         open: true,
         message: 'Your support request has been submitted successfully!',
         severity: 'success',
       });
+      // Reset form
       setFormData({
         type: '',
         subject: '',
@@ -107,13 +126,28 @@ const FeedbackSupport = () => {
     } catch (error) {
       setSnackbar({
         open: true,
-        message: `Failed to submit request. ${error.message}. Please try again.`,
+        message: error.response?.data?.message || 'Failed to submit request. Please try again.',
         severity: 'error',
       });
     } finally {
       setLoading(false);
     }
   };
+
+  const handleFeedbackReset = () => {
+    setFeedbackRating(null);
+    setFeedbackComment('');
+    setFollowUp('yes');
+};
+
+const handleSupportReset = () => {
+    setFormData({
+        type: '',
+        subject: '',
+        description: '',
+        priority: 'medium',
+    });
+};
 
   const FeedbackEmoji = ({ rating, selected, onClick }) => {
     const getEmoji = () => {
@@ -312,6 +346,10 @@ const FeedbackSupport = () => {
                     sx={{
                       py: 1.5,
                       fontSize: '16px',
+                      bgcolor: '#064e3b',
+                      '&:hover': {
+                          bgcolor: '#053c2e',
+                      },
                     }}
                   >
                     {loading ? 'Sending...' : 'Send'}
@@ -321,6 +359,7 @@ const FeedbackSupport = () => {
                   <Button
                     variant="outlined"
                     fullWidth
+                    onClick={handleFeedbackReset}
                     sx={{
                       py: 1.5,
                       fontSize: '16px',
@@ -470,19 +509,46 @@ const FeedbackSupport = () => {
                 </Grid>
                 
                 <Grid item xs={12} sx={{ mt: 2 }}>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    fullWidth
-                    disabled={loading}
-                    startIcon={loading ? <CircularProgress size={20} /> : <Send />}
-                    sx={{
-                      py: 1.5,
-                      fontSize: '16px',
-                    }}
-                  >
-                    {loading ? 'Submitting...' : 'Submit Request'}
-                  </Button>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            fullWidth
+                            disabled={loading}
+                            startIcon={loading ? <CircularProgress size={20} /> : <Send />}
+                            sx={{
+                                py: 1.5,
+                                fontSize: '16px',
+                                bgcolor: '#064e3b',
+                                '&:hover': {
+                                    bgcolor: '#053c2e',
+                                },
+                            }}
+                        >
+                            {loading ? 'Submitting...' : 'Submit Request'}
+                        </Button>
+                    </Grid>
+                    <Grid item xs={6}>
+                        <Button
+                            variant="outlined"
+                            fullWidth
+                            onClick={handleSupportReset}
+                            sx={{
+                                py: 1.5,
+                                fontSize: '16px',
+                                borderColor: '#e0e0e0',
+                                color: 'text.secondary',
+                                '&:hover': {
+                                    borderColor: '#bdbdbd',
+                                    backgroundColor: '#f5f5f7',
+                                }
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                    </Grid>
+                  </Grid>
                 </Grid>
               </Grid>
             </Box>
