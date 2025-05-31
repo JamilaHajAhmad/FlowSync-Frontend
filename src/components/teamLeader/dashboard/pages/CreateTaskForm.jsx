@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import {
@@ -135,26 +135,42 @@ const CreateTaskForm = ({ open, onClose }) => {
     setShowConfirmation(true);
   };
 
+  // Add updateEmployeeTaskCount to update a specific employee's task count
+  const updateEmployeeTaskCount = (employeeId) => {
+    setEmployees(prevEmployees => 
+        prevEmployees.map(emp => 
+            emp.id === employeeId
+                ? { ...emp, ongoingTasks: emp.ongoingTasks + 1 }
+                : emp
+        )
+    );
+  };
+
+  // Update the handleConfirm function
   const handleConfirm = async () => {
     try {
-      setLoading(true);
-      const payload = {
-        ...confirmationData,
-        priority: mapPriorityToEnum(confirmationData.priority),
-        type: 'Opened'
-      };
-      
-      const response = await createTask(payload, token);
-      console.log(response);
-      toast.success('Task created successfully');
-      onClose();
-      formik.resetForm();
+        setLoading(true);
+        const payload = {
+            ...confirmationData,
+            priority: mapPriorityToEnum(confirmationData.priority),
+            type: 'Opened'
+        };
+        
+        const response = await createTask(payload, token);
+        console.log('Task created successfully:', response.data);
+        
+        // Update the task count immediately
+        updateEmployeeTaskCount(confirmationData.selectedMemberId);
+        
+        toast.success('Task created successfully');
+        onClose();
+        formik.resetForm();
     } catch (error) {
-      console.error('Error creating task:', error);
-      toast.error(error.response.data || 'Failed to create task');
+        console.error('Error creating task:', error);
+        toast.error(error.response?.data?.message || 'Failed to create task');
     } finally {
-      setLoading(false);
-      setShowConfirmation(false);
+        setLoading(false);
+        setShowConfirmation(false);
     }
   };
 

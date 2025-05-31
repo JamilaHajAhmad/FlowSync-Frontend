@@ -43,34 +43,34 @@ const getColumns = (tab) => {
         {
             accessorKey: "name",
             header: "Name",
-            size: 200,
+            size: 150, // Reduced from 200
         },
         {
             accessorKey: "title",
             header: "Task Title",
-            size: 100,
+            size: 150, // Increased from 100 for better readability
         },
         {
             accessorKey: "frnNumber",
             header: "FRN Number",
-            size: 120,
+            size: 100, // Reduced from 120
         },
         {
             accessorKey: "ossNumber",
             header: "OSS Number",
-            size: 120,
+            size: 100, // Reduced from 120
         },
         {
             accessorKey: "openDate",
             header: "Open Date",
-            size: 130,
+            size: 100, // Reduced from 130
         }
     ];
 
     const statusColumn = {
         accessorKey: "status",
         header: "Status",
-        size: 130,
+        size: 100, // Reduced from 130
         Cell: ({ cell }) => (
             <Chip
                 label={cell.getValue()}
@@ -91,17 +91,17 @@ const getColumns = (tab) => {
                 {
                     accessorKey: "priority",
                     header: "Priority",
-                    size: 100,
+                    size: 90,
                 },
                 {
                     accessorKey: "caseType",
                     header: "Case Type",
-                    size: 130,
+                    size: 110,
                 },
                 {
                     accessorKey: "caseSource",
                     header: "Case Source",
-                    size: 120,
+                    size: 110,
                 }
             ];
         case 'Completed':
@@ -334,6 +334,17 @@ export default function Tasks({
         enableColumnFilters: true,
         initialState: {
             pagination: { pageSize: 5, pageIndex: 0 },
+            sorting: [{ id: 'openDate', desc: true }], // Add this line for default sorting
+        },
+        enableSorting: true,
+        getRowId: (row) => row.id,
+        sortingFns: {
+            openDate: (rowA, rowB, columnId) => {
+                // Convert date strings to timestamps for proper sorting
+                const dateA = new Date(rowA.getValue(columnId)).getTime();
+                const dateB = new Date(rowB.getValue(columnId)).getTime();
+                return dateB - dateA; // Descending order
+            },
         },
         state: { isLoading: loading },
         muiTableHeadCellProps: {
@@ -402,7 +413,17 @@ export default function Tasks({
     });
 
     return (
-        <Box sx={{ height: 520, width: containerWidth, flexGrow: 1 }}>
+        <Box sx={{ 
+            height: 520, 
+            width: containerWidth, 
+            flexGrow: 1,
+            '& .MuiTable-root': {
+                minWidth: 'auto !important' // Override default minWidth
+            },
+            '& .MuiTableContainer-root': {
+                overflowX: 'auto'
+            }
+        }}>
             <CreateTaskForm 
                 open={openDialog} 
                 onClose={handleCloseDialog} 

@@ -332,6 +332,17 @@ export default function Members({ showActions = true }) {
         });
     };
 
+    const handleMemberRemoveSuccess = (memberId) => {
+        setRows(prevRows => 
+            prevRows.map(row => 
+                row.id === memberId 
+                    ? { ...row, isRemoved: true, status: 'Removed', tasks: 0 }
+                    : row
+            )
+        );
+        handleDeleteCancel();
+    };
+
     return (
         <Box sx={{ height: 520, width: "100%" }}>
             <MaterialReactTable table={table} />
@@ -340,6 +351,7 @@ export default function Members({ showActions = true }) {
                 memberName={deleteDialog.memberName}
                 memberId={deleteDialog.memberId}
                 onClose={handleDeleteCancel}
+                onSuccess={() => handleMemberRemoveSuccess(deleteDialog.memberId)}
                 type="deleteAccount"
             />
         </Box>
