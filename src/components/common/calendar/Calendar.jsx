@@ -90,15 +90,24 @@ export default function Calendar() {
                 
                 if (deadlinesResponse && deadlinesResponse.data) {
                     const deadlineEvents = deadlinesResponse.data.map(deadline => {
-                        // Use the start time directly from the deadline object
+                        // Create new date from deadline start
                         const startDate = new Date(deadline.start);
                         
+                        // Create end date with same day handling for 11:XX PM
+                        const endDate = new Date(startDate);
+                        if (startDate.getHours() === 23) {
+                            endDate.setHours(23);
+                            endDate.setMinutes(59);
+                        } else {
+                            endDate.setTime(startDate.getTime() + (60 * 60 * 1000));
+                        }
+
                         return {
                             id: `deadline-${deadline.title.split('#')[1] || Date.now()}`,
                             title: deadline.title,
                             start: startDate.toISOString(),
-                            end: startDate.toISOString(), // Same as start for deadline events
-                            allDay: false, // Changed to false to show the time
+                            end: endDate.toISOString(), // Use calculated end date
+                            allDay: false,
                             userId: currentUserId,
                             isDeadline: true,
                             color: deadline.color || '#FF4444',
