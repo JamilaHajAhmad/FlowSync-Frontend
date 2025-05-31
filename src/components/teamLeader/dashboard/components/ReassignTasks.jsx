@@ -23,6 +23,8 @@ const ReassignTasks = ({ tasks, onComplete, excludeMemberId }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [isCompleted, setIsCompleted] = useState(false);
+    // Add new state to track updated task counts
+    const [updatedTaskCounts, setUpdatedTaskCounts] = useState({});
 
     // Calculate progress based on completed tasks
     const progress = (currentTaskIndex / tasks.length) * 100;
@@ -56,6 +58,12 @@ const ReassignTasks = ({ tasks, onComplete, excludeMemberId }) => {
             const token = localStorage.getItem('authToken');
             await reassignTask(tasks[currentTaskIndex].frnNumber, selectedMember, token);
             
+            // Update the task count for the selected member
+            setUpdatedTaskCounts(prev => ({
+                ...prev,
+                [selectedMember]: (prev[selectedMember] || 0) + 1
+            }));
+
             if (currentTaskIndex === tasks.length - 1) {
                 // Last task completed
                 setIsCompleted(true);
@@ -138,7 +146,7 @@ const ReassignTasks = ({ tasks, onComplete, excludeMemberId }) => {
                                     <Typography>{member.fullName}</Typography>
                                 </Box>
                                 <Chip 
-                                    label={`${member.ongoingTasks || 0} tasks`}
+                                    label={`${(member.ongoingTasks || 0) + (updatedTaskCounts[member.id] || 0)} tasks`}
                                     size="small"
                                     sx={{ 
                                         backgroundColor: '#e2e8f0',

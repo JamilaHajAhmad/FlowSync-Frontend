@@ -37,6 +37,8 @@ const DeleteMemberDialog = ({
     const [error, setError] = useState(null);
     const [showReassign, setShowReassign] = useState(false);
     const [deletionCompleted, setDeletionCompleted] = useState(false);
+    // Add loading state for buttons
+    const [buttonLoading, setButtonLoading] = useState(false);
 
     useEffect(() => {
         const fetchTasksToReassign = async () => {
@@ -101,10 +103,12 @@ const DeleteMemberDialog = ({
     console.log('Has tasks to reassign:', hasTasksToReassign);
     console.log('Tasks to reassign:', tasksToReassign);
 
+    // Update the handleConfirmAction function
     const handleConfirmAction = async () => {
+        setButtonLoading(true);
         try {
             console.log('Handling action for type:', type);
-            if (type === 'deleteAccount') { // Change condition to match the actual type
+            if (type === 'deleteAccount') {
                 await deleteMember(memberId, token);
             }
             setDeletionCompleted(true);
@@ -119,18 +123,20 @@ const DeleteMemberDialog = ({
                 onClose();
                 onSuccess();
             }
-        // eslint-disable-next-line no-unused-vars
         } catch (err) {
             setError(type === 'deleteAccount' ? 
                 'Failed to delete member' : 
                 'Failed to change member status'
             );
+            console.log('Error during action:', err);
+        } finally {
+            setButtonLoading(false);
         }
     };
 
     const handleReassignComplete = () => {
         if (deletionCompleted) {
-            toast.success(type === 'delete' ?
+            toast.success(type === 'deleteAccount' ?
                 'Member removed and tasks reassigned successfully' :
                 'Member status changed and tasks reassigned successfully'
             );
@@ -232,6 +238,7 @@ const DeleteMemberDialog = ({
                 <Button
                     onClick={onClose}
                     variant="outlined"
+                    disabled={buttonLoading}
                     sx={{
                         color: '#64748b',
                         borderColor: '#64748b',
@@ -246,7 +253,9 @@ const DeleteMemberDialog = ({
                 <Button
                     onClick={handleConfirmAction}
                     variant="contained"
+                    disabled={buttonLoading}
                     color={type === 'deleteAccount' ? 'error' : 'primary'}
+                    startIcon={buttonLoading ? <CircularProgress size={20} /> : null}
                     sx={{
                         bgcolor: type === 'deleteAccount' ? undefined : '#059669',
                         '&:hover': {
@@ -254,7 +263,10 @@ const DeleteMemberDialog = ({
                         }
                     }}
                 >
-                    {type === 'deleteAccount' ? 'Remove Member' : 'Change Status'}
+                    {buttonLoading 
+                        ? (type === 'deleteAccount' ? 'Removing...' : 'Changing Status...') 
+                        : (type === 'deleteAccount' ? 'Remove Member' : 'Change Status')
+                    }
                 </Button>
             </DialogActions>
         </Dialog>
