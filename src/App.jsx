@@ -44,6 +44,7 @@ import { ChartDataProvider } from './context/ChartDataContext';
 import HelpCenter from './components/Landing/components/Support/HelpCenter';
 import PrivacyPolicy from './components/Landing/components/Support/PrivacyPolicy';
 import TermsOfService from './components/Landing/components/Support/TermsOfService';
+import Chat from './components/common/messages/Chat';
 
 const App = () => {
     return (
@@ -90,6 +91,7 @@ const App = () => {
                     <Route path="/notifications" element={<ProtectedRouter><NotificationsPage /></ProtectedRouter>} />
                     <Route path="/faq" element={<ProtectedRouter><FAQ /></ProtectedRouter>} />
                     <Route path="/feedback&support" element={<ProtectedRouter><FeedbackSupport /></ProtectedRouter>} />
+                    <Route path="/chat" element={<ProtectedRouter><Chat /></ProtectedRouter>} />
                 </Routes>
                 <ToastContainer />
             </BrowserRouter>
