@@ -26,3 +26,9 @@ export const markMessagesAsRead = async (messageIds, token) => {
         headers: { Authorization: `Bearer ${token}` }
     });
 };
+
+export const getChatUsers = async (token) => {
+    return await api.get('/chat/users', {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+};
