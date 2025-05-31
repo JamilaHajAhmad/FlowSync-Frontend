@@ -1,4 +1,4 @@
-import React, { useState, useContext, useMemo, useEffect } from 'react';
+import { useState, useContext, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
     LightModeOutlined,
@@ -7,7 +7,8 @@ import {
     SettingsOutlined,
     Search as SearchIcon,
     Menu as MenuIcon,
-    Clear as ClearIcon
+    Clear as ClearIcon,
+    ChatBubbleOutline as MessageIcon, // Replace the existing Message import
 } from '@mui/icons-material';
 import { 
     useTheme, 
@@ -30,6 +31,7 @@ import NotificationList from './notification/NotificationList';
 import SearchResults from './search/SearchResults';
 import { getSearchItems } from './search/data';
 import { decodeToken } from '../../utils';
+import { getUnreadMessages } from '../../services/chatService';
 
 const Search = styled('div')(({ theme }) => ({
     position: 'relative',
@@ -111,6 +113,12 @@ const TopbarOffset = styled('div')(({ theme }) => ({
     minHeight: '64px' // Match the AppBar height
 }));
 
+const StyledBadge = styled(Badge)(() => ({
+    '& .MuiBadge-badge': {
+        transform: 'scale(0.8) translate(50%, -50%)'
+    }
+}));
+
 export default function Topbar({ open, handleDrawerOpen, setMode }) {
     const theme = useTheme();
     const token = localStorage.getItem('authToken');
@@ -124,6 +132,7 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [showResults, setShowResults] = useState(false);
+    const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
     // Updated searchItems with proper role check
     const searchItems = useMemo(() => {
@@ -149,6 +158,21 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
             );
         });
     }, [searchItems, searchTerm]);
+
+    useEffect(() => {
+        fetchUnreadMessages();
+        const interval = setInterval(fetchUnreadMessages, 30000); // Check every 30 seconds
+        return () => clearInterval(interval);
+    }, []);
+
+    const fetchUnreadMessages = async () => {
+        try {
+            const response = await getUnreadMessages(token);
+            setUnreadMessageCount(response.data.length);
+        } catch (error) {
+            console.error('Error fetching unread messages:', error);
+        }
+    };
 
     const handleSearchKeyDown = (e) => {
         if (searchResults.length && showResults) {
@@ -295,75 +319,80 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                     </Search>
 
                     <Stack direction="row" spacing={-0.5}>
-                    {theme.palette.mode === 'light' ? (
-                        <IconButton color='inherit' onClick={() => {
-                            localStorage.setItem("currentMode", theme.palette.mode === 'dark' ? 'light' : 'dark');
-                            setMode((prevMode) =>
-                                prevMode === 'light' ? 'dark' : 'light')
-                        }}>
-                            <LightModeOutlined />
+                        <IconButton
+                            size="large"
+                            color="inherit"
+                            onClick={() => navigate('/chat')}
+                        >
+                            <StyledBadge badgeContent={unreadMessageCount} color="error">
+                                <MessageIcon />
+                            </StyledBadge>
                         </IconButton>
-                    ) : (
-                        <IconButton color='inherit' onClick={() => {
-                            localStorage.setItem("currentMode", theme.palette.mode === 'dark' ? 'light' : 'dark');
-                            setMode((prevMode) =>
-                                prevMode === 'light' ? 'dark' : 'light');
-                        }}>
-                            <DarkModeOutlined />
-                        </IconButton>
-                    )}
-                    <IconButton 
-                        color='inherit' 
-                        onClick={handleClick}
-                        aria-controls="notification-menu"
-                        aria-haspopup="true"
-                    >
-                        <Badge badgeContent={unreadCount} color="error">
-                            <NotificationsNoneOutlined />
-                        </Badge>
-                    </IconButton>
 
-                    <Menu
-                        id="notification-menu"
-                        anchorEl={anchorEl}
-                        open={Boolean(anchorEl)}
-                        onClose={handleClose}
-                        PaperProps={{
-                            sx: {
-                                maxHeight: '80vh',
-                                width: 350,
-                                mt: 1.5,
-                                overflowY: 'auto',
-                                '&::-webkit-scrollbar': {
-                                    width: '6px'
-                                },
-                                '&::-webkit-scrollbar-track': {
-                                    background: '#f1f1f1'
-                                },
-                                '&::-webkit-scrollbar-thumb': {
-                                    backgroundColor: '#888',
-                                    borderRadius: '3px'
+                        {theme.palette.mode === 'light' ? (
+                            <IconButton color='inherit' onClick={() => {
+                                localStorage.setItem("currentMode", theme.palette.mode === 'dark' ? 'light' : 'dark');
+                                setMode((prevMode) =>
+                                    prevMode === 'light' ? 'dark' : 'light')
+                            }}>
+                                <LightModeOutlined />
+                            </IconButton>
+                        ) : (
+                            <IconButton color='inherit' onClick={() => {
+                                localStorage.setItem("currentMode", theme.palette.mode === 'dark' ? 'light' : 'dark');
+                                setMode((prevMode) =>
+                                    prevMode === 'light' ? 'dark' : 'light');
+                            }}>
+                                <DarkModeOutlined />
+                            </IconButton>
+                        )}
+                        <IconButton color='inherit' onClick={handleClick} aria-controls="notification-menu" aria-haspopup="true">
+                            <Badge badgeContent={unreadCount} color="error">
+                                <NotificationsNoneOutlined />
+                            </Badge>
+                        </IconButton>
+
+                        <Menu
+                            id="notification-menu"
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl)}
+                            onClose={handleClose}
+                            PaperProps={{
+                                sx: {
+                                    maxHeight: '80vh',
+                                    width: 350,
+                                    mt: 1.5,
+                                    overflowY: 'auto',
+                                    '&::-webkit-scrollbar': {
+                                        width: '6px'
+                                    },
+                                    '&::-webkit-scrollbar-track': {
+                                        background: '#f1f1f1'
+                                    },
+                                    '&::-webkit-scrollbar-thumb': {
+                                        backgroundColor: '#888',
+                                        borderRadius: '3px'
+                                    }
                                 }
-                            }
-                        }}
-                        anchorOrigin={{
-                            vertical: 'bottom',
-                            horizontal: 'right',
-                        }}
-                        transformOrigin={{
-                            vertical: 'top',
-                            horizontal: 'right',
-                        }}
-                    >
-                        <NotificationList onClose={handleClose} />
-                    </Menu>
+                            }}
+                            anchorOrigin={{
+                                vertical: 'bottom',
+                                horizontal: 'right',
+                            }}
+                            transformOrigin={{
+                                vertical: 'top',
+                                horizontal: 'right',
+                            }}
+                        >
+                            <NotificationList onClose={handleClose} />
+                        </Menu>
 
-                    <IconButton color='inherit'>
-                        <Link to="/settings" style={{ color: 'white' }}> 
-                            <SettingsOutlined sx={{ mt: -0.5 }}/> 
-                        </Link>
-                    </IconButton>
-                </Stack>
+                        <IconButton color='inherit'>
+                            <Link to="/settings" style={{ color: 'white' }}> 
+                                <SettingsOutlined sx={{ mt: -0.5 }}/> 
+                            </Link>
+                        </IconButton>
+                    </Stack>
                 </Toolbar>
             </StyledAppBar>
             <TopbarOffset /> 
