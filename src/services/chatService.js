@@ -1,0 +1,28 @@
+import api from './api';
+
+export const sendMessage = async (receiverId, message, token) => {
+    return await api.post(`/chat/send`, {
+        receiverId,
+        message
+    }, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+};
+
+export const getConversation = async (userId, token) => {
+    return await api.get(`/chat/conversation?userId=${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+};
+
+export const getUnreadMessages = async (token) => {
+    return await api.get(`/chat/unread`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+};
+
+export const markMessagesAsRead = async (messageIds, token) => {
+    return await api.post(`/chat/mark-as-read`, messageIds, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+};
