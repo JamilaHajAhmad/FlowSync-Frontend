@@ -1,23 +1,23 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { 
-    Box, 
-    Paper, 
-    TextField, 
-    IconButton, 
-    Typography, 
-    Avatar, 
-    List, 
-    ListItem, 
-    ListItemText, 
-    ListItemAvatar, 
-    Badge, 
+import {
+    Box,
+    Paper,
+    TextField,
+    IconButton,
+    Typography,
+    Avatar,
+    List,
+    ListItem,
+    ListItemText,
+    ListItemAvatar,
+    Badge,
     Chip,
     Skeleton,
     Alert,
     Snackbar
 } from '@mui/material';
-import { 
-    Send as SendIcon, 
+import {
+    Send as SendIcon,
     Circle as UnreadIcon,
     CheckCircle as DeliveredIcon,
     Schedule as PendingIcon,
@@ -37,24 +37,24 @@ const MESSAGE_STATUS = {
 
 export default function Chat() {
     // State management
-    const [conversations, setConversations] = useState([]);
-    const [selectedUser, setSelectedUser] = useState(null);
-    const [messages, setMessages] = useState([]);
-    const [newMessage, setNewMessage] = useState('');
-    const [unreadCount, setUnreadCount] = useState(0);
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [connection, setConnection] = useState(null);
-    const [connectionState, setConnectionState] = useState('disconnected');
-    const [error, setError] = useState(null);
-    const [isTyping, setIsTyping] = useState(false);
-    
+    const [ conversations, setConversations ] = useState([]);
+    const [ selectedUser, setSelectedUser ] = useState(null);
+    const [ messages, setMessages ] = useState([]);
+    const [ newMessage, setNewMessage ] = useState('');
+    const [ unreadCount, setUnreadCount ] = useState(0);
+    const [ users, setUsers ] = useState([]);
+    const [ loading, setLoading ] = useState(true);
+    const [ connection, setConnection ] = useState(null);
+    const [ connectionState, setConnectionState ] = useState('disconnected');
+    const [ error, setError ] = useState(null);
+    const [ isTyping, setIsTyping ] = useState(false);
+
     // Refs
     const messageEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
     const conversationCacheRef = useRef(new Map());
     const selectedUserIdRef = useRef(null);
-    
+
     // Constants - moved to refs to prevent recreating on each render
     const currentUserIdRef = useRef(localStorage.getItem('userId'));
     const tokenRef = useRef(localStorage.getItem('authToken'));
@@ -62,7 +62,14 @@ export default function Chat() {
     // Update refs when selectedUser changes
     useEffect(() => {
         selectedUserIdRef.current = selectedUser?.id || null;
-    }, [selectedUser?.id]);
+    }, [ selectedUser?.id ]);
+
+    useEffect(() => {
+        if (messageEndRef.current) {
+            messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [ messages, isTyping ]);
+
 
     // Memoized values
     const sortedUsers = useMemo(() => {
@@ -70,16 +77,16 @@ export default function Chat() {
             // Sort by unread messages first, then by last message time
             const aHasUnread = conversations.some(conv => conv.userId === a.id && conv.unreadCount > 0);
             const bHasUnread = conversations.some(conv => conv.userId === b.id && conv.unreadCount > 0);
-            
+
             if (aHasUnread && !bHasUnread) return -1;
             if (!aHasUnread && bHasUnread) return 1;
-            
+
             // Sort by last message time (newest first)
             const aLastMessage = conversations.find(conv => conv.userId === a.id)?.lastMessageTime || 0;
             const bLastMessage = conversations.find(conv => conv.userId === b.id)?.lastMessageTime || 0;
             return new Date(bLastMessage) - new Date(aLastMessage);
         });
-    }, [users, conversations]);
+    }, [ users, conversations ]);
 
     // Stable callback functions using useCallback with proper dependencies
     const showError = useCallback((message) => {
@@ -96,13 +103,13 @@ export default function Chat() {
     // Format functions - stable callbacks
     const formatLastMessageTime = useCallback((timestamp) => {
         if (!timestamp) return '';
-        
+
         const now = new Date();
         const messageDate = new Date(timestamp);
         const diffDays = Math.floor((now - messageDate) / (1000 * 60 * 60 * 24));
-        
+
         if (isNaN(messageDate.getTime())) return '';
-        
+
         if (diffDays === 0) {
             return messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         } else if (diffDays < 7) {
@@ -114,7 +121,7 @@ export default function Chat() {
 
     const formatMessageTime = useCallback((timestamp) => {
         if (!timestamp) return '';
-        
+
         try {
             const date = new Date(timestamp);
             if (isNaN(date.getTime())) return '';
@@ -129,7 +136,7 @@ export default function Chat() {
             if (diffMins < 60) return `${diffMins}m`;
             if (diffHours < 24) return `${diffHours}h`;
             if (diffDays < 7) return `${diffDays}d`;
-            
+
             return date.toLocaleDateString();
         } catch (error) {
             console.error('Error formatting date:', error);
@@ -148,26 +155,26 @@ export default function Chat() {
                 showError('Session expired. Please log in again.');
             }
         }
-    }, [showError]);
+    }, [ showError ]);
 
     const fetchConversations = useCallback(async () => {
         try {
             const response = await getUnreadMessages(tokenRef.current);
             const conversationsMap = response.data.reduce((acc, msg) => {
-                if (!acc[msg.senderId]) {
-                    acc[msg.senderId] = { 
-                        userId: msg.senderId, 
+                if (!acc[ msg.senderId ]) {
+                    acc[ msg.senderId ] = {
+                        userId: msg.senderId,
                         unreadCount: 0,
                         lastMessage: msg.content,
                         lastMessageTime: msg.timestamp
                     };
                 }
-                acc[msg.senderId].unreadCount++;
+                acc[ msg.senderId ].unreadCount++;
                 // Keep the latest message
-                if (!acc[msg.senderId].lastMessageTime || 
-                    new Date(msg.timestamp) > new Date(acc[msg.senderId].lastMessageTime)) {
-                    acc[msg.senderId].lastMessage = msg.content;
-                    acc[msg.senderId].lastMessageTime = msg.timestamp;
+                if (!acc[ msg.senderId ].lastMessageTime ||
+                    new Date(msg.timestamp) > new Date(acc[ msg.senderId ].lastMessageTime)) {
+                    acc[ msg.senderId ].lastMessage = msg.content;
+                    acc[ msg.senderId ].lastMessageTime = msg.timestamp;
                 }
                 return acc;
             }, {});
@@ -187,7 +194,7 @@ export default function Chat() {
         } finally {
             setLoading(false);
         }
-    }, [showError]);
+    }, [ showError ]);
 
     const fetchConversation = useCallback(async (userId, fromCache = true) => {
         // Check cache first
@@ -201,13 +208,40 @@ export default function Chat() {
 
         try {
             const response = await getConversation(userId, tokenRef.current);
-            const messagesData = response.data.map(msg => ({
-                ...msg,
-                status: msg.senderId === currentUserIdRef.current ? MESSAGE_STATUS.DELIVERED : undefined
-            }));
-            
+            console.log('Fetched conversation:', response.data);
+
+            let messagesData;
+
+            if (Array.isArray(response.data)) {
+                messagesData = response.data.map(msg => ({
+                    id: msg.id,
+                    senderId: msg.senderId,
+                    content: msg.content || msg.message,
+                    timestamp: msg.timestamp || msg.sentAt,
+                    isRead: msg.isRead,
+                    isMine: msg.isMine,
+                    status: msg.isMine ? MESSAGE_STATUS.DELIVERED : undefined
+                }));
+            } else if (response.data && Array.isArray(response.data.messages)) {
+                messagesData = response.data.messages.map(msg => ({
+                    id: msg.id,
+                    senderId: msg.senderId,
+                    content: msg.content || msg.message,
+                    timestamp: msg.timestamp || msg.sentAt,
+                    isRead: msg.isRead,
+                    isMine: msg.isMine,
+                    status: msg.isMine ? MESSAGE_STATUS.DELIVERED : undefined
+                }));
+            } else {
+                console.warn('Unexpected API response structure:', response.data);
+                messagesData = [];
+            }
+
+            // Sort messages by timestamp to ensure correct order
+            messagesData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
             setMessages(messagesData);
-            
+
             // Cache the conversation
             conversationCacheRef.current.set(userId, {
                 messages: messagesData,
@@ -216,9 +250,9 @@ export default function Chat() {
 
             // Mark messages as read
             const unreadMessageIds = messagesData
-                .filter(m => !m.isRead && m.senderId === userId)
+                .filter(m => !m.isRead && !m.isMine)
                 .map(m => m.id);
-            
+
             if (unreadMessageIds.length > 0) {
                 await markMessagesAsRead(unreadMessageIds, tokenRef.current);
                 fetchUnreadMessages();
@@ -228,7 +262,7 @@ export default function Chat() {
             console.error('Error fetching conversation:', error);
             showError('Failed to load conversation');
         }
-    }, [fetchUnreadMessages, fetchConversations, showError]);
+    }, [ fetchUnreadMessages, fetchConversations, showError ]);
 
     // Typing notification handler
     const sendTypingNotification = useCallback((isTypingValue) => {
@@ -241,16 +275,16 @@ export default function Chat() {
                     }
                 });
         }
-    }, [connection, showError]);
+    }, [ connection, showError ]);
 
     const handleTyping = useCallback(() => {
         sendTypingNotification(true);
-        
+
         clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = setTimeout(() => {
             sendTypingNotification(false);
         }, 1000);
-    }, [sendTypingNotification]);
+    }, [ sendTypingNotification ]);
 
     // Message sending with optimistic updates - REST API only
     const handleSendMessage = useCallback(async (e) => {
@@ -268,10 +302,11 @@ export default function Chat() {
             content: messageContent,
             timestamp: new Date().toISOString(),
             isRead: true,
+            isMine: true,
             status: MESSAGE_STATUS.SENDING
         };
-        
-        setMessages(prev => [...prev, tempMessage]);
+
+        setMessages(prev => [ ...prev, tempMessage ]);
         scrollToBottom();
 
         try {
@@ -279,29 +314,29 @@ export default function Chat() {
             const response = await sendMessage(selectedUser.id, messageContent, tokenRef.current);
             const sentMessageId = response.data?.id || response.data?.messageId;
 
-            // Update message status to delivered (since we're only using REST API)
-            setMessages(prev => prev.map(msg => 
-                msg.id === tempId 
+            // Update message status to delivered
+            setMessages(prev => prev.map(msg =>
+                msg.id === tempId
                     ? { ...msg, id: sentMessageId || tempId, status: MESSAGE_STATUS.DELIVERED }
                     : msg
             ));
 
-            // Clear cache for this conversation
+            // Clear cache for this conversation to force refresh
             conversationCacheRef.current.delete(selectedUser.id);
-            
+
         } catch (error) {
             console.error('Error sending message:', error);
-            
+
             // Update message status to failed
-            setMessages(prev => prev.map(msg => 
-                msg.id === tempId 
+            setMessages(prev => prev.map(msg =>
+                msg.id === tempId
                     ? { ...msg, status: MESSAGE_STATUS.FAILED }
                     : msg
             ));
-            
+
             showError('Failed to send message. Please try again.');
         }
-    }, [newMessage, selectedUser, scrollToBottom, showError]);
+    }, [ newMessage, selectedUser, scrollToBottom, showError ]);
 
     // SignalR connection management - Fixed dependencies
     useEffect(() => {
@@ -318,7 +353,7 @@ export default function Chat() {
                         skipNegotiation: true,
                         transport: signalR.HttpTransportType.WebSockets
                     })
-                    .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+                    .withAutomaticReconnect([ 0, 2000, 5000, 10000, 30000 ])
                     .configureLogging(signalR.LogLevel.Debug)
                     .build();
 
@@ -329,28 +364,33 @@ export default function Chat() {
                     }
                 });
 
-                newConnection.on("ReceiveMessage", async (senderId, messageContent, messageId, timestamp) => {
+                newConnection.on("ReceiveMessage", async (senderId, messageContent, messageId, timestamp, isMine) => {
                     if (!isMounted) return;
-                    
+
                     const newMsg = {
                         id: messageId,
                         senderId,
                         content: messageContent,
                         timestamp,
-                        isRead: selectedUserIdRef.current === senderId
+                        isRead: selectedUserIdRef.current === senderId,
+                        isMine
                     };
 
                     if (selectedUserIdRef.current === senderId) {
                         setMessages(prev => {
+                            // Check if message already exists to prevent duplicates
                             if (prev.some(m => m.id === messageId)) return prev;
-                            return [...prev, newMsg];
+
+                            // Add new message and sort by timestamp
+                            const newMessages = [ ...prev, newMsg ];
+                            return newMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
                         });
                         setTimeout(() => {
                             messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
                         }, 100);
-                        
+
                         try {
-                            await markMessagesAsRead([messageId], tokenRef.current);
+                            await markMessagesAsRead([ messageId ], tokenRef.current);
                         } catch (error) {
                             console.error('Error marking message as read:', error);
                         }
@@ -363,7 +403,7 @@ export default function Chat() {
 
                 // Start connection
                 await newConnection.start();
-                
+
                 if (isMounted) {
                     setConnectionState('connected');
                     setConnection(newConnection);
@@ -415,13 +455,13 @@ export default function Chat() {
                 });
             }
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Empty dependency array - only run once
 
     // Initial data fetching effect - Fixed dependencies
     useEffect(() => {
         let isMounted = true;
-        
+
         const fetchData = async () => {
             if (!isMounted) return;
             try {
@@ -441,19 +481,19 @@ export default function Chat() {
         const unreadInterval = setInterval(() => {
             if (isMounted) fetchUnreadMessages();
         }, 30000);
-        
+
         const conversationsInterval = setInterval(() => {
             if (isMounted) fetchConversations();
         }, 60000);
-        
+
         return () => {
             isMounted = false;
             clearInterval(unreadInterval);
             clearInterval(conversationsInterval);
         };
-    }, [fetchUsers, fetchUnreadMessages, fetchConversations]);
+    }, [ fetchUsers, fetchUnreadMessages, fetchConversations ]);
 
-    // Selected user effect - Fixed to prevent infinite re-renders
+    // Selected user effect - Modified to prevent message loss
     useEffect(() => {
         if (!selectedUser?.id) return;
 
@@ -463,11 +503,13 @@ export default function Chat() {
         const fetchAndSetConversation = async () => {
             await fetchConversation(selectedUser.id, false);
             if (isMounted) {
+                // Reduce polling frequency to prevent message loss
                 intervalId = setInterval(() => {
                     if (selectedUserIdRef.current === selectedUser.id) {
+                        // Only refresh from cache or if there might be new messages
                         fetchConversation(selectedUser.id, true);
                     }
-                }, 10000);
+                }, 30000); // Increased from 10s to 30s
             }
         };
 
@@ -477,12 +519,12 @@ export default function Chat() {
             isMounted = false;
             if (intervalId) clearInterval(intervalId);
         };
-    }, [selectedUser?.id, fetchConversation]);
+    }, [ selectedUser?.id, fetchConversation ]);
 
     // Scroll effect - only when messages change
     useEffect(() => {
         scrollToBottom();
-    }, [messages.length, scrollToBottom]);
+    }, [ messages.length, scrollToBottom ]);
 
     // Connection cleanup effect
     useEffect(() => {
@@ -494,7 +536,7 @@ export default function Chat() {
             }
             clearTimeout(typingTimeoutRef.current);
         };
-    }, [connection]);
+    }, [ connection ]);
 
     // Render message status icon
     const renderMessageStatus = (status) => {
@@ -513,16 +555,16 @@ export default function Chat() {
     };
 
     return (
-        <Box className="chat-container">
+        <Box className="chat-container" >
             {/* Connection status banner */}
             {connectionState !== 'connected' && (
-                <Alert 
+                <Alert
                     severity={connectionState === 'reconnecting' ? 'warning' : 'error'}
-                    sx={{ 
-                        position: 'fixed', 
-                        top: 0, 
-                        left: 0, 
-                        right: 0, 
+                    sx={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
                         zIndex: 1000,
                         borderRadius: 0
                     }}
@@ -550,15 +592,15 @@ export default function Chat() {
                         Messages
                     </Typography>
                     {unreadCount > 0 && (
-                        <Chip 
-                            label={`${unreadCount} unread`} 
-                            color="error" 
-                            size="small" 
+                        <Chip
+                            label={`${unreadCount} unread`}
+                            color="error"
+                            size="small"
                             sx={{ mt: 1 }}
                         />
                     )}
                 </Box>
-                
+
                 <List sx={{ flexGrow: 1, overflow: 'auto' }}>
                     {loading ? (
                         Array.from({ length: 5 }).map((_, index) => (
@@ -576,11 +618,11 @@ export default function Chat() {
                         sortedUsers.map((user) => {
                             const conversation = conversations.find(conv => conv.userId === user.id);
                             const hasUnread = conversation?.unreadCount > 0;
-                            
+
                             return (
                                 <ListItem
                                     key={user.id}
-                                    component="div" // Add this line
+                                    component="div"
                                     selected={selectedUser?.id === user.id}
                                     onClick={() => setSelectedUser(user)}
                                     sx={{
@@ -617,25 +659,25 @@ export default function Chat() {
                                                 color="error"
                                                 max={99}
                                             >
-                                                <Avatar 
+                                                <Avatar
                                                     src={user.pictureURL}
                                                     alt={user.fullName}
-                                                    sx={{ 
-                                                        width: 40, 
+                                                    sx={{
+                                                        width: 40,
                                                         height: 40,
                                                         border: hasUnread ? 2 : 0,
                                                         borderColor: 'primary.main'
                                                     }}
                                                 >
-                                                    {user.fullName[0]?.toUpperCase()}
+                                                    {user.fullName[ 0 ]?.toUpperCase()}
                                                 </Avatar>
                                             </Badge>
                                         </Badge>
                                     </ListItemAvatar>
                                     <ListItemText
                                         primary={
-                                            <Typography 
-                                                sx={{ 
+                                            <Typography
+                                                sx={{
                                                     fontWeight: hasUnread ? 600 : 400,
                                                     fontSize: '0.95rem'
                                                 }}
@@ -644,12 +686,11 @@ export default function Chat() {
                                             </Typography>
                                         }
                                         secondary={
-                                            // Change this to Typography instead of Box
                                             <Typography
-                                                component="div" // Important: change component to div
+                                                component="div"
                                                 variant="body2"
                                                 color="text.secondary"
-                                                sx={{ 
+                                                sx={{
                                                     display: 'flex',
                                                     justifyContent: 'space-between',
                                                     alignItems: 'center'
@@ -658,7 +699,7 @@ export default function Chat() {
                                                 <Typography
                                                     component="span"
                                                     variant="caption"
-                                                    sx={{ 
+                                                    sx={{
                                                         display: 'inline-block',
                                                         fontWeight: hasUnread ? 500 : 400,
                                                         overflow: 'hidden',
@@ -667,7 +708,7 @@ export default function Chat() {
                                                         maxWidth: '70%'
                                                     }}
                                                 >
-                                                    {conversation?.lastMessage?.length > 30 
+                                                    {conversation?.lastMessage?.length > 30
                                                         ? `${conversation.lastMessage.substring(0, 30)}...`
                                                         : conversation?.lastMessage
                                                     }
@@ -676,7 +717,7 @@ export default function Chat() {
                                                     <Typography
                                                         component="span"
                                                         variant="caption"
-                                                        sx={{ 
+                                                        sx={{
                                                             fontSize: '0.7rem',
                                                             ml: 1
                                                         }}
@@ -699,10 +740,10 @@ export default function Chat() {
                 {selectedUser ? (
                     <>
                         {/* Chat header */}
-                        <Box 
-                            sx={{ 
-                                p: 2, 
-                                borderBottom: 1, 
+                        <Box
+                            sx={{
+                                p: 2,
+                                borderBottom: 1,
                                 borderColor: 'divider',
                                 display: 'flex',
                                 alignItems: 'center',
@@ -725,7 +766,7 @@ export default function Chat() {
                                 }
                             >
                                 <Avatar src={selectedUser.pictureURL} alt={selectedUser.fullName}>
-                                    {selectedUser.fullName[0]?.toUpperCase()}
+                                    {selectedUser.fullName[ 0 ]?.toUpperCase()}
                                 </Avatar>
                             </Badge>
                             <Box>
@@ -737,31 +778,31 @@ export default function Chat() {
                                 </Typography>
                             </Box>
                             <Box sx={{ ml: 'auto' }}>
-                                <Chip 
-                                    label={connectionState} 
-                                    size="small" 
+                                <Chip
+                                    label={connectionState}
+                                    size="small"
                                     color={connectionState === 'connected' ? 'success' : 'warning'}
                                     variant="outlined"
                                 />
                             </Box>
                         </Box>
 
-                        {/* Messages area */}
-                        <Box 
+                        <Box
                             className="messages-container"
-                            sx={{ 
-                                flexGrow: 1, 
-                                overflow: 'auto', 
+                            sx={{
+                                flexGrow: 1,
+                                overflow: 'auto',
                                 p: 1,
                                 display: 'flex',
-                                flexDirection: 'column'
+                                flexDirection: 'column',
+                                minHeight: 0
                             }}
                         >
                             {messages.map((message, index) => {
-                                const isOwn = message.senderId === currentUserIdRef.current;
+                                const isOwn = message.isMine;
                                 const showAvatar = !isOwn && (
-                                    index === 0 || 
-                                    messages[index - 1].senderId !== message.senderId
+                                    index === 0 ||
+                                    messages[ index - 1 ].isMine
                                 );
 
                                 return (
@@ -775,20 +816,20 @@ export default function Chat() {
                                         }}
                                     >
                                         {!isOwn && (
-                                            <Avatar 
-                                                sx={{ 
-                                                    width: 32, 
-                                                    height: 32, 
+                                            <Avatar
+                                                sx={{
+                                                    width: 32,
+                                                    height: 32,
                                                     mr: 1,
                                                     visibility: showAvatar ? 'visible' : 'hidden'
                                                 }}
                                                 src={selectedUser.pictureURL}
                                                 alt={selectedUser.fullName}
                                             >
-                                                {selectedUser.fullName[0]?.toUpperCase()}
+                                                {selectedUser.fullName[ 0 ]?.toUpperCase()}
                                             </Avatar>
                                         )}
-                                        
+
                                         <Box
                                             sx={{
                                                 maxWidth: '70%',
@@ -802,18 +843,18 @@ export default function Chat() {
                                             <Typography variant="body2">
                                                 {message.content}
                                             </Typography>
-                                            <Box 
-                                                sx={{ 
-                                                    display: 'flex', 
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
                                                     justifyContent: 'space-between',
                                                     alignItems: 'center',
                                                     mt: 0.5,
                                                     gap: 1
                                                 }}
                                             >
-                                                <Typography 
-                                                    variant="caption" 
-                                                    sx={{ 
+                                                <Typography
+                                                    variant="caption"
+                                                    sx={{
                                                         opacity: 0.7,
                                                         fontSize: '0.7rem'
                                                     }}
@@ -826,28 +867,85 @@ export default function Chat() {
                                     </Box>
                                 );
                             })}
-                            
-                            {/* Typing indicator */}
+
+                            {/* Typing indicator - enhanced visibility */}
                             {isTyping && (
-                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                    <Avatar sx={{ width: 32, height: 32, mr: 1 }}>
-                                        {selectedUser.fullName[0]?.toUpperCase()}
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        justifyContent: 'flex-start',
+                                        mb: 2, // Increased margin bottom
+                                        alignItems: 'flex-end',
+                                        width: '100%', // Ensure full width
+                                        minHeight: '60px', // Minimum height to prevent cutoff
+                                        pb: 1 // Add padding bottom
+                                    }}
+                                >
+                                    <Avatar
+                                        sx={{
+                                            width: 32,
+                                            height: 32,
+                                            mr: 1,
+                                            flexShrink: 0 // Prevent avatar from shrinking
+                                        }}
+                                        src={selectedUser.pictureURL}
+                                        alt={selectedUser.fullName}
+                                    >
+                                        {selectedUser.fullName[ 0 ]?.toUpperCase()}
                                     </Avatar>
-                                    <Box 
-                                        sx={{ 
-                                            bgcolor: 'grey.100', 
-                                            borderRadius: 2, 
-                                            p: 1.5,
-                                            fontStyle: 'italic'
+                                    <Box
+                                        sx={{
+                                            maxWidth: '70%',
+                                            minWidth: '60px', // Minimum width for typing indicator
+                                            bgcolor: 'grey.100',
+                                            color: 'text.primary',
+                                            borderRadius: 2,
+                                            p: 2, // Increased padding
+                                            position: 'relative',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            minHeight: '40px' // Minimum height for the bubble
                                         }}
                                     >
-                                        <Typography variant="body2" color="text.secondary">
-                                            typing...
-                                        </Typography>
+                                        <Box
+                                            sx={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '6px', // Slightly increased gap
+                                                height: '20px' // Fixed height for animation container
+                                            }}
+                                        >
+                                            {[ 0, 1, 2 ].map((dot) => (
+                                                <Box
+                                                    key={dot}
+                                                    sx={{
+                                                        width: '8px',
+                                                        height: '8px',
+                                                        borderRadius: '50%',
+                                                        backgroundColor: 'text.secondary',
+                                                        animation: 'bounce 1.4s infinite ease-in-out',
+                                                        animationDelay: `${dot * 0.2}s`,
+                                                        animationFillMode: 'both',
+                                                        '@keyframes bounce': {
+                                                            '0%, 80%, 100%': {
+                                                                transform: 'scale(0) translateY(0)',
+                                                                opacity: 0.5
+                                                            },
+                                                            '40%': {
+                                                                transform: 'scale(1) translateY(-8px)',
+                                                                opacity: 1
+                                                            },
+                                                        }
+                                                    }}
+                                                />
+                                            ))}
+                                        </Box>
                                     </Box>
                                 </Box>
                             )}
-                            
+
                             <div ref={messageEndRef} />
                         </Box>
 
@@ -855,9 +953,9 @@ export default function Chat() {
                         <Box
                             component="form"
                             onSubmit={handleSendMessage}
-                            sx={{ 
-                                p: 2, 
-                                borderTop: 1, 
+                            sx={{
+                                p: 2,
+                                borderTop: 1,
                                 borderColor: 'divider',
                                 display: 'flex',
                                 gap: 1,
@@ -892,7 +990,7 @@ export default function Chat() {
                                 color="primary"
                                 type="submit"
                                 disabled={!newMessage.trim()}
-                                sx={{ 
+                                sx={{
                                     bgcolor: 'primary.main',
                                     color: 'white',
                                     '&:hover': {
@@ -908,10 +1006,10 @@ export default function Chat() {
                         </Box>
                     </>
                 ) : (
-                    <Box 
-                        sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
                             justifyContent: 'center',
                             height: '100%',
                             textAlign: 'center'
