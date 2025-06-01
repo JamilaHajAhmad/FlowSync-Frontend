@@ -53,10 +53,16 @@ export default function Chat() {
     const messageEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
     const conversationCacheRef = useRef(new Map());
+    const selectedUserIdRef = useRef(null);
     
-    // Constants
-    const currentUserId = localStorage.getItem('userId');
-    const token = localStorage.getItem('authToken');
+    // Constants - moved to refs to prevent recreating on each render
+    const currentUserIdRef = useRef(localStorage.getItem('userId'));
+    const tokenRef = useRef(localStorage.getItem('authToken'));
+
+    // Update refs when selectedUser changes
+    useEffect(() => {
+        selectedUserIdRef.current = selectedUser?.id || null;
+    }, [selectedUser?.id]);
 
     // Memoized values
     const sortedUsers = useMemo(() => {
@@ -75,7 +81,19 @@ export default function Chat() {
         });
     }, [users, conversations]);
 
-    // Format last message time for display
+    // Stable callback functions using useCallback with proper dependencies
+    const showError = useCallback((message) => {
+        setError(message);
+        setTimeout(() => setError(null), 5000);
+    }, []);
+
+    const scrollToBottom = useCallback(() => {
+        setTimeout(() => {
+            messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+    }, []);
+
+    // Format functions - stable callbacks
     const formatLastMessageTime = useCallback((timestamp) => {
         if (!timestamp) return '';
         
@@ -94,7 +112,6 @@ export default function Chat() {
         }
     }, []);
 
-    // Message time formatting
     const formatMessageTime = useCallback((timestamp) => {
         if (!timestamp) return '';
         
@@ -120,58 +137,10 @@ export default function Chat() {
         }
     }, []);
 
-    // Debounced scroll to bottom
-    const scrollToBottom = useCallback(() => {
-        setTimeout(() => {
-            messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-    }, []);
-
-    // Error handling
-    const showError = useCallback((message) => {
-        setError(message);
-        setTimeout(() => setError(null), 5000);
-    }, []);
-
-    // Connection cleanup effect
-    useEffect(() => {
-        return () => {
-            if (connection) {
-                connection.stop().catch(err => {
-                    console.error('Error stopping connection:', err);
-                });
-            }
-            clearTimeout(typingTimeoutRef.current);
-        };
-    }, [connection]);
-
-    // Typing notification handler
-    const sendTypingNotification = useCallback((isTyping) => {
-        if (connection?.state === signalR.HubConnectionState.Connected && selectedUser) {
-            connection.invoke("Typing", selectedUser.id, isTyping)
-                .catch(err => {
-                    console.error('Error sending typing notification:', err);
-                    if (!err.message.includes("Method does not exist")) {
-                        showError('Failed to send typing notification');
-                    }
-                });
-        }
-    }, [connection, selectedUser, showError]);
-
-    // Updated handleTyping function
-    const handleTyping = useCallback(() => {
-        sendTypingNotification(true);
-        
-        clearTimeout(typingTimeoutRef.current);
-        typingTimeoutRef.current = setTimeout(() => {
-            sendTypingNotification(false);
-        }, 1000);
-    }, [sendTypingNotification]);
-
-    // Fetch functions with error handling
+    // Stable fetch functions
     const fetchUnreadMessages = useCallback(async () => {
         try {
-            const response = await getUnreadMessages(token);
+            const response = await getUnreadMessages(tokenRef.current);
             setUnreadCount(response.data.length);
         } catch (error) {
             console.error('Error fetching unread messages:', error);
@@ -179,11 +148,11 @@ export default function Chat() {
                 showError('Session expired. Please log in again.');
             }
         }
-    }, [token, showError]);
+    }, [showError]);
 
     const fetchConversations = useCallback(async () => {
         try {
-            const response = await getUnreadMessages(token);
+            const response = await getUnreadMessages(tokenRef.current);
             const conversationsMap = response.data.reduce((acc, msg) => {
                 if (!acc[msg.senderId]) {
                     acc[msg.senderId] = { 
@@ -206,7 +175,19 @@ export default function Chat() {
         } catch (error) {
             console.error('Error fetching conversations:', error);
         }
-    }, [token]);
+    }, []);
+
+    const fetchUsers = useCallback(async () => {
+        try {
+            const response = await getChatUsers(tokenRef.current);
+            setUsers(response.data);
+        } catch (error) {
+            console.error('Error fetching users:', error);
+            showError('Failed to load users');
+        } finally {
+            setLoading(false);
+        }
+    }, [showError]);
 
     const fetchConversation = useCallback(async (userId, fromCache = true) => {
         // Check cache first
@@ -219,10 +200,10 @@ export default function Chat() {
         }
 
         try {
-            const response = await getConversation(userId, token);
+            const response = await getConversation(userId, tokenRef.current);
             const messagesData = response.data.map(msg => ({
                 ...msg,
-                status: msg.senderId === currentUserId ? MESSAGE_STATUS.DELIVERED : undefined
+                status: msg.senderId === currentUserIdRef.current ? MESSAGE_STATUS.DELIVERED : undefined
             }));
             
             setMessages(messagesData);
@@ -239,7 +220,7 @@ export default function Chat() {
                 .map(m => m.id);
             
             if (unreadMessageIds.length > 0) {
-                await markMessagesAsRead(unreadMessageIds, token);
+                await markMessagesAsRead(unreadMessageIds, tokenRef.current);
                 fetchUnreadMessages();
                 fetchConversations();
             }
@@ -247,111 +228,31 @@ export default function Chat() {
             console.error('Error fetching conversation:', error);
             showError('Failed to load conversation');
         }
-    }, [token, currentUserId, fetchUnreadMessages, fetchConversations, showError]);
+    }, [fetchUnreadMessages, fetchConversations, showError]);
 
-    const fetchUsers = useCallback(async () => {
-        try {
-            const response = await getChatUsers(token);
-            setUsers(response.data);
-        } catch (error) {
-            console.error('Error fetching users:', error);
-            showError('Failed to load users');
-        } finally {
-            setLoading(false);
-        }
-    }, [token, showError]);
-
-    // SignalR connection management
-    const setupSignalRConnection = useCallback(() => {
-        if (!token) return;
-
-        const newConnection = new signalR.HubConnectionBuilder()
-            .withUrl("https://localhost:49798/chatHub", {
-                accessTokenFactory: () => token,
-                skipNegotiation: true,
-                transport: signalR.HttpTransportType.WebSockets
-            })
-            .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
-            .configureLogging(signalR.LogLevel.Information)
-            .build();
-
-        // Typing notification handler
-        newConnection.on("UserTyping", (userId, isTyping) => {
-            if (selectedUser?.id === userId) {
-                setIsTyping(isTyping);
-            }
-        });
-
-        // Message received handler
-        newConnection.on("ReceiveMessage", async (senderId, messageContent, messageId, timestamp) => {
-            console.log("New message received:", { senderId, messageContent, messageId });
-            
-            const newMsg = {
-                id: messageId,
-                senderId,
-                content: messageContent,
-                timestamp,
-                isRead: selectedUser?.id === senderId
-            };
-
-            if (selectedUser?.id === senderId) {
-                setMessages(prev => {
-                    // Avoid duplicates
-                    if (prev.some(m => m.id === messageId)) return prev;
-                    return [...prev, newMsg];
+    // Typing notification handler
+    const sendTypingNotification = useCallback((isTypingValue) => {
+        if (connection?.state === signalR.HubConnectionState.Connected && selectedUserIdRef.current) {
+            connection.invoke("Typing", selectedUserIdRef.current, isTypingValue)
+                .catch(err => {
+                    console.error('Error sending typing notification:', err);
+                    if (!err.message.includes("Method does not exist")) {
+                        showError('Failed to send typing notification');
+                    }
                 });
-                scrollToBottom();
-                
-                // Mark as read immediately if chat is open
-                try {
-                    await markMessagesAsRead([messageId], token);
-                } catch (error) {
-                    console.error('Error marking message as read:', error);
-                }
-            } else {
-                fetchUnreadMessages();
-                fetchConversations();
-            }
-        });
+        }
+    }, [connection, showError]);
 
-        const startConnection = async () => {
-            try {
-                await newConnection.start();
-                console.log("SignalR Connected");
-                console.log("Connection ID:", newConnection.connectionId);
-                console.log("Access Token:", newConnection.accessToken);
-                console.log("Current token:", token);
-                setConnectionState('connected');
-                setConnection(newConnection);
-            } catch (err) {
-                console.error("SignalR Connection Error:", err);
-                setConnectionState('disconnected');
-                setTimeout(startConnection, 5000);
-            }
-        };
+    const handleTyping = useCallback(() => {
+        sendTypingNotification(true);
+        
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => {
+            sendTypingNotification(false);
+        }, 1000);
+    }, [sendTypingNotification]);
 
-        // Connection state handlers
-        newConnection.onreconnecting(() => {
-            setConnectionState('reconnecting');
-            setConnection(null);
-        });
-
-        newConnection.onreconnected(() => {
-            setConnectionState('connected');
-            setConnection(newConnection);
-        });
-
-        newConnection.onclose(() => {
-            setConnectionState('disconnected');
-            setConnection(null);
-            setTimeout(startConnection, 2000);
-        });
-
-        startConnection();
-        return newConnection;
-    }, [token, selectedUser, scrollToBottom, fetchUnreadMessages, fetchConversations]);
-
-    // Message sending with optimistic updates
+    // Message sending with optimistic updates - REST API only
     const handleSendMessage = useCallback(async (e) => {
         e.preventDefault();
         if (!newMessage.trim() || !selectedUser) return;
@@ -363,7 +264,7 @@ export default function Chat() {
         // Optimistic update
         const tempMessage = {
             id: tempId,
-            senderId: currentUserId,
+            senderId: currentUserIdRef.current,
             content: messageContent,
             timestamp: new Date().toISOString(),
             isRead: true,
@@ -374,54 +275,16 @@ export default function Chat() {
         scrollToBottom();
 
         try {
-            // Send via REST API
-            const response = await sendMessage(selectedUser.id, messageContent, token);
+            // Send via REST API only
+            const response = await sendMessage(selectedUser.id, messageContent, tokenRef.current);
             const sentMessageId = response.data?.id || response.data?.messageId;
 
-            // Update message status to sent
+            // Update message status to delivered (since we're only using REST API)
             setMessages(prev => prev.map(msg => 
                 msg.id === tempId 
-                    ? { ...msg, id: sentMessageId || tempId, status: MESSAGE_STATUS.SENT }
+                    ? { ...msg, id: sentMessageId || tempId, status: MESSAGE_STATUS.DELIVERED }
                     : msg
             ));
-
-            // Try SignalR for real-time delivery (optional)
-            if (connection?.state === signalR.HubConnectionState.Connected) {
-                try {
-                    await connection.invoke("SendMessage", selectedUser.id, messageContent);
-                    
-                    // If successful, update to delivered status
-                    setMessages(prev => prev.map(msg => 
-                        (msg.id === sentMessageId || msg.id === tempId)
-                            ? { ...msg, status: MESSAGE_STATUS.DELIVERED }
-                            : msg
-                    ));
-                } catch (signalRError) {
-                    if (signalRError.message?.includes('Method does not exist') || 
-                        signalRError.message?.includes('SendMessage')) {
-                        console.log('SignalR SendMessage not supported by server - using REST API only');
-                        setMessages(prev => prev.map(msg => 
-                            (msg.id === sentMessageId || msg.id === tempId)
-                                ? { ...msg, status: MESSAGE_STATUS.DELIVERED }
-                                : msg
-                        ));
-                    } else {
-                        console.warn('SignalR send failed, message sent via REST:', signalRError);
-                        setMessages(prev => prev.map(msg => 
-                            (msg.id === sentMessageId || msg.id === tempId)
-                                ? { ...msg, status: MESSAGE_STATUS.DELIVERED }
-                                : msg
-                        ));
-                    }
-                }
-            } else {
-                // No SignalR connection, but message was sent via REST
-                setMessages(prev => prev.map(msg => 
-                    (msg.id === sentMessageId || msg.id === tempId)
-                        ? { ...msg, status: MESSAGE_STATUS.DELIVERED }
-                        : msg
-                ));
-            }
 
             // Clear cache for this conversation
             conversationCacheRef.current.delete(selectedUser.id);
@@ -438,7 +301,200 @@ export default function Chat() {
             
             showError('Failed to send message. Please try again.');
         }
-    }, [newMessage, selectedUser, currentUserId, connection, token, scrollToBottom, showError]);
+    }, [newMessage, selectedUser, scrollToBottom, showError]);
+
+    // SignalR connection management - Fixed dependencies
+    useEffect(() => {
+        if (!tokenRef.current) return;
+
+        let connection;
+        let isMounted = true;
+
+        const setupConnection = async () => {
+            try {
+                const newConnection = new signalR.HubConnectionBuilder()
+                    .withUrl("https://localhost:49798/chatHub", {
+                        accessTokenFactory: () => tokenRef.current,
+                        skipNegotiation: true,
+                        transport: signalR.HttpTransportType.WebSockets
+                    })
+                    .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+                    .configureLogging(signalR.LogLevel.Debug)
+                    .build();
+
+                // Add handlers
+                newConnection.on("UserTyping", (userId, isTypingValue) => {
+                    if (isMounted && selectedUserIdRef.current === userId) {
+                        setIsTyping(isTypingValue);
+                    }
+                });
+
+                newConnection.on("ReceiveMessage", async (senderId, messageContent, messageId, timestamp) => {
+                    if (!isMounted) return;
+                    
+                    const newMsg = {
+                        id: messageId,
+                        senderId,
+                        content: messageContent,
+                        timestamp,
+                        isRead: selectedUserIdRef.current === senderId
+                    };
+
+                    if (selectedUserIdRef.current === senderId) {
+                        setMessages(prev => {
+                            if (prev.some(m => m.id === messageId)) return prev;
+                            return [...prev, newMsg];
+                        });
+                        setTimeout(() => {
+                            messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                        }, 100);
+                        
+                        try {
+                            await markMessagesAsRead([messageId], tokenRef.current);
+                        } catch (error) {
+                            console.error('Error marking message as read:', error);
+                        }
+                    } else {
+                        // Trigger refresh for unread messages and conversations
+                        fetchUnreadMessages();
+                        fetchConversations();
+                    }
+                });
+
+                // Start connection
+                await newConnection.start();
+                
+                if (isMounted) {
+                    setConnectionState('connected');
+                    setConnection(newConnection);
+                    console.log("SignalR Connected");
+                }
+
+                // Connection state handlers
+                newConnection.onreconnecting(() => {
+                    if (isMounted) {
+                        setConnectionState('reconnecting');
+                    }
+                });
+
+                newConnection.onreconnected(() => {
+                    if (isMounted) {
+                        setConnectionState('connected');
+                    }
+                });
+
+                newConnection.onclose(() => {
+                    if (isMounted) {
+                        setConnectionState('disconnected');
+                    }
+                });
+
+                return newConnection;
+            } catch (err) {
+                console.error("SignalR Connection Error:", err);
+                if (isMounted) {
+                    setConnectionState('disconnected');
+                }
+                // Retry after delay
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                return setupConnection();
+            }
+        };
+
+        setupConnection().then(conn => {
+            connection = conn;
+        });
+
+        return () => {
+            isMounted = false;
+            if (connection) {
+                connection.off("UserTyping");
+                connection.off("ReceiveMessage");
+                connection.stop().catch(err => {
+                    console.error('Error stopping connection:', err);
+                });
+            }
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Empty dependency array - only run once
+
+    // Initial data fetching effect - Fixed dependencies
+    useEffect(() => {
+        let isMounted = true;
+        
+        const fetchData = async () => {
+            if (!isMounted) return;
+            try {
+                await Promise.all([
+                    fetchUsers(),
+                    fetchUnreadMessages(),
+                    fetchConversations()
+                ]);
+            } catch (error) {
+                console.error('Initial data fetch error:', error);
+            }
+        };
+
+        fetchData();
+
+        // Polling fallback with stable intervals
+        const unreadInterval = setInterval(() => {
+            if (isMounted) fetchUnreadMessages();
+        }, 30000);
+        
+        const conversationsInterval = setInterval(() => {
+            if (isMounted) fetchConversations();
+        }, 60000);
+        
+        return () => {
+            isMounted = false;
+            clearInterval(unreadInterval);
+            clearInterval(conversationsInterval);
+        };
+    }, [fetchUsers, fetchUnreadMessages, fetchConversations]);
+
+    // Selected user effect - Fixed to prevent infinite re-renders
+    useEffect(() => {
+        if (!selectedUser?.id) return;
+
+        let isMounted = true;
+        let intervalId;
+
+        const fetchAndSetConversation = async () => {
+            await fetchConversation(selectedUser.id, false);
+            if (isMounted) {
+                intervalId = setInterval(() => {
+                    if (selectedUserIdRef.current === selectedUser.id) {
+                        fetchConversation(selectedUser.id, true);
+                    }
+                }, 10000);
+            }
+        };
+
+        fetchAndSetConversation();
+
+        return () => {
+            isMounted = false;
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [selectedUser?.id, fetchConversation]);
+
+    // Scroll effect - only when messages change
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages.length, scrollToBottom]);
+
+    // Connection cleanup effect
+    useEffect(() => {
+        return () => {
+            if (connection) {
+                connection.stop().catch(err => {
+                    console.error('Error stopping connection:', err);
+                });
+            }
+            clearTimeout(typingTimeoutRef.current);
+        };
+    }, [connection]);
 
     // Render message status icon
     const renderMessageStatus = (status) => {
@@ -455,47 +511,6 @@ export default function Chat() {
                 return null;
         }
     };
-
-    // Effects
-    useEffect(() => {
-        fetchUsers();
-        fetchUnreadMessages();
-        fetchConversations();
-        
-        const connection = setupSignalRConnection();
-        
-        // Polling fallback
-        const unreadInterval = setInterval(fetchUnreadMessages, 30000);
-        const conversationsInterval = setInterval(fetchConversations, 60000);
-        
-        return () => {
-            clearInterval(unreadInterval);
-            clearInterval(conversationsInterval);
-            clearTimeout(typingTimeoutRef.current);
-            if (connection) {
-                connection.stop().catch(err => {
-                    console.error('Error stopping connection:', err);
-                });
-            }
-        };
-    }, []);
-
-    useEffect(() => {
-        if (selectedUser) {
-            fetchConversation(selectedUser.id, false);
-            
-            // Refresh conversation periodically
-            const interval = setInterval(() => {
-                fetchConversation(selectedUser.id, true);
-            }, 10000);
-            
-            return () => clearInterval(interval);
-        }
-    }, [selectedUser, fetchConversation]);
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages, scrollToBottom]);
 
     return (
         <Box className="chat-container">
@@ -565,7 +580,7 @@ export default function Chat() {
                             return (
                                 <ListItem
                                     key={user.id}
-                                    button
+                                    component="div" // Add this line
                                     selected={selectedUser?.id === user.id}
                                     onClick={() => setSelectedUser(user)}
                                     sx={{
@@ -629,30 +644,38 @@ export default function Chat() {
                                             </Typography>
                                         }
                                         secondary={
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                {conversation?.lastMessage && (
-                                                    <Typography 
-                                                        variant="caption" 
-                                                        color="text.secondary"
-                                                        sx={{ 
-                                                            display: 'block',
-                                                            fontWeight: hasUnread ? 500 : 400,
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis',
-                                                            whiteSpace: 'nowrap',
-                                                            maxWidth: '70%'
-                                                        }}
-                                                    >
-                                                        {conversation.lastMessage.length > 30 
-                                                            ? `${conversation.lastMessage.substring(0, 30)}...`
-                                                            : conversation.lastMessage
-                                                        }
-                                                    </Typography>
-                                                )}
+                                            // Change this to Typography instead of Box
+                                            <Typography
+                                                component="div" // Important: change component to div
+                                                variant="body2"
+                                                color="text.secondary"
+                                                sx={{ 
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center'
+                                                }}
+                                            >
+                                                <Typography
+                                                    component="span"
+                                                    variant="caption"
+                                                    sx={{ 
+                                                        display: 'inline-block',
+                                                        fontWeight: hasUnread ? 500 : 400,
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap',
+                                                        maxWidth: '70%'
+                                                    }}
+                                                >
+                                                    {conversation?.lastMessage?.length > 30 
+                                                        ? `${conversation.lastMessage.substring(0, 30)}...`
+                                                        : conversation?.lastMessage
+                                                    }
+                                                </Typography>
                                                 {conversation?.lastMessageTime && (
-                                                    <Typography 
-                                                        variant="caption" 
-                                                        color="text.secondary"
+                                                    <Typography
+                                                        component="span"
+                                                        variant="caption"
                                                         sx={{ 
                                                             fontSize: '0.7rem',
                                                             ml: 1
@@ -661,7 +684,7 @@ export default function Chat() {
                                                         {formatLastMessageTime(conversation.lastMessageTime)}
                                                     </Typography>
                                                 )}
-                                            </Box>
+                                            </Typography>
                                         }
                                     />
                                 </ListItem>
@@ -735,7 +758,7 @@ export default function Chat() {
                             }}
                         >
                             {messages.map((message, index) => {
-                                const isOwn = message.senderId === currentUserId;
+                                const isOwn = message.senderId === currentUserIdRef.current;
                                 const showAvatar = !isOwn && (
                                     index === 0 || 
                                     messages[index - 1].senderId !== message.senderId
