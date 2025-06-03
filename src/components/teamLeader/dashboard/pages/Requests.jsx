@@ -53,6 +53,7 @@ const Requests = () => {
         requestId: null,
         type: null
     });
+    const [isConfirmLoading, setIsConfirmLoading] = useState(false);
     const token = localStorage.getItem('authToken');
 
     const fetchRequests = async (type) => {
@@ -508,14 +509,18 @@ const Requests = () => {
 
     const handleConfirmYes = async () => {
         const { actionType, requestId, requestType } = confirmDialog;
+        setIsConfirmLoading(true);
         
-        if (actionType === 'approve') {
-            await handleApprove(requestId, requestType);
-        } else {
-            await handleReject(requestId, requestType);
+        try {
+            if (actionType === 'approve') {
+                await handleApprove(requestId, requestType);
+            } else {
+                await handleReject(requestId, requestType);
+            }
+        } finally {
+            setIsConfirmLoading(false);
+            handleConfirmClose();
         }
-        
-        handleConfirmClose();
     };
 
     const handleDeleteMemberDialogClose = () => {
@@ -640,6 +645,7 @@ const Requests = () => {
                     <Button
                         onClick={handleConfirmClose}
                         variant="outlined"
+                        disabled={isConfirmLoading}
                         sx={{
                             color: '#64748b',
                             borderColor: '#64748b',
@@ -654,6 +660,8 @@ const Requests = () => {
                     <Button
                         onClick={handleConfirmYes}
                         variant="contained"
+                        disabled={isConfirmLoading}
+                        startIcon={isConfirmLoading ? <CircularProgress size={16} color="inherit" /> : null}
                         sx={{
                             bgcolor: '#059669',
                             '&:hover': {
@@ -661,7 +669,7 @@ const Requests = () => {
                             }
                         }}
                     >
-                        Confirm
+                        {isConfirmLoading ? 'Processing...' : 'Confirm'}
                     </Button>
                 </DialogActions>
             </Dialog>
