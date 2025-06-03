@@ -16,6 +16,7 @@ import { toast } from "react-toastify";
 import { getAllMembers } from "../../../../services/memberService";
 import { formatString } from "../../../../utils";
 import DeleteMemberDialog from '../components/DeleteMemberDialog';
+import { Visibility as VisibilityIcon } from '@mui/icons-material';
 
 export default function Members({ showActions = true }) {
     const [rows, setRows] = useState([]);
@@ -110,7 +111,7 @@ export default function Members({ showActions = true }) {
             header: "Status",
             Cell: ({ cell, row }) => (
                 <Chip
-                    label={row.original.isRemoved ? "Removed" : formatString(cell.getValue())}
+                    label={row.original.isRemoved ? "Deactivated" : formatString(cell.getValue())}
                     sx={{
                         fontSize: "12px",
                         color: getStatusColor(cell.getValue(), row.original.isRemoved).color,
@@ -134,26 +135,60 @@ export default function Members({ showActions = true }) {
             Cell: ({ row }) => {
                 if (row.original.isRemoved) {
                     return (
-                        <Button
-                            variant="contained"
-                            size="small"
-                            disabled
-                            sx={{
-                                backgroundColor: '#ef4444',
-                                minWidth: 'unset',
-                                padding: '4px 8px',
-                                '&:hover': {
-                                    backgroundColor: '#dc2626'
-                                }
-                            }}
-                            startIcon={<CloseIcon fontSize="small" />}
-                        >
-                            Remove
-                        </Button>
+                        <Stack direction="row" spacing={1}>
+                            <Button
+                                variant="contained"
+                                size="small"
+                                disabled
+                                sx={{
+                                    backgroundColor: '#10b981', // Light green when not disabled
+                                    minWidth: 'unset',
+                                    padding: '4px 8px',
+                                    '&.Mui-disabled': {
+                                        backgroundColor: '#e2e8f0'
+                                    }
+                                }}
+                                startIcon={<VisibilityIcon fontSize="small" />}
+                            >
+                                View
+                            </Button>
+                            <Button
+                                variant="contained"
+                                size="small"
+                                disabled
+                                sx={{
+                                    backgroundColor: '#ef4444',
+                                    minWidth: 'unset',
+                                    padding: '4px 8px',
+                                    '&.Mui-disabled': {
+                                        backgroundColor: '#e2e8f0'
+                                    }
+                                }}
+                                startIcon={<CloseIcon fontSize="small" />}
+                            >
+                                Deactivate
+                            </Button>
+                        </Stack>
                     );
                 }
                 return showActions ? (
                     <Stack direction="row" spacing={1}>
+                        <Button
+                            variant="contained"
+                            size="small"
+                            onClick={() => handleViewClick(row.original)}
+                            sx={{
+                                backgroundColor: '#10b981', // Light green
+                                minWidth: 'unset',
+                                padding: '4px 8px',
+                                '&:hover': {
+                                    backgroundColor: '#059669' // Darker green on hover
+                                }
+                            }}
+                            startIcon={<VisibilityIcon fontSize="small" />}
+                        >
+                            View
+                        </Button>
                         <Button
                             variant="contained"
                             size="small"
@@ -168,7 +203,7 @@ export default function Members({ showActions = true }) {
                             }}
                             startIcon={<CloseIcon fontSize="small" />}
                         >
-                            Remove
+                            Deactivate
                         </Button>
                     </Stack>
                 ) : null;
@@ -341,6 +376,16 @@ export default function Members({ showActions = true }) {
             )
         );
         handleDeleteCancel();
+    };
+
+    const handleViewClick = (member) => {
+        // Navigate to member details or open a dialog
+        console.log('View member:', member);
+        // TODO: Implement view functionality
+        // You could either:
+        // 1. Navigate to a new page: navigate(`/members/${member.id}`)
+        // 2. Open a dialog with member details
+        // 3. Open a drawer with member information
     };
 
     return (
