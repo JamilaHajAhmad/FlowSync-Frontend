@@ -32,3 +32,16 @@ export const getChatUsers = async (token) => {
         headers: { Authorization: `Bearer ${token}` }
     });
 };
+
+export const sendMessageToTeam = async (message, token) => {
+    return await api.post(
+        '/chat/send-to-team',
+        { message },
+        {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        }
+    );
+};
