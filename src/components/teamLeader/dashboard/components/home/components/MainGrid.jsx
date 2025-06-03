@@ -27,16 +27,33 @@ export default function MainGrid() {
       </Grid>
 
       <Grid container spacing={2} columns={12} sx={{ mb: (theme) => theme.spacing(2) }}>
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12} md={8} sx={{ 
+              mb: (theme) => theme.spacing(15),
+              mt: (theme) => theme.spacing(2)
+          }}>
           <Tasks
             hideCreateButton={true}
             showTabs={true}
-            containerWidth="85.5vw"
+            containerWidth="88.5vw"
             tabsAlignment="right"
             showTitle={true}
             showToolbarBorder={true}
+            hideFilterToolbar={true}
           />
-        </Grid><Grid size={{ xs: 12, md: 6 }}>
+        </Grid>
+      </Grid>
+
+      {/* Add a new container for charts with top margin */}
+      <Grid 
+          container 
+          spacing={2} 
+          columns={12} 
+          sx={{ 
+              mb: (theme) => theme.spacing(2),
+              mt: (theme) => theme.spacing(3) // Add top margin
+          }}
+      >
+        <Grid size={{ xs: 12, md: 6 }}>
           <TasksChart />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
