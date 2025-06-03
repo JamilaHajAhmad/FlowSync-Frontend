@@ -117,7 +117,7 @@ const DeleteMemberDialog = ({
                 setShowReassign(true);
             } else {
                 toast.success(type === 'deleteAccount' ? 
-                    'Member removed successfully' : 
+                    'Member deactivated successfully' : 
                     'Member status changed successfully'
                 );
                 onClose();
@@ -125,7 +125,7 @@ const DeleteMemberDialog = ({
             }
         } catch (err) {
             setError(type === 'deleteAccount' ? 
-                'Failed to delete member' : 
+                'Failed to deactivate member' : 
                 'Failed to change member status'
             );
             console.log('Error during action:', err);
@@ -137,7 +137,7 @@ const DeleteMemberDialog = ({
     const handleReassignComplete = () => {
         if (deletionCompleted) {
             toast.success(type === 'deleteAccount' ?
-                'Member removed and tasks reassigned successfully' :
+                'Member deactivated and tasks reassigned successfully' :
                 'Member status changed and tasks reassigned successfully'
             );
             onClose();
@@ -177,12 +177,12 @@ const DeleteMemberDialog = ({
                 }}
             >
                 <WarningAmberIcon color="warning" />
-                {type === 'deleteAccount' ? 'Confirm Member Removal' : 'Confirm Status Change'}
+                {type === 'deleteAccount' ? 'Confirm Member Deactivating' : 'Confirm Status Change'}
             </DialogTitle>
             <DialogContent>
                 <DialogContentText sx={{ mb: 2 }}>
                     {type === 'deleteAccount' ? 
-                        `Are you sure you want to remove ${memberName} from the team?` :
+                        `Are you sure you want to deactivate ${memberName} from the team?` :
                         `Are you sure you want to change ${memberName}'s status?`
                     }
                 </DialogContentText>
@@ -213,7 +213,7 @@ const DeleteMemberDialog = ({
                         </List>
                         <Typography variant="body2" sx={{ mt: 1, color: 'warning.dark' }}>
                             {type === 'deleteAccount' ?
-                                'These tasks must be reassigned before removing the member.' :
+                                'These tasks must be reassigned before deactivating the member.' :
                                 'These tasks must be reassigned before changing status.'
                             }
                         </Typography>
@@ -264,8 +264,8 @@ const DeleteMemberDialog = ({
                     }}
                 >
                     {buttonLoading 
-                        ? (type === 'deleteAccount' ? 'Removing...' : 'Changing Status...') 
-                        : (type === 'deleteAccount' ? 'Remove Member' : 'Change Status')
+                        ? (type === 'deleteAccount' ? 'Deactivating...' : 'Changing Status...') 
+                        : (type === 'deleteAccount' ? 'Deactivate Member' : 'Change Status')
                     }
                 </Button>
             </DialogActions>
