@@ -52,7 +52,8 @@ function StatsCard({ taskType }) {
     interval: '',
     trend: 'neutral',
     trendPercentage: 0,
-    data: Array(30).fill(0),
+    data: [],
+    months: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -94,63 +95,75 @@ function StatsCard({ taskType }) {
     return { trend: trendDirection, percentage: roundedPercentage };
   };
 
-  const handleTrendCalculation = (count) => {
-    const storageKey = `previous${taskType}Count`;
-    const currentStorageKey = `current${taskType}Count`;
-
-    const storedPrevious = localStorage.getItem(storageKey);
-    const storedCurrent = localStorage.getItem(currentStorageKey);
-
-    const storedPreviousValue = storedPrevious ? parseInt(storedPrevious) : null;
-    const storedCurrentValue = storedCurrent ? parseInt(storedCurrent) : null;
-
-    if (storedCurrentValue === null) {
-      localStorage.setItem(currentStorageKey, count.toString());
+  const handleTrendCalculation = (currentCount, previousCount) => {
+    if (previousCount === undefined || previousCount === null) {
       return { trend: 'neutral', percentage: 0 };
     }
 
-    if (count !== storedCurrentValue) {
-      localStorage.setItem(storageKey, storedCurrentValue.toString());
-      localStorage.setItem(currentStorageKey, count.toString());
-      return calculateTrend(count, storedCurrentValue);
-    }
-
-    return calculateTrend(count, storedPreviousValue);
+    return calculateTrend(currentCount, previousCount);
   };
 
   useEffect(() => {
     const fetchTaskStats = async () => {
-      try {
-        const token = localStorage.getItem('authToken');
-        const response = await axios.get(
-          'https://localhost:49798/api/reports/member/monthly-task-status-counts',
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        console.log('Task Statistics Response:', response.data);
-        const statusCounts = response.data[0].statusCounts;
-        const month = response.data[0].month;
-        const year = response.data[0].year;
-        const currentCount = statusCounts[taskType] || 0;
-        const trends = handleTrendCalculation(currentCount);
-        const daysInWeek = getDaysInMonth(month, year);
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await axios.get(
+                'https://localhost:49798/api/reports/member/monthly-task-status-counts',
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
 
-        setCardData({
-          title: `${taskType} Tasks`,
-          value: currentCount.toString(),
-          interval: `${month}-${year}`, // Added year to the interval
-          trend: trends.trend || 'neutral',
-          trendPercentage: trends.percentage || 0,
-          data: Array(30).fill(currentCount),
-          daysInWeek: daysInWeek,
-        });
+            // Sort data by year and month to ensure latest month is first
+            const sortedData = [...response.data].sort((a, b) => {
+                if (a.year !== b.year) return b.year - a.year;
+                return b.month - a.month;
+            });
 
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching task statistics:', error);
-        setLoading(false);
-      }
+            // Process all months' data
+            const monthsData = sortedData.map(monthData => ({
+                month: monthData.month,
+                year: monthData.year,
+                count: monthData.statusCounts?.[taskType] || 0,
+                daysInMonth: getDaysInMonth(monthData.month, monthData.year)
+            }));
+
+            // Get current month's data
+            const currentMonth = monthsData[0]; // Latest month after sorting
+            const previousMonth = monthsData[1];
+
+            // Calculate total for current month
+            const currentMonthCount = currentMonth?.count || 0;
+
+            // Calculate trend based on current and previous month
+            const trends = handleTrendCalculation(
+                currentMonthCount,
+                previousMonth?.count || 0
+            );
+
+            // Create data points for current month's sparkline
+            const currentMonthData = Array(currentMonth?.daysInMonth.length || 0).fill(currentMonthCount);
+
+            // Format month name for display
+            const monthName = new Date(currentMonth?.year, currentMonth?.month - 1)
+                .toLocaleString('default', { month: 'long' });
+
+            setCardData({
+                title: `${taskType} Tasks`,
+                value: currentMonthCount.toString(),
+                interval: `${monthName}-${currentMonth?.year}`,
+                trend: trends.trend || 'neutral',
+                trendPercentage: trends.percentage || 0,
+                data: currentMonthData,
+                daysInWeek: currentMonth?.daysInMonth || [],
+                months: monthsData
+            });
+
+            setLoading(false);
+        } catch (error) {
+            console.error('Error fetching task statistics:', error);
+            setLoading(false);
+        }
     };
 
     fetchTaskStats();
@@ -213,8 +226,10 @@ function StatsCard({ taskType }) {
               showTooltip
               tooltip={{
                 label: 'Tasks',
-                // Add custom tooltip to show month and value
-                format: (value) => `${cardData.interval}: ${value} tasks`,
+                format: (value, index) => {
+                  const date = cardData.daysInWeek?.[index];
+                  return `${date}: ${value} tasks`;
+                },
               }}
               xAxis={{
                 scaleType: 'band',
@@ -226,10 +241,7 @@ function StatsCard({ taskType }) {
                 },
               }}
             >
-              <AreaGradient
-                color={chartColor}
-                id={`area-gradient-${taskType}`}
-              />
+              <AreaGradient color={chartColor} id={`area-gradient-${taskType}`} />
             </SparkLineChart>
           </Box>
         </Stack>
