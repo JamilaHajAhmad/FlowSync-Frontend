@@ -86,6 +86,36 @@ const ReassignTasks = ({ tasks, onComplete, excludeMemberId }) => {
 
     const currentTask = tasks[currentTaskIndex];
 
+    // Add the getStatusColor function at the top level
+    const getStatusColor = (status) => {
+        const normalizedStatus = status.toLowerCase();
+        switch (normalizedStatus) {
+            case "completed":
+                return { color: "green", background: "#e0f7e9" };
+            case "delayed":
+                return { color: "red", background: "#fde8e8" };
+            case "opened":
+                return { color: "orange", background: "#fff4e0" };
+            case "frozen":
+                return { color: "#1976D2", background: "#E3F2FD" };
+            case "all":
+                return { color: "#059669", background: "#ecfdf5" };
+            default:
+                return { color: "#059669", background: "#ecfdf5" };
+        }
+    };
+
+    // Add this function at the top level after getStatusColor
+    const getTaskLoadColor = (taskCount) => {
+        if (taskCount <= 3) {
+            return { color: "#059669", background: "#ecfdf5" }; // Light green - Low load
+        } else if (taskCount <= 7) {
+            return { color: "#d97706", background: "#fff7ed" }; // Light orange - Medium load
+        } else {
+            return { color: "#dc2626", background: "#fef2f2" }; // Light red - High load
+        }
+    };
+
     return (
         <Dialog 
             open={!isCompleted} 
@@ -112,12 +142,40 @@ const ReassignTasks = ({ tasks, onComplete, excludeMemberId }) => {
 
                 <Box sx={{ mb: 3 }}>
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                        Current Task
+                        Current Task Details
                     </Typography>
-                    <Typography variant="body1" gutterBottom>
-                        FRN Number: {currentTask.frnNumber}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Box sx={{ 
+                        p: 2
+                    }}>
+                        <Typography variant="body1" gutterBottom>
+                            <strong>Title:</strong> {currentTask.title}
+                        </Typography>
+                        <Typography variant="body1" gutterBottom>
+                            <strong>FRN Number:</strong> {currentTask.frnNumber}
+                        </Typography>
+                        <Typography 
+                            variant="body1" 
+                            gutterBottom 
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1
+                            }}
+                        >
+                            <strong>Type:</strong>
+                            <Chip
+                                label={currentTask.type}
+                                size="small"
+                                sx={{
+                                    backgroundColor: getStatusColor(currentTask.type).background,
+                                    color: getStatusColor(currentTask.type).color,
+                                    fontWeight: 500
+                                }}
+                            />
+                        </Typography>
+                    </Box>
+                    
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
                         Select member to reassign to:
                     </Typography>
                     <Select
@@ -125,38 +183,86 @@ const ReassignTasks = ({ tasks, onComplete, excludeMemberId }) => {
                         value={selectedMember}
                         onChange={(e) => setSelectedMember(e.target.value)}
                         sx={{ mt: 1 }}
-                    >
-                        {members.map((member) => (
-                            <MenuItem 
-                                key={member.id} 
-                                value={member.id}
-                                sx={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    gap: 1
-                                }}
-                            >
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        renderValue={(selected) => {
+                            const selectedMemberData = members.find(member => member.id === selected);
+                            if (!selectedMemberData) return '';
+                            
+                            return (
+                                <Box sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: 1.5 
+                                }}>
                                     <Avatar
-                                        src={member.pictureURL}
-                                        alt={member.fullName}
-                                        sx={{ width: 32, height: 32 }}
+                                        src={selectedMemberData.pictureURL}
+                                        alt={selectedMemberData.fullName}
+                                        sx={{ width: 24, height: 24 }}
                                     />
-                                    <Typography>{member.fullName}</Typography>
+                                    <Typography>{selectedMemberData.fullName}</Typography>
                                 </Box>
-                                <Chip 
-                                    label={`${(member.ongoingTasks || 0) + (updatedTaskCounts[member.id] || 0)} tasks`}
-                                    size="small"
-                                    sx={{ 
-                                        backgroundColor: '#e2e8f0',
-                                        '& .MuiChip-label': {
-                                            fontSize: '0.75rem'
+                            );
+                        }}
+                    >
+                        {members.map((member) => {
+                            const totalTasks = (member.ongoingTasks || 0) + (updatedTaskCounts[member.id] || 0);
+                            const loadColors = getTaskLoadColor(totalTasks);
+                            
+                            return (
+                                <MenuItem 
+                                    key={member.id} 
+                                    value={member.id}
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        padding: '8px 16px',
+                                        minHeight: '48px',
+                                        '&.Mui-selected': {
+                                            '& .MuiChip-root': {
+                                                position: 'absolute',
+                                                bottom: 20,
+                                                right: 40,
+                                            }
                                         }
                                     }}
-                                />
-                            </MenuItem>
-                        ))}
+                                >
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        gap: 1.5,
+                                        flex: 1,
+                                        minWidth: 0
+                                    }}>
+                                        <Avatar
+                                            src={member.pictureURL}
+                                            alt={member.fullName}
+                                            sx={{ width: 32, height: 32 }}
+                                        />
+                                        <Typography>
+                                            {member.fullName}
+                                        </Typography>
+                                    </Box>
+                                    <Chip 
+                                        label={`${totalTasks} tasks`}
+                                        size="small"
+                                        sx={{ 
+                                            backgroundColor: loadColors.background,
+                                            color: loadColors.color,
+                                            minWidth: 70,
+                                            fontWeight: 500,
+                                            transition: 'all 0.2s ease',
+                                            '& .MuiChip-label': {
+                                                fontSize: '0.75rem'
+                                            },
+                                            '&:hover': {
+                                                backgroundColor: loadColors.background,
+                                                opacity: 0.9
+                                            }
+                                        }}
+                                    />
+                                </MenuItem>
+                            );
+                        })}
                     </Select>
                 </Box>
 
