@@ -25,7 +25,8 @@ import {
     CheckCircle as DeliveredIcon,
     Schedule as PendingIcon,
     Check as CheckIcon,
-    People as TeamIcon
+    People as TeamIcon,
+    ArrowBack
 } from '@mui/icons-material';
 import { sendMessage, getConversation, getUnreadMessages, markMessagesAsRead, getChatUsers, sendMessageToTeam } from '../../../services/chatService';
 import * as signalR from '@microsoft/signalr';
@@ -33,6 +34,7 @@ import './Chat.css';
 import Logo from '../../../assets/images/logo.png';
 import { decodeToken } from '../../../utils';
 import { toast } from 'react-toastify';
+import TeamMessageDialog from './TeamMessageDialog';
 
 // Message status constants
 const MESSAGE_STATUS = {
@@ -88,6 +90,8 @@ export default function Chat() {
             return false;
         }
     });
+    // Add new state for team message dialog
+    const [teamMessageDialog, setTeamMessageDialog] = useState(false);
 
     // Refs
     const messageEndRef = useRef(null);
@@ -96,8 +100,8 @@ export default function Chat() {
     const selectedUserIdRef = useRef(null);
 
     // Constants - moved to refs to prevent recreating on each render
-    const currentUserIdRef = useRef(localStorage.getItem('userId'));
     const tokenRef = useRef(localStorage.getItem('authToken'));
+    const currentUserIdRef = useRef(decodeToken(tokenRef.current).id);
 
     // Update refs when selectedUser changes
     useEffect(() => {
@@ -109,7 +113,6 @@ export default function Chat() {
             messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, [ messages, isTyping ]);
-
 
     // Memoized values
     const sortedUsers = useMemo(() => {
@@ -328,7 +331,6 @@ export default function Chat() {
     }, [ sendTypingNotification ]);
 
     // Message sending with optimistic updates - REST API only
-
     const handleSendMessage = useCallback(async (e) => {
         e.preventDefault();
         if (!newMessage.trim()) return;
@@ -396,6 +398,7 @@ export default function Chat() {
 
             showError('Failed to send message. Please try again.');
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ newMessage, selectedUser, isTeamMessage, isTeamMessageEnabled, showError ]);
 
     // SignalR connection management - Fixed dependencies
@@ -514,6 +517,7 @@ export default function Chat() {
                     console.error('Error stopping connection:', err);
                 });
             }
+            clearTimeout(typingTimeoutRef.current);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Empty dependency array - only run once
@@ -614,9 +618,25 @@ export default function Chat() {
         }
     };
 
+    // Update the team message button click handler
+    const handleTeamMessageClick = () => {
+        setTeamMessageDialog(true);
+    };
+
+    // Add the send team message handler
+    const handleSendTeamMessage = async (message) => {
+        try {
+            await sendMessageToTeam(message, tokenRef.current);
+            toast.success('Team message sent successfully');
+        } catch (error) {
+            console.error('Error sending team message:', error);
+            showError('Failed to send team message');
+        }
+    };
+
     return (
         <ThemeProvider theme={theme}>
-            <Box className="chat-container" >
+            <Box className="chat-container" sx={{ overflowX: 'hidden' }}> {/* Prevent horizontal scroll */}
                 {/* Connection status banner */}
                 {connectionState !== 'connected' && (
                     <Alert
@@ -655,7 +675,8 @@ export default function Chat() {
                         flexDirection: 'column',
                         borderRight: '1px solid',
                         borderColor: 'secondary.light',
-                        bgcolor: 'background.paper'
+                        bgcolor: 'background.paper',
+                        overflow: 'hidden' // Prevent horizontal scroll
                     }}
                 >
                     <Box sx={{ 
@@ -665,6 +686,25 @@ export default function Chat() {
                         alignItems: 'center',
                         gap: 2
                     }}>
+                        <IconButton
+                            onClick={() => {
+                                const role = decodeToken(tokenRef.current).role;
+                                if (role === 'Leader') {
+                                    window.location.href = '/leader-dashboard';
+                                }   
+                                else {
+                                    window.location.href = '/member-dashboard';
+                                }
+                            }}
+                            sx={{ 
+                                color: 'white',
+                                '&:hover': { 
+                                    bgcolor: 'rgba(255,255,255,0.1)' 
+                                }
+                            }}
+                        >
+                            <ArrowBack />
+                        </IconButton>
                         <img src={Logo} alt="FlowSync" style={{ height: 32 }} />
                         <Box>
                             <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
@@ -677,12 +717,28 @@ export default function Chat() {
                     </Box>
 
                     <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                            Messages
-                        </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                Messages
+                            </Typography>
+                            {isTeamMessageEnabled && (
+                                <Tooltip title="Send message to all team members">
+                                    <IconButton
+                                        size="small"
+                                        onClick={handleTeamMessageClick}
+                                        sx={{
+                                            '&:hover': { bgcolor: 'primary.light' }
+                                        }}
+                                    >
+                                        <TeamIcon color="action" />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
+                        </Box>
                         {unreadCount > 0 && (
                             <Chip
                                 label={`${unreadCount} unread`}
+                                icon={<UnreadIcon />}
                                 color="error"
                                 size="small"
                                 sx={{ mt: 1 }}
@@ -839,7 +895,7 @@ export default function Chat() {
                 </Paper>
 
                 {/* Main chat area */}
-                <Paper className="chat-main" elevation={1}>
+                <Paper className="chat-main" elevation={1} sx={{ overflowX: 'hidden' }}> {/* Prevent horizontal scroll */}
                     {selectedUser ? (
                         <>
                             {/* Chat header */}
@@ -894,11 +950,13 @@ export default function Chat() {
                                 className="messages-container"
                                 sx={{
                                     flexGrow: 1,
-                                    overflow: 'auto',
+                                    overflowY: 'auto',
                                     p: 1,
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    minHeight: 0
+                                    minHeight: 0,
+                                    maxWidth: '100%', // Prevent horizontal scroll
+                                    overflowX: 'hidden' // Prevent horizontal scroll
                                 }}
                             >
                                 {messages.map((message, index) => {
@@ -913,9 +971,13 @@ export default function Chat() {
                                             key={message.id}
                                             sx={{
                                                 display: 'flex',
-                                                flexDirection: 'column', // Change to column to put time below
+                                                flexDirection: 'column',
                                                 alignItems: isOwn ? 'flex-end' : 'flex-start',
                                                 mb: 1,
+                                                maxWidth: '80%', // Limit message width
+                                                alignSelf: isOwn ? 'flex-end' : 'flex-start',
+                                                ml: isOwn ? 'auto' : 0, // Keep own messages close to right
+                                                mr: isOwn ? 0 : 'auto' // Keep received messages close to left
                                             }}
                                         >
                                             <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1 }}>
@@ -935,7 +997,7 @@ export default function Chat() {
 
                                                 <Box
                                                     sx={{
-                                                        maxWidth: '70%',
+                                                        maxWidth: '100%', // Use full available width
                                                         minWidth: '80px', // Add minimum width
                                                         bgcolor: isOwn ? 'primary.main' : 'grey.50',
                                                         color: isOwn ? 'primary.contrastText' : 'text.primary',
@@ -959,11 +1021,12 @@ export default function Chat() {
                                                     }}
                                                 >
                                                     <Typography 
-                                                        variant="body1" // Change to body1 for larger text
+                                                        variant="body1"
                                                         sx={{ 
                                                             fontSize: '0.95rem',
                                                             lineHeight: 1.5,
-                                                            wordBreak: 'break-word'
+                                                            wordBreak: 'break-word',
+                                                            whiteSpace: 'pre-wrap' // Preserve line breaks
                                                         }}
                                                     >
                                                         {message.content}
@@ -1086,33 +1149,18 @@ export default function Chat() {
                                     bgcolor: 'background.paper'
                                 }}
                             >
-                                {isTeamMessageEnabled && (
-                                    <Tooltip title={isTeamMessage ? "Switch to direct message" : "Switch to team message"}>
-                                        <IconButton
-                                            size="small"
-                                            onClick={() => setIsTeamMessage(!isTeamMessage)}
-                                            sx={{
-                                                bgcolor: isTeamMessage ? 'primary.light' : 'transparent',
-                                                '&:hover': { bgcolor: 'primary.light' }
-                                            }}
-                                        >
-                                            <TeamIcon color={isTeamMessage ? 'primary' : 'action'} />
-                                        </IconButton>
-                                    </Tooltip>
-                                )}
-                                
                                 <TextField
                                     fullWidth
                                     multiline
                                     maxRows={4}
                                     variant="outlined"
-                                    placeholder={isTeamMessage ? "Type a message to all team members..." : "Type a message..."}
+                                    placeholder="Type a message..."
                                     value={newMessage}
                                     onChange={(e) => {
                                         setNewMessage(e.target.value);
                                         handleTyping();
                                     }}
-                                    onKeyPress={(e) => {
+                                    onKeyDown={(e) => {
                                         if (e.key === 'Enter' && !e.shiftKey) {
                                             e.preventDefault();
                                             handleSendMessage(e);
@@ -1122,7 +1170,12 @@ export default function Chat() {
                                     sx={{
                                         '& .MuiOutlinedInput-root': {
                                             borderRadius: 3,
-                                            bgcolor: isTeamMessage ? 'primary.light' : 'grey.50',
+                                            bgcolor: 'grey.50',
+                                            '& textarea': {
+                                                lineHeight: '1.5',
+                                                overflow: 'hidden',
+                                                whiteSpace: 'pre-wrap' // Always allow wrapping for multiline input
+                                            },
                                             '&:hover': {
                                                 borderColor: 'primary.main'
                                             },
@@ -1138,19 +1191,29 @@ export default function Chat() {
                                     type="submit"
                                     disabled={!newMessage.trim()}
                                     sx={{
-                                        bgcolor: isTeamMessage ? 'secondary.main' : 'primary.main',
+                                        bgcolor: 'primary.main',
                                         color: 'white',
                                         '&:hover': {
-                                            bgcolor: isTeamMessage ? 'secondary.dark' : 'primary.dark'
+                                            bgcolor: 'primary.dark'
                                         },
                                         '&:disabled': {
                                             bgcolor: 'grey.200'
-                                        }
+                                        },
+                                        width: 40,
+                                        height: 40,
+
                                     }}
                                 >
                                     <SendIcon />
                                 </IconButton>
                             </Box>
+
+                            {/* Add the team message dialog */}
+                            <TeamMessageDialog
+                                open={teamMessageDialog}
+                                onClose={() => setTeamMessageDialog(false)}
+                                onSend={handleSendTeamMessage}
+                            />
                         </>
                     ) : (
                         <Box

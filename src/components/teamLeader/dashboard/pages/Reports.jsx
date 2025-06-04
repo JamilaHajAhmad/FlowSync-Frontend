@@ -66,6 +66,32 @@ const Reports = () => {
             },
         },
         {
+            accessorKey: 'fromDate',
+            header: 'From Date',
+            size: 160,
+            muiTableHeadCellProps: {
+                align: 'center',
+            },
+            Cell: ({ cell }) => (
+                <Typography variant="body2" noWrap>
+                    {format(new Date(cell.getValue()), 'yyyy-MM-dd')}
+                </Typography>
+            ),
+        },
+        {
+            accessorKey: 'toDate',
+            header: 'To Date',
+            size: 160,
+            muiTableHeadCellProps: {
+                align: 'center',
+            },
+            Cell: ({ cell }) => (
+                <Typography variant="body2" noWrap>
+                    {format(new Date(cell.getValue()), 'yyyy-MM-dd')}
+                </Typography>
+            ),
+        },
+        {
             accessorKey: 'description',
             header: 'Description',
             size: 250,
@@ -179,7 +205,7 @@ const Reports = () => {
             },
             Cell: ({ cell }) => (
                 <Typography variant="body2" noWrap>
-                    {format(new Date(cell.getValue()), 'yyyy-MM-dd HH:mm:ss')}
+                    {format(new Date(cell.getValue()), 'yyyy-MM-dd')}
                 </Typography>
             )
         }
@@ -207,7 +233,9 @@ const Reports = () => {
             chunks.forEach((chunk, index) => {
                 const exportData = chunk.map(item => ({
                     'Report ID': item.reportID,
-                    'Report Title': item.title?.substring(0, 32000), // Limit text length
+                    'Report Title': item.title?.substring(0, 32000),
+                    'From Date': format(new Date(item.fromDate), 'yyyy-MM-dd'),
+                    'To Date': format(new Date(item.toDate), 'yyyy-MM-dd'),
                     'Description': item.description?.substring(0, 32000),
                     'Filters Applied': Array.isArray(item.filtersApplied)
                         ? item.filtersApplied
@@ -220,13 +248,15 @@ const Reports = () => {
                         : (item.filtersApplied?.split(':')[1]?.trim().replace(/['"{}]/g, '') || '')
                             .substring(0, 32000),
                     'File Name': item.fileName,
-                    'Created At': format(new Date(item.createdAt), 'yyyy-MM-dd HH:mm:ss')
+                    'Created At': format(new Date(item.createdAt), 'yyyy-MM-dd')
                 }));
 
                 const worksheet = XLSX.utils.json_to_sheet(exportData);
                 worksheet['!cols'] = [
                     { wch: 10 },  // Report ID
                     { wch: 20 },  // Report Title
+                    { wch: 15 },  // From Date
+                    { wch: 15 },  // To Date
                     { wch: 30 },  // Description
                     { wch: 20 },  // Filters Applied
                     { wch: 15 },  // File Name
@@ -238,6 +268,7 @@ const Reports = () => {
 
             XLSX.writeFile(workbook, `reports-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
             handleExportClose();
+            toast.success('Excel file exported successfully');
         } catch (error) {
             console.error('Error exporting to Excel:', error);
         }
@@ -256,12 +287,14 @@ const Reports = () => {
             doc.setFontSize(16);
             doc.text('Reports', 15, 15);
 
-            // Define table headers and data
+            // Update table headers and data
             const tableData = {
-                head: [['Report ID', 'Report Title', 'Description', 'Filters Applied', 'File Name', 'Created At']],
+                head: [['Report ID', 'Report Title', 'From Date', 'To Date', 'Description', 'Filters Applied', 'File Name', 'Created At']],
                 body: data.map(item => [
                     item.reportID,
-                    (item.title || '').substring(0, 100), // Limit text length
+                    (item.title || '').substring(0, 100),
+                    format(new Date(item.fromDate), 'yyyy-MM-dd'),
+                    format(new Date(item.toDate), 'yyyy-MM-dd'),
                     (item.description || '').substring(0, 100),
                     (Array.isArray(item.filtersApplied)
                         ? item.filtersApplied
@@ -273,7 +306,7 @@ const Reports = () => {
                         : item.filtersApplied?.split(':')[1]?.trim().replace(/['"{}]/g, '') || '')
                         .substring(0, 100),
                     item.fileName,
-                    format(new Date(item.createdAt), 'yyyy-MM-dd HH:mm:ss')
+                    format(new Date(item.createdAt), 'yyyy-MM-dd')
                 ])
             };
 
@@ -296,18 +329,69 @@ const Reports = () => {
                     halign: 'left'
                 },
                 columnStyles: {
-                    0: { cellWidth: 50 }, // Name
-                    1: { cellWidth: 30 }, // Status
-                    2: { cellWidth: 70 }, // Email
-                    3: { cellWidth: 30 }  // Ongoing Tasks
+                    0: { cellWidth: 30 },  // Report ID
+                    1: { cellWidth: 40 },  // Report Title
+                    2: { cellWidth: 25 },  // From Date
+                    3: { cellWidth: 25 },  // To Date
+                    4: { cellWidth: 50 },  // Description
+                    5: { cellWidth: 40 },  // Filters Applied
+                    6: { cellWidth: 30 },  // File Name
+                    7: { cellWidth: 30 }   // Created At
                 },
                 margin: { top: 25 }
             });
 
             doc.save(`reports-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
             handleExportClose();
+            toast.success('PDF file exported successfully');
         } catch (error) {
             console.error('Error generating PDF:', error);
+        }
+    };
+
+    const exportToCSV = () => {
+        try {
+            const csvRows = [];
+            // Add headers
+            const headers = ['Report ID', 'Report Title', 'From Date', 'To Date', 'Description', 'Filters Applied', 'File Name', 'Created At'];
+            csvRows.push(headers.join(','));
+
+            // Add data rows
+            data.forEach(item => {
+                const rowData = [
+                    item.reportID,
+                    `"${(item.title || '').replace(/"/g, '""')}"`,
+                    format(new Date(item.fromDate), 'yyyy-MM-dd'),
+                    format(new Date(item.toDate), 'yyyy-MM-dd'),
+                    `"${(item.description || '').replace(/"/g, '""')}"`,
+                    `"${Array.isArray(item.filtersApplied)
+                        ? item.filtersApplied
+                            .map(filter => {
+                                const [, value] = filter.split(':');
+                                return value ? value.trim().replace(/['"{}]/g, '') : '';
+                            })
+                            .join(', ')
+                        : item.filtersApplied?.split(':')[1]?.trim().replace(/['"{}]/g, '') || ''}"`,
+                    item.fileName,
+                    format(new Date(item.createdAt), 'yyyy-MM-dd')
+                ];
+                csvRows.push(rowData.join(','));
+            });
+
+            const csvString = csvRows.join('\n');
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `reports-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            handleExportClose();
+            toast.success('CSV file exported successfully');
+        } catch (error) {
+            console.error('Error exporting to CSV:', error);
+            toast.error('Failed to export CSV file');
         }
     };
 
@@ -366,6 +450,7 @@ const Reports = () => {
                 >
                     <MenuItem onClick={exportToExcel}>Export as Excel</MenuItem>
                     <MenuItem onClick={exportToPDF}>Export as PDF</MenuItem>
+                    <MenuItem onClick={exportToCSV}>Export as CSV</MenuItem>
                 </Menu>
             </Box>
         ),

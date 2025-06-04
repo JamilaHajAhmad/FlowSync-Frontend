@@ -242,71 +242,118 @@ const Requests = () => {
             return rowData;
         });
 
-        if (fileType === 'pdf') {
-            const doc = new jsPDF('landscape');
-            const tableColumn = Object.keys(columns);
-            const tableRows = exportData.map(item => Object.values(item));
+        switch (fileType) {
+            case 'pdf':
+                { const doc = new jsPDF('landscape');
+                const tableColumn = Object.keys(columns);
+                const tableRows = exportData.map(item => Object.values(item));
 
-            // Add title to PDF
-            doc.setFontSize(16);
-            doc.setTextColor(5, 150, 105);
-            doc.text(`${currentType.charAt(0).toUpperCase() + currentType.slice(1)} Requests`, 14, 15);
+                // Add title to PDF
+                doc.setFontSize(16);
+                doc.setTextColor(5, 150, 105);
+                doc.text(`${currentType.charAt(0).toUpperCase() + currentType.slice(1)} Requests`, 14, 15);
 
-            // Add table
-            autoTable(doc, {
-                head: [tableColumn],
-                body: tableRows,
-                startY: 25,
-                theme: 'grid',
-                styles: {
-                    fontSize: 8,
-                    cellPadding: 3,
-                    overflow: 'linebreak',
-                    halign: 'left'
-                },
-                headStyles: {
-                    fillColor: [5, 150, 105],
-                    textColor: 255,
-                    fontSize: 9,
-                    fontStyle: 'bold',
-                    halign: 'left'
-                },
-                columnStyles: {
-                    0: { cellWidth: 40 }, // Name
-                    1: { cellWidth: 60 }, // Email
-                    2: { cellWidth: 30 }, // Date
-                    3: { cellWidth: 30 }, // FRN (if exists)
-                    4: { cellWidth: 70 }  // Reason/Notes (if exists)
-                },
-                margin: { top: 25 }
-            });
+                // Add table
+                autoTable(doc, {
+                    head: [tableColumn],
+                    body: tableRows,
+                    startY: 25,
+                    theme: 'grid',
+                    styles: {
+                        fontSize: 8,
+                        cellPadding: 3,
+                        overflow: 'linebreak',
+                        halign: 'left'
+                    },
+                    headStyles: {
+                        fillColor: [5, 150, 105],
+                        textColor: 255,
+                        fontSize: 9,
+                        fontStyle: 'bold',
+                        halign: 'left'
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 40 }, // Name
+                        1: { cellWidth: 60 }, // Email
+                        2: { cellWidth: 30 }, // Date
+                        3: { cellWidth: 30 }, // FRN (if exists)
+                        4: { cellWidth: 70 }  // Reason/Notes (if exists)
+                    },
+                    margin: { top: 25 }
+                });
 
-            doc.save(`${currentType}-requests.pdf`);
+                doc.save(`${currentType}-requests.pdf`);
+                toast.success('PDF file exported successfully');
+                break; }
+            
+            case 'excel':
+                try {
+                    // Add headers style
+                    const ws = XLSX.utils.json_to_sheet(exportData);
+                    const wb = XLSX.utils.book_new();
+
+                    // Set column widths
+                    const colWidths = [
+                        { wch: 20 }, // Name
+                        { wch: 30 }, // Email
+                        { wch: 15 }, // Date
+                        { wch: 15 }, // FRN
+                        { wch: 40 }  // Reason/Notes
+                    ];
+                    ws['!cols'] = colWidths;
+
+                    XLSX.utils.book_append_sheet(wb, ws, "Requests");
+                    XLSX.writeFile(wb, `${currentType}-requests.xlsx`);
+                    toast.success('Excel file exported successfully');
+                } catch (error) {
+                    console.error("Error creating Excel file:", error);
+                    toast.error("Failed to create Excel file");
+                }
+                break;
+            
+            case 'csv':
+                try {
+                    exportToCSV(exportData, `${currentType}-requests.csv`);
+                    toast.success('CSV file exported successfully');
+                } catch (error) {
+                    console.error("Error creating CSV file:", error);
+                    toast.error("Failed to create CSV file");
+                }
+                break;
+            
+            default:
+                console.error('Unsupported file type');
         }
-        else if (fileType === 'excel') {
-            try {
-                // Add headers style
-                const ws = XLSX.utils.json_to_sheet(exportData);
-                const wb = XLSX.utils.book_new();
-
-                // Set column widths
-                const colWidths = [
-                    { wch: 20 }, // Name
-                    { wch: 30 }, // Email
-                    { wch: 15 }, // Date
-                    { wch: 15 }, // FRN
-                    { wch: 40 }  // Reason/Notes
-                ];
-                ws['!cols'] = colWidths;
-
-                XLSX.utils.book_append_sheet(wb, ws, "Requests");
-                XLSX.writeFile(wb, `${currentType}-requests.xlsx`);
-            } catch (error) {
-                console.error("Error creating Excel file:", error);
-                toast.error("Failed to create Excel file");
-            }
-        }
+        
         handleExportClose();
+    };
+
+    // Add this new function for CSV export
+    const exportToCSV = (data, filename) => {
+        const csvRows = [];
+        const headers = Object.keys(data[0]);
+        csvRows.push(headers.join(','));
+
+        for (const row of data) {
+            const values = headers.map(header => {
+                const value = row[header];
+                // Handle values that contain commas or quotes
+                const escaped = String(value).replace(/"/g, '""');
+                return `"${escaped}"`;
+            });
+            csvRows.push(values.join(','));
+        }
+
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
     };
 
     // Update useEffect to fetch requests for current tab only
@@ -478,6 +525,9 @@ const Requests = () => {
                     </MenuItem>
                     <MenuItem onClick={() => handleDownload('pdf')}>
                         Export as PDF
+                    </MenuItem>
+                    <MenuItem onClick={() => handleDownload('csv')}>
+                        Export as CSV
                     </MenuItem>
                 </Menu>
             </Box>

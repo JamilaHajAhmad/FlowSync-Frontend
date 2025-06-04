@@ -195,6 +195,33 @@ export default function Tasks({
         setAnchorEl(null);
     };
 
+    const exportToCSV = (data, filename) => {
+        const csvRows = [];
+        const headers = Object.keys(data[0]);
+        csvRows.push(headers.join(','));
+
+        for (const row of data) {
+            const values = headers.map(header => {
+                const value = row[header];
+                // Handle values that contain commas or quotes
+                const escaped = String(value).replace(/"/g, '""');
+                return `"${escaped}"`;
+            });
+            csvRows.push(values.join(','));
+        }
+
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `${filename}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    };
+
     const handleDownload = (fileType) => {
         const exportData = filteredTasks.map(task => ({
             Name: task.name,
@@ -218,7 +245,15 @@ export default function Tasks({
             })
         }));
 
-        if (fileType === 'pdf') {
+        if (fileType === 'csv') {
+            try {
+                exportToCSV(exportData, `${activeTab.toLowerCase()}-tasks`);
+                toast.success('CSV file exported successfully');
+            } catch (error) {
+                console.error("Error creating CSV file:", error);
+                toast.error("Failed to create CSV file");
+            }
+        } else if (fileType === 'pdf') {
             const doc = new jsPDF('landscape');
             
             // Add title
@@ -277,6 +312,7 @@ export default function Tasks({
             });
 
             doc.save(`${activeTab.toLowerCase()}-tasks.pdf`);
+            toast.success('PDF file exported successfully');
         } 
         else if (fileType === 'excel') {
             try {
@@ -319,6 +355,7 @@ export default function Tasks({
 
                 XLSX.utils.book_append_sheet(wb, ws, `${activeTab} Tasks`);
                 XLSX.writeFile(wb, `${activeTab.toLowerCase()}-tasks.xlsx`);
+                toast.success('Excel file exported successfully');
             } catch (error) {
                 console.error("Error creating Excel file:", error);
                 toast.error("Failed to create Excel file");
@@ -462,138 +499,147 @@ export default function Tasks({
         renderTopToolbarCustomActions: () => (
             <Box sx={{ 
                 display: 'flex', 
-                width: '100%', 
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                width: '100%',
+                flexDirection: 'column', // Change to column layout
+                gap: 2, // Add gap between tabs and filters
                 p: 2,
             }}>
-                {showTabs && (
-                    <Stack direction="row" spacing={1}>
-                        {['All', 'Completed', 'Opened', 'Delayed', 'Frozen'].map((tab) => (
-                            <Button
-                                key={tab}
-                                variant={activeTab === tab ? "contained" : "outlined"}
-                                onClick={() => setActiveTab(tab)}
-                                size="small"
-                                sx={{
-                                    backgroundColor: activeTab === tab ? getStatusColor(tab).background : 'transparent',
-                                    color: getStatusColor(tab).color,
-                                    borderColor: getStatusColor(tab).color,
-                                    '&:hover': {
-                                        backgroundColor: getStatusColor(tab).background,
-                                        opacity: 0.9
-                                    }
-                                }}
-                            >
-                                {tab}
-                            </Button>
-                        ))}
-                    </Stack>
-                )}
+                {/* Tabs and Export Section */}
+                <Box sx={{
+                    display: 'flex',
+                    width: '100%',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mt: -1.5,
+                }}>
+                    {showTabs && (
+                        <Stack direction="row" spacing={1}>
+                            {['All', 'Completed', 'Opened', 'Delayed', 'Frozen'].map((tab) => (
+                                <Button
+                                    key={tab}
+                                    variant={activeTab === tab ? "contained" : "outlined"}
+                                    onClick={() => setActiveTab(tab)}
+                                    size="small"
+                                    sx={{
+                                        backgroundColor: activeTab === tab ? getStatusColor(tab).background : 'transparent',
+                                        color: getStatusColor(tab).color,
+                                        borderColor: getStatusColor(tab).color,
+                                        '&:hover': {
+                                            backgroundColor: getStatusColor(tab).background,
+                                            opacity: 0.9
+                                        }
+                                    }}
+                                >
+                                    {tab}
+                                </Button>
+                            ))}
+                        </Stack>
+                    )}
 
-                <Box>
-                    <Button
-                        onClick={handleExportClick}
-                        startIcon={<FileDownloadIcon />}
-                        sx={{ mt: -3}}
-                    >
-                        Export
-                    </Button>
-                    <Menu
-                        anchorEl={anchorEl}
-                        open={open}
-                        onClose={handleExportClose}
-                    >
-                        <MenuItem onClick={() => handleDownload('excel')}>
-                            Export as Excel
-                        </MenuItem>
-                        <MenuItem onClick={() => handleDownload('pdf')}>
-                            Export as PDF
-                        </MenuItem>
-                    </Menu>
+                    <Box>
+                        <Button
+                            onClick={handleExportClick}
+                            startIcon={<FileDownloadIcon />}
+                        >
+                            Export
+                        </Button>
+                        <Menu
+                            anchorEl={anchorEl}
+                            open={open}
+                            onClose={handleExportClose}
+                        >
+                            <MenuItem onClick={() => handleDownload('excel')}>
+                                Export as Excel
+                            </MenuItem>
+                            <MenuItem onClick={() => handleDownload('pdf')}>
+                                Export as PDF
+                            </MenuItem>
+                            <MenuItem onClick={() => handleDownload('csv')}>
+                                Export as CSV
+                            </MenuItem>
+                        </Menu>
+                    </Box>
                 </Box>
+
+                {/* Filter Toolbar */}
+                {!hideFilterToolbar && (
+                    <Box sx={{ 
+                        display: 'flex', 
+                        gap: 2, 
+                        borderRadius: 1,
+                        py: 2,
+                        alignItems: 'center',
+                        flexWrap: 'wrap'
+                    }}>
+                        <LocalizationProvider dateAdapter={AdapterDateFns}>
+                            <DatePicker
+                                label="Start Date"
+                                value={startDate}
+                                onChange={(newValue) => setStartDate(newValue)}
+                                renderInput={(params) => <TextField {...params} size="small" />}
+                            />
+                            <DatePicker
+                                label="End Date"
+                                value={endDate}
+                                onChange={(newValue) => setEndDate(newValue)}
+                                renderInput={(params) => <TextField {...params} size="small" />}
+                            />
+                        </LocalizationProvider>
+
+                        <FormControl size="small" sx={{ width: 200 }}>
+                            <InputLabel>Employee</InputLabel>
+                            <Select
+                                value={selectedEmployee}
+                                onChange={(e) => setSelectedEmployee(e.target.value)}
+                                input={<OutlinedInput label="Employee" />}
+                            >
+                                <MenuItem value="">
+                                    <em>All Employees</em>
+                                </MenuItem>
+                                {uniqueEmployees.map((employee) => (
+                                    <MenuItem key={employee.id} value={employee.id}>
+                                        {employee.fullName}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+
+                        <FormControl size="small" sx={{ width: 200 }}>
+                            <InputLabel>Status Filter</InputLabel>
+                            <Select
+                                value={selectedTaskType}
+                                onChange={(e) => setSelectedTaskType(e.target.value)}
+                                input={<OutlinedInput label="Status Filter" />}
+                            >
+                                <MenuItem value="">
+                                    <em>All Statuses</em>
+                                </MenuItem>
+                                {uniqueTaskTypes.map((type) => (
+                                    <MenuItem key={type} value={type}>
+                                        {type}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => {
+                                setStartDate(null);
+                                setEndDate(null);
+                                setSelectedEmployee('');
+                                setSelectedTaskType('');
+                            }}
+                            sx={{ height: 40 }}
+                        >
+                            Clear Filters
+                        </Button>
+                    </Box>
+                )}
             </Box>
         ),
     });
-
-    // Filter toolbar component
-    const FilterToolbar = () => (
-        <Box sx={{ 
-            display: 'flex', 
-            gap: 2, 
-            p: 2, 
-            backgroundColor: '#f9fafb',
-            borderRadius: 1,
-            alignItems: 'center',
-            flexWrap: 'wrap'
-        }}>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                    label="Start Date"
-                    value={startDate}
-                    onChange={(newValue) => setStartDate(newValue)}
-                    renderInput={(params) => <TextField {...params} size="small" sx={{ width: 200 }} />}
-                />
-                <DatePicker
-                    label="End Date"
-                    value={endDate}
-                    onChange={(newValue) => setEndDate(newValue)}
-                    renderInput={(params) => <TextField {...params} size="small" sx={{ width: 200 }} />}
-                />
-            </LocalizationProvider>
-
-            <FormControl size="small" sx={{ width: 200 }}>
-                <InputLabel>Employee</InputLabel>
-                <Select
-                    value={selectedEmployee}
-                    onChange={(e) => setSelectedEmployee(e.target.value)}
-                    input={<OutlinedInput label="Employee" />}
-                >
-                    <MenuItem value="">
-                        <em>All Employees</em>
-                    </MenuItem>
-                    {uniqueEmployees.map((employee) => (
-                        <MenuItem key={employee.id} value={employee.id}>
-                            {employee.fullName}
-                        </MenuItem>
-                    ))}
-                </Select>
-            </FormControl>
-
-            <FormControl size="small" sx={{ width: 200 }}>
-                <InputLabel>Status Filter</InputLabel>
-                <Select
-                    value={selectedTaskType}
-                    onChange={(e) => setSelectedTaskType(e.target.value)}
-                    input={<OutlinedInput label="Status Filter" />}
-                >
-                    <MenuItem value="">
-                        <em>All Statuses</em>
-                    </MenuItem>
-                    {uniqueTaskTypes.map((type) => (
-                        <MenuItem key={type} value={type}>
-                            {type}
-                        </MenuItem>
-                    ))}
-                </Select>
-            </FormControl>
-
-            {/* Clear filters button */}
-            <Button
-                variant="outlined"
-                size="small"
-                onClick={() => {
-                    setStartDate(null);
-                    setEndDate(null);
-                    setSelectedEmployee('');
-                    setSelectedTaskType('');
-                }}
-                sx={{ height: 40 }}
-            >
-                Clear Filters
-            </Button>
-        </Box>
-    );
 
     return (
         <Box sx={{ height: 520, width: containerWidth, flexGrow: 1 }}>
@@ -620,9 +666,6 @@ export default function Tasks({
                     </Button>
                 </Box>
             )}
-
-            {/* Filter Toolbar */}
-            {!hideFilterToolbar && <FilterToolbar />}
 
             <MaterialReactTable 
                 table={table}

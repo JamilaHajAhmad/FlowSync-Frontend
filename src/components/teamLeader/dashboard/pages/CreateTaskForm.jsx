@@ -240,6 +240,7 @@ const CreateTaskForm = ({ open, onClose }) => {
             <TextField
               label="Task Title"
               name="title"
+              placeholder="Task title in English"
               fullWidth
               value={formik.values.title}
               onChange={formik.handleChange}
@@ -251,6 +252,7 @@ const CreateTaskForm = ({ open, onClose }) => {
             <TextField
               label="FRN Number"
               name="frnNumber"
+              placeholder="5-digits FRN Number"
               fullWidth
               value={formik.values.frnNumber}
               onChange={formik.handleChange}
@@ -262,6 +264,7 @@ const CreateTaskForm = ({ open, onClose }) => {
             <TextField
               label="OSS Number"
               name="ossNumber"
+              placeholder="12-digits OSS Number"
               fullWidth
               value={formik.values.ossNumber}
               onChange={formik.handleChange}

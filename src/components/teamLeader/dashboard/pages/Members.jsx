@@ -222,6 +222,33 @@ export default function Members({ showActions = true }) {
         setAnchorEl(null);
     };
 
+    const exportToCSV = (data, filename) => {
+        const csvRows = [];
+        const headers = Object.keys(data[0]);
+        csvRows.push(headers.join(','));
+
+        for (const row of data) {
+            const values = headers.map(header => {
+                const value = row[header];
+                // Handle values that contain commas or quotes
+                const escaped = String(value).replace(/"/g, '""');
+                return `"${escaped}"`;
+            });
+            csvRows.push(values.join(','));
+        }
+
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `${filename}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    };
+
     const handleDownload = (fileType) => {
         // Filter out removed members and prepare export data
         const exportData = rows
@@ -233,63 +260,78 @@ export default function Members({ showActions = true }) {
                 'Opened Tasks': row.tasks
             }));
 
-        if (fileType === 'pdf') {
-            const doc = new jsPDF('landscape');
-            
-            // Add title
-            doc.setFontSize(16);
-            doc.setTextColor(5, 150, 105);
-            doc.text('Team Members List', 14, 15);
+        switch (fileType) {
+            case 'pdf':
+                { const doc = new jsPDF('landscape');
+                
+                // Add title
+                doc.setFontSize(16);
+                doc.setTextColor(5, 150, 105);
+                doc.text('Team Members List', 14, 15);
 
-            autoTable(doc, {
-                head: [Object.keys(exportData[0])],
-                body: exportData.map(item => Object.values(item)),
-                startY: 25,
-                theme: 'grid',
-                styles: {
-                    fontSize: 8,
-                    cellPadding: 3,
-                    overflow: 'linebreak',
-                    halign: 'left'
-                },
-                headStyles: {
-                    fillColor: [5, 150, 105], // FlowSync green color
-                    textColor: 255,
-                    fontSize: 9,
-                    fontStyle: 'bold',
-                    halign: 'left'
-                },
-                columnStyles: {
-                    0: { cellWidth: 50 }, // Name
-                    1: { cellWidth: 30 }, // Status
-                    2: { cellWidth: 70 }, // Email
-                    3: { cellWidth: 30 }  // Ongoing Tasks
-                },
-                margin: { top: 25 }
-            });
+                autoTable(doc, {
+                    head: [Object.keys(exportData[0])],
+                    body: exportData.map(item => Object.values(item)),
+                    startY: 25,
+                    theme: 'grid',
+                    styles: {
+                        fontSize: 8,
+                        cellPadding: 3,
+                        overflow: 'linebreak',
+                        halign: 'left'
+                    },
+                    headStyles: {
+                        fillColor: [5, 150, 105], // FlowSync green color
+                        textColor: 255,
+                        fontSize: 9,
+                        fontStyle: 'bold',
+                        halign: 'left'
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 50 }, // Name
+                        1: { cellWidth: 30 }, // Status
+                        2: { cellWidth: 70 }, // Email
+                        3: { cellWidth: 30 }  // Ongoing Tasks
+                    },
+                    margin: { top: 25 }
+                });
 
-            doc.save('team-members.pdf');
-        } 
-        else if (fileType === 'excel') {
-            try {
-                // Create worksheet with custom column widths
-                const ws = XLSX.utils.json_to_sheet(exportData);
-                const wb = XLSX.utils.book_new();
+                doc.save('team-members.pdf');
+                toast.success('PDF file exported successfully');
+                break; }
+            case 'excel':
+                try {
+                    // Create worksheet with custom column widths
+                    const ws = XLSX.utils.json_to_sheet(exportData);
+                    const wb = XLSX.utils.book_new();
 
-                // Set column widths
-                ws['!cols'] = [
-                    { wch: 30 }, // Name
-                    { wch: 20 }, // Status
-                    { wch: 40 }, // Email
-                    { wch: 15 }  // Ongoing Tasks
-                ];
+                    // Set column widths
+                    ws['!cols'] = [
+                        { wch: 30 }, // Name
+                        { wch: 20 }, // Status
+                        { wch: 40 }, // Email
+                        { wch: 15 }  // Ongoing Tasks
+                    ];
 
-                XLSX.utils.book_append_sheet(wb, ws, "Team Members");
-                XLSX.writeFile(wb, "team-members.xlsx");
-            } catch (error) {
-                console.error("Error creating Excel file:", error);
-                toast.error("Failed to create Excel file");
-            }
+                    XLSX.utils.book_append_sheet(wb, ws, "Team Members");
+                    XLSX.writeFile(wb, "team-members.xlsx");
+                    toast.success('Excel file exported successfully');
+                } catch (error) {
+                    console.error("Error creating Excel file:", error);
+                    toast.error("Failed to create Excel file");
+                }
+                break;
+            case 'csv':
+                try {
+                    exportToCSV(exportData, 'team-members');
+                    toast.success('CSV file exported successfully');
+                } catch (error) {
+                    console.error('Error creating CSV file:', error);
+                    toast.error('Failed to create CSV file');
+                }
+                break;
+            default:
+                console.error('Unsupported file type');
         }
         handleExportClose();
     };
@@ -345,6 +387,9 @@ export default function Members({ showActions = true }) {
                     </MenuItem>
                     <MenuItem onClick={() => handleDownload('pdf')}>
                         Export as PDF
+                    </MenuItem>
+                    <MenuItem onClick={() => handleDownload('csv')}>
+                        Export as CSV
                     </MenuItem>
                 </Menu>
             </Box>
