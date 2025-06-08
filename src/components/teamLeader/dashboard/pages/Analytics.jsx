@@ -29,16 +29,25 @@ const Analytics = () => {
                     }
                 );
 
-                // Calculate total tasks
-                const totalTasks = response.data.reduce((sum, item) => sum + item.count, 0);
+                // Calculate total tasks from the new response format
+                const totalTasks = response.data.date.reduce((sum, item) => sum + item.count, 0);
 
-                // Get highest and lowest task counts
-                const maxTasks = Math.max(...response.data.map(item => item.count));
-                const minTasks = Math.min(...response.data.map(item => item.count));
+                // Get highest and lowest task counts per member
+                const memberCounts = {};
+                response.data.date.forEach(item => {
+                    if (!memberCounts[ item.member ]) {
+                        memberCounts[ item.member ] = 0;
+                    }
+                    memberCounts[ item.member ] += item.count;
+                });
+
+                const counts = Object.values(memberCounts);
+                const maxTasks = Math.max(...counts);
+                const minTasks = Math.min(...counts);
 
                 // Calculate distribution trend
                 const distributionRange = maxTasks - minTasks;
-                const avgTasks = totalTasks / response.data.length;
+                const avgTasks = totalTasks / Object.keys(memberCounts).length;
                 const distributionIndex = (distributionRange / avgTasks) * 100;
                 const trend = `${distributionIndex > 50 ? '+' : '-'}${Math.abs(distributionIndex - 50).toFixed(1)}%`;
 
@@ -52,57 +61,47 @@ const Analytics = () => {
         };
 
         const fetchPieChartData = async () => {
-    try {
-        const token = localStorage.getItem('authToken');
-        const response = await axios.get(
-            'https://localhost:49798/api/reports/task-status-summary',
-            {
-                headers: { Authorization: `Bearer ${token}` }
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await axios.get(
+                    'https://localhost:49798/api/reports/task-status-summary',
+                    {
+                        headers: { Authorization: `Bearer ${token}` }
+                    }
+                );
+
+                // Calculate total tasks from the new response format
+                const totalTasks = response.data.date.reduce((sum, item) => sum + item.count, 0);
+
+                // Calculate status distribution using the new format
+                const statusCounts = response.data.date.reduce((acc, item) => {
+                    acc[ item.status.type ] = item.count;
+                    return acc;
+                }, {});
+
+                // Calculate completion rate and trend
+                const completedTasks = statusCounts[ 'Completed' ] || 0;
+                const openedTasks = statusCounts[ 'Opened' ] || 0;
+
+                let trend = "0%";
+
+                if (totalTasks > 0) {
+                    const taskEfficiencyRate = ((completedTasks - openedTasks) / totalTasks) * 100;
+                    trend = `${taskEfficiencyRate >= 0 ? '+' : ''}${taskEfficiencyRate.toFixed(1)}%`;
+                }
+
+                setPieChartStats({
+                    value: totalTasks.toString(),
+                    trend: trend
+                });
+            } catch (error) {
+                console.error('Error fetching pie chart data:', error);
+                setPieChartStats({
+                    value: '0',
+                    trend: '0%'
+                });
             }
-        );
-
-        // First, ensure the response data is in array format
-        // If the API returns separate objects, you might need to transform them
-        const responseData = Array.isArray(response.data) ? response.data : [
-            response.data.status?.type === "Opened" && { type: "Opened", count: response.data.count },
-            response.data.status?.type === "Completed" && { type: "Completed", count: response.data.count },
-            response.data.status?.type === "Delayed" && { type: "Delayed", count: response.data.count },
-            response.data.status?.type === "Frozen" && { type: "Frozen", count: response.data.count }
-        ].filter(Boolean);
-
-        // Calculate total tasks
-        const totalTasks = responseData.reduce((sum, item) => sum + item.count, 0);
-
-        // Calculate status distribution
-        const statusCounts = responseData.reduce((acc, item) => {
-            acc[item.status.type] = item.count;
-            return acc;
-        }, {});
-
-        // Calculate completion rate
-        const completedTasks = statusCounts['Completed'] || 0;
-        // Using 'Opened' as in-progress tasks since that's what your API returns
-        const inProgressTasks = statusCounts['Opened'] || 0;
-        
-        // Only calculate rates if there are tasks
-        let completionRate = 0;
-        let progressRate = 0;
-        let trend = "0%";
-        
-        if (totalTasks > 0) {
-            completionRate = (completedTasks / totalTasks) * 100;
-            progressRate = (inProgressTasks / totalTasks) * 100;
-            trend = `${completionRate > progressRate ? '+' : '-'}${Math.abs(completionRate - progressRate).toFixed(1)}%`;
-        }
-
-        setPieChartStats({
-            value: totalTasks.toString(),
-            trend: trend
-        });
-    } catch (error) {
-        console.error('Error fetching pie chart data:', error);
-    }
-};
+        };
 
         const fetchLineChartData = async () => {
             try {
@@ -114,22 +113,34 @@ const Analytics = () => {
                     }
                 );
 
-                // Calculate total created tasks
-                const totalCreated = response.data.reduce((sum, item) => sum + item.created, 0);
+                // Calculate totals from all months
+                const totalCreated = response.data.date.reduce((sum, month) => sum + month.created, 0);
 
-                // Calculate total completed tasks
-                const totalCompleted = response.data.reduce((sum, item) => sum + item.completed, 0);
+                // Calculate trend based on current month vs previous month
+                let trend = "0%";
+                const months = response.data.date;
+                if (months.length >= 2) {
+                    const currentMonth = months[months.length - 1];
+                    const previousMonth = months[months.length - 2];
+                    
+                    const currentRate = currentMonth.completed / currentMonth.created * 100;
+                    const previousRate = previousMonth.completed / previousMonth.created * 100;
+                    
+                    const trendValue = currentRate - previousRate;
+                    trend = `${trendValue >= 0 ? '+' : ''}${trendValue.toFixed(1)}%`;
+                }
 
-                // Calculate completion trend
-                const completionRate = ((totalCompleted / totalCreated) * 100).toFixed(1);
-                const trend = `${completionRate}%`;
-
+                // Set the stats
                 setLineChartStats({
                     value: totalCreated.toString(),
                     trend: trend
                 });
             } catch (error) {
                 console.error('Error fetching line chart data:', error);
+                setLineChartStats({
+                    value: '0',
+                    trend: '0%'
+                });
             }
         };
 
@@ -143,24 +154,29 @@ const Analytics = () => {
                     }
                 );
 
-                // Get unique departments
-                const departments = [ ...new Set(response.data.map(item => item.department)) ];
+                // Calculate total tasks across all departments
+                const totalTasks = response.data.date.reduce((sum, item) => sum + item.count, 0);
 
-                // Calculate total tasks
-                const totalTasks = response.data.reduce((sum, item) => sum + item.count, 0);
+                // Calculate department coverage
+                const uniqueDepartments = new Set(response.data.date.map(item => item.department));
+                const departmentCount = uniqueDepartments.size;
 
                 // Calculate average tasks per department
-                const avgTasksPerDepartment = totalTasks / departments.length;
+                const avgTasksPerDepartment = totalTasks / departmentCount;
 
-                // Calculate trend based on department distribution
-                const trend = ((departments.length / 10) * 100).toFixed(1); // Assuming 10 is a baseline
+                // Calculate distribution trend
+                const trend = `${avgTasksPerDepartment >= 5 ? '+' : '-'}${Math.abs(avgTasksPerDepartment - 5).toFixed(1)}%`;
 
                 setHeatmapStats({
-                    value: `${departments.length} Departments | ${avgTasksPerDepartment.toFixed(1)} Avg Tasks`,
-                    trend: `+${trend}%`
+                    value: `${departmentCount} Departments`,
+                    trend: trend
                 });
             } catch (error) {
                 console.error('Error fetching heatmap data:', error);
+                setHeatmapStats({
+                    value: '0',
+                    trend: '0%'
+                });
             }
         };
 
@@ -174,22 +190,29 @@ const Analytics = () => {
                     }
                 );
 
-                // Calculate total tasks
-                const totalTasks = response.data.reduce((sum, item) => sum + item.count, 0);
-
-                // Calculate average daily tasks
-                const uniqueDays = [ ...new Set(response.data.map(item => item.date)) ];
-                const avgDailyTasks = totalTasks / uniqueDays.length;
-
+                // Calculate total activities
+                const totalActivities = response.data.date.reduce((sum, item) => sum + item.count, 0);
+                
+                // Calculate daily average
+                const uniqueDays = new Set(response.data.date.map(item => 
+                    new Date(item.date).toISOString().split('T')[0]
+                )).size;
+                
+                const averagePerDay = totalActivities / uniqueDays;
+                
                 // Calculate trend based on daily average
-                const trend = ((avgDailyTasks / 10) * 100).toFixed(1); // Assuming 10 tasks per day is baseline
+                const trend = `${averagePerDay >= 3 ? '+' : '-'}${Math.abs(averagePerDay - 3).toFixed(1)}%`;
 
                 setStackedStats({
-                    value: `${totalTasks} Tasks`,
-                    trend: `${trend > 0 ? '+' : ''}${trend}%`
+                    value: totalActivities.toString(),
+                    trend: trend
                 });
             } catch (error) {
-                console.error('Error fetching stacked chart data:', error);
+                console.error('Error fetching stacked data:', error);
+                setStackedStats({
+                    value: '0',
+                    trend: '0%'
+                });
             }
         };
 
@@ -203,28 +226,40 @@ const Analytics = () => {
                     }
                 );
 
-                // Group by request type and calculate totals
-                const requestCounts = response.data.reduce((acc, item) => {
-                    if (!acc[ item.type ]) {
-                        acc[ item.type ] = 0;
-                    }
-                    acc[ item.type ] += item.count;
+                // Calculate total activities
+                const totalActivities = response.data.date.reduce((sum, item) => sum + item.count, 0);
+                
+                // Calculate activity distribution and trend
+                const activityTypes = new Set(response.data.date.map(item => item.type));
+                const uniqueActivitiesCount = activityTypes.size;
+                
+                // Calculate month-over-month growth
+                const monthlyTotals = response.data.date.reduce((acc, item) => {
+                    const key = `${item.year}-${item.month}`;
+                    acc[key] = (acc[key] || 0) + item.count;
                     return acc;
                 }, {});
-
-                // Calculate total requests
-                const totalRequests = Object.values(requestCounts).reduce((sum, count) => sum + count, 0);
-
-                // Calculate completion rate (CompleteTask type)
-                const completedTasks = requestCounts[ 'CompleteTask' ] || 0;
-                const completionRate = ((completedTasks / totalRequests) * 100).toFixed(1);
+                
+                const months = Object.keys(monthlyTotals).sort();
+                const currentMonth = monthlyTotals[months[months.length - 1]];
+                const previousMonth = monthlyTotals[months[months.length - 2]] || 0;
+                
+                const growthRate = previousMonth > 0 
+                    ? ((currentMonth - previousMonth) / previousMonth) * 100 
+                    : 100;
+                
+                const trend = `${growthRate >= 0 ? '+' : ''}${growthRate.toFixed(1)}%`;
 
                 setFunnelStats({
-                    value: `${totalRequests} Requests`,
-                    trend: `${completionRate}%`
+                    value: `${uniqueActivitiesCount} Types (${totalActivities} Total)`,
+                    trend: trend
                 });
             } catch (error) {
-                console.error('Error fetching funnel chart data:', error);
+                console.error('Error fetching funnel data:', error);
+                setFunnelStats({
+                    value: '0',
+                    trend: '0%'
+                });
             }
         };
 
