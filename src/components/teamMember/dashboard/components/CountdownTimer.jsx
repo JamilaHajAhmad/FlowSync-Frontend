@@ -1,6 +1,6 @@
 import { Typography } from '@mui/material';
 
-const CountdownTimer = ({ counter }) => {
+const CountdownTimer = ({ counter, isOverdue = false }) => {
     const parseCounter = (counterStr) => {
         if (!counterStr) {
             return {
@@ -11,16 +11,29 @@ const CountdownTimer = ({ counter }) => {
         }
 
         try {
-            const [dayPart, timePart] = counterStr.split('.');
+            // Handle negative values for overdue tasks
+            const isNegative = counterStr.startsWith('-');
+            const cleanCounter = counterStr.replace('-', '');
+            
+            const [dayPart, timePart] = cleanCounter.split('.');
             const [hours, minutes] = timePart.split(':');
 
-            return {
+            const values = {
                 days: parseInt(dayPart, 10),
                 hours: parseInt(hours, 10),
                 minutes: parseInt(minutes, 10)
             };
+
+            // If overdue, make values negative
+            if (isNegative) {
+                values.days = -values.days;
+                values.hours = -values.hours;
+                values.minutes = -values.minutes;
+            }
+
+            return values;
         } catch (error) {
-            console.error('Error parsing counter:', error);
+            console.error('Error parsing counter:', error, counterStr);
             return {
                 days: 0,
                 hours: 0,
@@ -32,20 +45,21 @@ const CountdownTimer = ({ counter }) => {
     const { days, hours, minutes } = parseCounter(counter);
 
     const formatTimeRemaining = (days, hours, minutes) => {
-        if (!counter) {
-            return 'Counter not available';
-        }
+        if (!counter) return 'Counter not available';
 
         const parts = [];
+        const absDays = Math.abs(days);
+        const absHours = Math.abs(hours);
+        const absMinutes = Math.abs(minutes);
         
-        if (days > 0) {
-            parts.push(`${days} ${days === 1 ? 'day' : 'days'}`);
+        if (absDays > 0) {
+            parts.push(`${absDays} ${absDays === 1 ? 'day' : 'days'}`);
         }
-        if (hours > 0) {
-            parts.push(`${hours} ${hours === 1 ? 'hour' : 'hours'}`);
+        if (absHours > 0) {
+            parts.push(`${absHours} ${absHours === 1 ? 'hour' : 'hours'}`);
         }
-        if (minutes > 0) {
-            parts.push(`${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`);
+        if (absMinutes > 0) {
+            parts.push(`${absMinutes} ${absMinutes === 1 ? 'minute' : 'minutes'}`);
         }
 
         return parts.join(' ') || 'Less than a minute';
@@ -54,8 +68,7 @@ const CountdownTimer = ({ counter }) => {
     return (
         <Typography
             sx={{
-                color: counter ? 'text.primary' : 'text.secondary',
-                fontFamily: 'system-ui'
+                color: isOverdue ? '#d32f2f' : 'text.primary',
             }}
         >
             {formatTimeRemaining(days, hours, minutes)}

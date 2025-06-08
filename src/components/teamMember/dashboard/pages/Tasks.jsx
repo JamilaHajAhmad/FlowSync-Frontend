@@ -1,19 +1,18 @@
 import { Box, Typography, Card, Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, CircularProgress } from "@mui/material";
 import { CalendarToday, ErrorOutline, CheckCircleOutline, PauseCircleOutline } from "@mui/icons-material";
 import { useState, useEffect } from "react";
-import FreezeTaskForm from './FreezeTaskForm';
+import FreezeTaskForm from "../components/FreezeTaskForm";
 import { DndContext, DragOverlay, closestCorners, useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import UnfreezeTaskForm from './UnfreezeTaskForm';
-import CompleteTaskForm from './CompleteTaskForm';
+import UnfreezeTaskForm from '../components/UnfreezeTaskForm';
+import CompleteTaskForm from '../components/CompleteTaskForm';
 import { getMemberTasks } from '../../../../services/taskService';
 import { toast } from 'react-toastify';
 import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 import CountdownTimer from '../components/CountdownTimer';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import ReactPlayer from 'react-player';
 
 const getStatusColor = (status) => {
@@ -72,11 +71,41 @@ const TaskCard = ({ task, isDragging }) => {
   const renderCardInfo = () => {
     return (
       <Box>
-        {/* Existing title and status icon */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          mb: 1,
+          position: 'relative'
+        }}>
+          <Typography 
+            variant="subtitle1" 
+            sx={{ 
+              fontWeight: 600,
+              mb: 0.5,
+            }}
+          >
             {task.taskTitle}
           </Typography>
+          {/* Add indicator for delayed-completed tasks */}
+          {task.status === "Completed" && task.isDelayed && (
+            <Typography
+              variant="caption"
+              sx={{
+                position: 'absolute',
+                top: -15,
+                right: 25,
+                color: '#dc2626',
+                bgcolor: '#fef2f2',
+                px: 1,
+                py: 0.5,
+                borderRadius: 1,
+                fontSize: '0.7rem'
+              }}
+            >
+              Was Delayed
+            </Typography>
+          )}
           {task.status === "Delayed" && (
             <ErrorOutline sx={{ color: "#d32f2f" }} />
           )}
@@ -297,7 +326,7 @@ const TaskCard = ({ task, isDragging }) => {
             >
               <CountdownTimer 
                 counter={task.counter} 
-                isOverdue={task.status === "Delayed"} 
+                isOverdue={task.status === "Delayed"}
               />
             </Typography>
           </Grid>
@@ -520,11 +549,7 @@ const DragDropHelpDialog = ({ open, onClose }) => {
         <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>Demo Video:</Typography>
         <Box sx={{ 
           position: 'relative',
-          paddingTop: '56.25%', // 16:9 aspect ratio
-          backgroundColor: '#f5f5f5',
-          borderRadius: 1,
-          overflow: 'hidden',
-          mb: 2
+          paddingTop: '56.25%' // 16:9 aspect ratio
         }}>
           <ReactPlayer
             url="/videos/drag-drop-demo.mp4" // Update path to start from public folder
@@ -596,7 +621,8 @@ const Tasks = () => {
             createdAt: task.createdAt,
             completedAt: task.completedAt,
             frozenAt: task.frozenAt,
-            reason: task.reason
+            reason: task.reason,
+            isDelayed: task.isDelayed // Make sure to include isDelayed property
           };
         }).filter(Boolean);
 
