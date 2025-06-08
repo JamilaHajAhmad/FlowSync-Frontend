@@ -28,16 +28,21 @@ const Layout = ({ children }) => {
     };
 
     const formatDataForExport = (data) => {
-        if (!data || !data.rawData) return [];
+        if (!data || !data.rawData || !data.type) {
+            console.warn('Invalid data format:', data);
+            return [];
+        }
 
+        const rawData = Array.isArray(data.rawData.date) ? data.rawData.date : [];
+        
         switch (data.type) {
             case 'bar':
                 // Get unique members
-                { const members = [...new Set(data.rawData.map(item => item.member))];
+                { const members = [...new Set(rawData.map(item => item.member))];
                 
                 // Create a map to store task counts for each member
                 return members.map(member => {
-                    const memberTasks = data.rawData.filter(task => task.member === member);
+                    const memberTasks = rawData.filter(task => task.member === member);
                     
                     // Initialize task counts
                     const taskCounts = {
@@ -69,64 +74,57 @@ const Layout = ({ children }) => {
                     });
                     
                     // Calculate total tasks
-                    taskCounts['Total Tasks'] = 
-                        taskCounts['Opened Tasks'] + 
-                        taskCounts['Completed Tasks'] + 
-                        taskCounts['Frozen Tasks'] + 
-                        taskCounts['Delayed Tasks'];
+                    taskCounts['Total Tasks'] = Object.values(taskCounts)
+                        .filter(value => typeof value === 'number')
+                        .reduce((a, b) => a + b, 0);
                     
                     return taskCounts;
                 }); }
 
             case 'line':
-                return data.rawData.map(item => ({
+                return rawData.map(item => ({
                     'Year': item.year,
                     'Month': item.month,
                     'Created Tasks': item.created,
                     'Completed Tasks': item.completed,
-                    'Task Completion Rate': `${((item.completed / item.created) * 100).toFixed(2)}%`
+                    'Task Completion Rate': item.created > 0 ? 
+                        `${((item.completed / item.created) * 100).toFixed(2)}%` : '0%'
                 }));
                 
             case 'pie':
-                // Calculate total for percentage
-                { const total = data.rawData.reduce((sum, item) => sum + item.count, 0);
-                
-                return data.rawData.map(item => ({
+                { const total = rawData.reduce((sum, item) => sum + item.count, 0);
+                return rawData.map(item => ({
                     'Status': item.status.type,
                     'Count': item.count,
                     'Percentage': `${((item.count / total) * 100).toFixed(2)}%`
                 })); }
                 
             case 'stacked':
-                return data.rawData.map(item => ({
-                    'Date': new Date(item.date).toLocaleDateString(
-                        'en-US',
-                        { year: 'numeric', month: '2-digit', day: '2-digit' }
-                    ),
+                return rawData.map(item => ({
+                    'Date': new Date(item.date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                    }),
                     'Activity Count': item.count,
                     'Week Day': new Date(item.date).toLocaleString('en-US', { weekday: 'long' }),
                     'Month': new Date(item.date).toLocaleString('en-US', { month: 'long' })
                 }));
                 
             case 'heatmap':
-                // Get unique departments and statuses
-                { const departments = [...new Set(data.rawData.map(item => item.department))].sort();
-                const statuses = [...new Set(data.rawData.map(item => item.status))].sort();
+                { const departments = [...new Set(rawData.map(item => item.department))].sort();
+                const statuses = [...new Set(rawData.map(item => item.status))].sort();
                 
-                // Create a map for quick lookup of counts
                 const countMap = new Map(
-                    data.rawData.map(item => [`${item.department}-${item.status}`, item.count])
+                    rawData.map(item => [`${item.department}-${item.status}`, item.count])
                 );
                 
-                // Create rows with department as first column followed by status columns
                 return departments.map(dept => {
                     const row = { Department: dept };
                     statuses.forEach(status => {
-                        const count = countMap.get(`${dept}-${status}`) || 0;
-                        row[`${status} Tasks`] = count;
+                        row[`${status} Tasks`] = countMap.get(`${dept}-${status}`) || 0;
                     });
                     
-                    // Add total tasks for department
                     row['Total Tasks'] = statuses.reduce((sum, status) => 
                         sum + (countMap.get(`${dept}-${status}`) || 0), 0
                     );
@@ -134,37 +132,33 @@ const Layout = ({ children }) => {
                     return row;
                 }); }
                 
-            case 'funnel':
-                // First group data by type to combine counts from different months
-                { const groupedByType = data.rawData.reduce((acc, item) => {
-                    const key = item.type;
-                    if (!acc[key]) {
-                        acc[key] = {
+            case 'funnel': {
+                const groupedByType = rawData.reduce((acc, item) => {
+                    if (!acc[item.type]) {
+                        acc[item.type] = {
                             type: item.type,
                             count: 0,
-                            dates: []
+                            months: new Set()
                         };
                     }
-                    acc[key].count += item.count;
-                    acc[key].dates.push(`${item.year}-${item.month.toString().padStart(2, '0')}`);
+                    acc[item.type].count += item.count;
+                    acc[item.type].months.add(`${item.year}-${String(item.month).padStart(2, '0')}`);
                     return acc;
                 }, {});
 
-                // Convert grouped data back to array and sort by count
-                const sortedData = Object.values(groupedByType)
-                    .sort((a, b) => b.count - a.count);
+                const sortedData = Object.values(groupedByType).sort((a, b) => b.count - a.count);
 
-                // Calculate conversion rates and format the data
-                return sortedData.map((item) => ({
-                    'Request Type': item.type,
+                return sortedData.map(item => ({
+                    'Activity Type': item.type,
                     'Count': item.count,
-                    'Dates': item.dates.join(', '),
-                    'Conversion Rate': calculateConversionRate(sortedData, item),
-                    'Most Recent Date': item.dates[item.dates.length - 1]
-                })); }
-                
+                    'Months Active': Array.from(item.months).join(', '),
+                    'Conversion Rate': calculateConversionRate(sortedData, item)
+                }));
+            }
+            
             default:
-                return data.rawData;
+                console.warn('Unknown chart type:', data.type);
+                return [];
         }
     };
 
