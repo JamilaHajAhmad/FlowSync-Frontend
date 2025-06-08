@@ -7,3 +7,19 @@ export const getEmployeesWithTasks = (token) => {
         }
     });
 };
+
+export const getMemberNames = async (token) => {
+    return await api.get('/membermanagement/member-names', {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+};
+
+export const getMemberDetails = async (memberId, token) => {
+    return await api.get(`/membermanagement/member-details/${memberId}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+}

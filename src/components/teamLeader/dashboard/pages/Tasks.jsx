@@ -18,11 +18,12 @@ import {
 import { Add as AddIcon, FileDownload as FileDownloadIcon } from '@mui/icons-material';
 import Box from "@mui/material/Box";
 import { useState, useEffect, useMemo } from "react";
-import CreateTaskForm from './CreateTaskForm';
+import CreateTaskForm from '../components/CreateTaskForm';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getAllTasks } from '../../../../services/taskService';
+import { getMemberNames } from '../../../../services/employeeService';
 import { toast } from 'react-toastify';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -72,6 +73,19 @@ const getColumns = (tab) => {
             accessorKey: "openDate",
             header: "Open Date",
             size: 100,
+        },
+        {
+            accessorKey: "deadline",
+            header: "Deadline",
+            size: 100,
+            Cell: ({ cell }) => {
+                const date = new Date(cell.getValue());
+                return date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+            }
         }
     ];
 
@@ -181,6 +195,7 @@ export default function Tasks({
     const [endDate, setEndDate] = useState(null);
     const [selectedEmployee, setSelectedEmployee] = useState('');
     const [selectedTaskType, setSelectedTaskType] = useState('');
+    const [members, setMembers] = useState([]); // New state for member names
     
     const open = Boolean(anchorEl);
 
@@ -373,17 +388,19 @@ export default function Tasks({
                 const type = activeTab === 'All' ? '' : activeTab.toLowerCase();
 
                 const response = await getAllTasks(token, type);
+                console.log('Fetched tasks:', response.data);
                 
-                // Format tasks but keep dates as Date objects for filtering
                 const formattedTasks = response.data.map(task => ({
                     id: task.id,
                     name: task.assignedMember.fullName,
+                    assignedMember: task.assignedMember, // Keep full member object
                     title: task.taskTitle,
+                    deadline: task.deadline ? new Date(task.deadline) : null,
                     status: task.status,
                     priority: task.priority,
                     frnNumber: task.frnNumber,
                     ossNumber: task.ossNumber,
-                    openDate: new Date(task.openDate),  // Keep as Date object for filtering
+                    openDate: new Date(task.openDate),
                     completedAt: task.completedAt ? new Date(task.completedAt) : null,
                     reason: task.reason,
                     notes: task.notes,
@@ -405,20 +422,21 @@ export default function Tasks({
         fetchTasks();
     }, [activeTab]); // Only refetch when tab changes
 
-    // Get unique employees for the dropdown
-    const uniqueEmployees = useMemo(() => {
-        const employeeMap = new Map();
-        rawTasks.forEach(task => {
-            if (!employeeMap.has(task.name)) {
-                employeeMap.set(task.name, {
-                    id: task.name, // Use name as ID since we don't have unique employee IDs
-                    fullName: task.name
-                });
+    // Fetch member names for the dropdown
+    useEffect(() => {
+        const fetchMembers = async () => {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await getMemberNames(token);
+                setMembers(response.data);
+            } catch (error) {
+                console.error('Error fetching members:', error);
+                toast.error('Failed to load team members');
             }
-        });
-        return Array.from(employeeMap.values())
-            .sort((a, b) => a.fullName.localeCompare(b.fullName));
-    }, [rawTasks]);
+        };
+
+        fetchMembers();
+    }, []);
 
     // Get unique task types for the dropdown
     const uniqueTaskTypes = useMemo(() => {
@@ -441,10 +459,10 @@ export default function Tasks({
             const isAfterStart = !startDate || taskDate >= startDate;
             const isBeforeEnd = !endDate || taskDate <= endDate;
             
-            // Employee filtering
-            const matchesEmployee = !selectedEmployee || task.name === selectedEmployee;
+            // Employee filtering - Changed this part
+            const matchesEmployee = !selectedEmployee || task.assignedMember?.id === selectedEmployee;
             
-            // Task type filtering - now using status field
+            // Task type filtering
             const matchesTaskType = !selectedTaskType || task.status === selectedTaskType;
 
             // All conditions must be true for the task to be included
@@ -596,9 +614,9 @@ export default function Tasks({
                                 <MenuItem value="">
                                     <em>All Employees</em>
                                 </MenuItem>
-                                {uniqueEmployees.map((employee) => (
-                                    <MenuItem key={employee.id} value={employee.id}>
-                                        {employee.fullName}
+                                {members.map((member) => (
+                                    <MenuItem key={member.id} value={member.id}>
+                                        {member.fullName}
                                     </MenuItem>
                                 ))}
                             </Select>
