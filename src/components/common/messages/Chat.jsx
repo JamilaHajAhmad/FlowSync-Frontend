@@ -619,15 +619,23 @@ export default function Chat() {
     };
 
     // Update the team message button click handler
-    const handleTeamMessageClick = () => {
-        setTeamMessageDialog(true);
-    };
+    const handleTeamMessageClick = useCallback(() => {
+        if (isTeamMessageEnabled) {
+            setTeamMessageDialog(true);
+        }
+    }, [isTeamMessageEnabled]);
 
     // Add the send team message handler
     const handleSendTeamMessage = async (message) => {
         try {
             await sendMessageToTeam(message, tokenRef.current);
             toast.success('Team message sent successfully');
+            // Refresh conversations after sending team message
+            await Promise.all([
+                fetchUnreadMessages(),
+                fetchConversations()
+            ]);
+            setTeamMessageDialog(false);
         } catch (error) {
             console.error('Error sending team message:', error);
             showError('Failed to send team message');
@@ -1207,13 +1215,6 @@ export default function Chat() {
                                     <SendIcon />
                                 </IconButton>
                             </Box>
-
-                            {/* Add the team message dialog */}
-                            <TeamMessageDialog
-                                open={teamMessageDialog}
-                                onClose={() => setTeamMessageDialog(false)}
-                                onSend={handleSendTeamMessage}
-                            />
                         </>
                     ) : (
                         <Box
@@ -1236,6 +1237,13 @@ export default function Chat() {
                         </Box>
                     )}
                 </Paper>
+
+                {/* Move TeamMessageDialog here - outside of selectedUser check */}
+                <TeamMessageDialog
+                    open={teamMessageDialog}
+                    onClose={() => setTeamMessageDialog(false)}
+                    onSend={handleSendTeamMessage}
+                />
             </Box>
         </ThemeProvider>
     );
