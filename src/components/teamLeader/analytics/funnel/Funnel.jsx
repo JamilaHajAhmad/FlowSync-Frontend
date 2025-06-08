@@ -1,11 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
+import { Box, Typography } from '@mui/material';
 import { ResponsiveFunnel } from '@nivo/funnel';
-import axios from 'axios';
+import { DateRange as DateRangeIcon } from '@mui/icons-material';
+import { useState, useEffect, useRef } from 'react';
 import { transformApiData } from './data';
+import axios from 'axios';
 import { useChartData } from '../../../../context/ChartDataContext';
 
 const Funnel = () => {
     const [ data, setData ] = useState([]);
+    const [ dateRange, setDateRange ] = useState(null);
     const [ loading, setLoading ] = useState(true);
     const [ error, setError ] = useState(null);
     const { updateChartData } = useChartData();
@@ -22,7 +25,8 @@ const Funnel = () => {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 const transformedData = transformApiData(response.data);
-                setData(transformedData);
+                setData(transformedData.data);
+                setDateRange(transformedData.dateRange);
                 updateChartData({
                     type: 'funnel',
                     rawData: response.data,
@@ -44,23 +48,51 @@ const Funnel = () => {
     if (error) return <div>Error: {error}</div>;
 
     return (
-        <ResponsiveFunnel
-            data={data}
-            margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
-            valueFormat=">-.4s"
-            colors={{ datum: 'color' }}  // Use colors from the data
-            borderWidth={20}
-            labelColor={{ from: 'color', modifiers: [['darker', 3]] }}
-            beforeSeparatorLength={100}
-            beforeSeparatorOffset={20}
-            afterSeparatorLength={100}
-            afterSeparatorOffset={20}
-            currentPartSizeExtension={10}
-            currentBorderWidth={40}
-            motionConfig="gentle"
-            enableLabel={true}
-            labelPosition="right"
-        />
+        <Box sx={{ position: 'relative', height: '100%' }}>
+            {dateRange && (
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: -5,
+                        right: 40,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        bgcolor: '#f8fafc',
+                        px: 2,
+                        py: 0.75,
+                        borderRadius: '8px',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        zIndex: 2,
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                    }}
+                >
+                    <DateRangeIcon sx={{ color: '#059669', fontSize: 18 }} />
+                    <Typography
+                        variant="caption"
+                        sx={{
+                            color: 'text.secondary',
+                            fontWeight: 500,
+                            letterSpacing: '0.25px'
+                        }}
+                    >
+                        {dateRange.from} - {dateRange.to}
+                    </Typography>
+                </Box>
+            )}
+
+            <ResponsiveFunnel
+                data={data}
+                margin={{ top: 50, right: 20, bottom: 20, left: 20 }}
+                valueFormat=">-.0f"
+                colors={{ datum: 'color' }}
+                labelColor={{ from: 'color', modifiers: [['darker', 3]] }}
+                enableLabel={true}
+                currentPartSizeExtension={10}
+                motionConfig="gentle"
+            />
+        </Box>
     );
 };
 

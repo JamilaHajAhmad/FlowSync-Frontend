@@ -1,4 +1,6 @@
-const transformApiData = (apiData) => {
+const transformApiData = (response) => {
+    const { date: apiData, dateRange } = response;
+
     // Create data series for created and completed tasks
     const created = {
         id: "Created Tasks",
@@ -14,7 +16,9 @@ const transformApiData = (apiData) => {
 
     // Transform API data into the required format
     apiData.forEach(item => {
-        const monthName = new Date(2024, item.month - 1, 1).toLocaleString('default', { month: 'long' });
+        const monthName = new Date(item.year, item.month - 1, 1)
+            .toLocaleString('default', { month: 'long', year: 'numeric' });
+        
         created.data.push({
             x: monthName,
             y: item.created
@@ -26,7 +30,23 @@ const transformApiData = (apiData) => {
         });
     });
 
-    return [created, completed];
+    const formattedDateRange = {
+        from: formatDate(dateRange.from),
+        to: formatDate(dateRange.to)
+    };
+
+    return {
+        data: [created, completed],
+        dateRange: formattedDateRange
+    };
+};
+
+const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
 };
 
 export { transformApiData };
