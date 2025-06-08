@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Box, TextField, Button, Typography, Avatar, Select, MenuItem, Grid, Paper, IconButton, CssBaseline, FormControl, InputLabel, CircularProgress } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { styled, ThemeProvider } from '@mui/material/styles';
@@ -11,7 +11,6 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate } from 'react-router-dom';
 import { adjustTimezone } from "../../utils";
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { format, parseISO } from 'date-fns';
 import { ArrowBack } from "@mui/icons-material";
 
@@ -34,59 +33,6 @@ const StyledTextField = styled(TextField)(() => ({
         },
         '&.Mui-focused': {
             color: '#059669',
-        }
-    }
-}));
-
-
-
-// Add this after your other styled components
-const StyledDatePicker = styled(DatePicker)(() => ({
-    '& .MuiInputBase-root': {
-        borderRadius: '8px',
-        '& fieldset': {
-            borderColor: '#e5e7eb',
-        },
-        '&:hover fieldset': {
-            borderColor: '#10B981',
-        },
-        '&.Mui-focused fieldset': {
-            borderColor: '#059669',
-            borderWidth: '2px'
-        }
-    },
-    '& .MuiInputBase-input': {
-        padding: '16.5px 14px',
-    },
-    '& .MuiInputLabel-root': {
-        '&.Mui-focused': {
-            color: '#059669'
-        }
-    },
-    '& .MuiSvgIcon-root': {
-        color: '#059669'
-    },
-    '& .MuiPickersPopper': {
-        '& .MuiPaper-root': {
-            '& .MuiPickersDay-root': {
-                '&.Mui-selected': {
-                    backgroundColor: '#059669',
-                    color: '#fff',
-                    '&:hover': {
-                        backgroundColor: '#047857'
-                    }
-                },
-                '&:hover': {
-                    backgroundColor: 'rgba(5, 150, 105, 0.1)'
-                }
-            },
-            '& .MuiDayPicker-weekDayLabel': {
-                color: '#059669'
-            },
-            '& .MuiPickersDay-today': {
-                borderColor: '#059669',
-                color: '#059669'
-            }
         }
     }
 }));
@@ -476,36 +422,20 @@ const EditProfile = () => {
 
                                 {/* Date of Birth */}
                                 <Grid item xs={12} sm={6}>
-                                    <StyledDatePicker
+                                    <StyledTextField
+                                        fullWidth
                                         label="Date of Birth"
-                                        value={formik.values.dateOfBirth ? parseISO(formik.values.dateOfBirth) : null}
-                                        onChange={(date) => {
-                                            formik.setFieldValue('dateOfBirth', date ? format(date, 'yyyy-MM-dd') : null);
-                                        }}
-                                        slotProps={{
-                                            textField: {
-                                                fullWidth: true,
-                                                error: formik.touched.dateOfBirth && Boolean(formik.errors.dateOfBirth),
-                                                helperText: formik.touched.dateOfBirth && formik.errors.dateOfBirth,
-                                                InputLabelProps: {
-                                                    shrink: true,
-                                                    sx: {
-                                                        bgcolor: 'background.paper',
-                                                        px: 1,
-                                                        transform: 'translate(14px, -9px) scale(0.75)',
-                                                        '&.Mui-focused': {
-                                                            color: '#059669'
-                                                        }
-                                                    }
-                                                }
-                                            },
-                                            popper: {
-                                                sx: {
-                                                    '& .MuiPaper-root': {
-                                                        border: '1px solid #e5e7eb',
-                                                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                                                    }
-                                                }
+                                        name="dateOfBirth"
+                                        type="date"
+                                        value={formik.values.dateOfBirth ? format(parseISO(formik.values.dateOfBirth), 'yyyy-MM-dd') : ''}
+                                        onChange={formik.handleChange}
+                                        onBlur={formik.handleBlur}
+                                        error={formik.touched.dateOfBirth && Boolean(formik.errors.dateOfBirth)}
+                                        helperText={formik.touched.dateOfBirth && formik.errors.dateOfBirth}
+                                        InputLabelProps={{ shrink: true }}
+                                        InputProps={{
+                                            inputProps: {
+                                                max: new Date().toISOString().split('T')[0] // Prevent future dates
                                             }
                                         }}
                                     />
