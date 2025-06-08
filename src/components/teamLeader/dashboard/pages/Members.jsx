@@ -14,8 +14,10 @@ import * as XLSX from 'xlsx';
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { getAllMembers } from "../../../../services/memberService";
+import { getMemberDetails } from "../../../../services/employeeService";
 import { formatString } from "../../../../utils";
 import DeleteMemberDialog from '../components/DeleteMemberDialog';
+import MemberDetailsDialog from '../components/MemberDetailsDialog';
 import { Visibility as VisibilityIcon } from '@mui/icons-material';
 
 export default function Members({ showActions = true }) {
@@ -25,6 +27,11 @@ export default function Members({ showActions = true }) {
         open: false,
         memberId: null,
         memberName: ''
+    });
+    const [memberDetailsDialog, setMemberDetailsDialog] = useState({
+        open: false,
+        member: null,
+        loading: false
     });
 
     useEffect(() => {
@@ -423,14 +430,39 @@ export default function Members({ showActions = true }) {
         handleDeleteCancel();
     };
 
-    const handleViewClick = (member) => {
-        // Navigate to member details or open a dialog
-        console.log('View member:', member);
-        // TODO: Implement view functionality
-        // You could either:
-        // 1. Navigate to a new page: navigate(`/members/${member.id}`)
-        // 2. Open a dialog with member details
-        // 3. Open a drawer with member information
+    const handleViewClick = async (member) => {
+        try {
+            setMemberDetailsDialog(prev => ({
+                ...prev,
+                loading: true,
+                open: true
+            }));
+            
+            const token = localStorage.getItem('authToken');
+            const response = await getMemberDetails(member.id, token);
+            console.log('Fetched member details:', response.data);
+            
+            setMemberDetailsDialog({
+                open: true,
+                member: response.data,
+                loading: false
+            });
+        } catch (error) {
+            console.error('Error fetching member details:', error);
+            toast.error('Failed to load member details');
+            setMemberDetailsDialog(prev => ({
+                ...prev,
+                loading: false
+            }));
+        }
+    };
+
+    const handleDetailsClose = () => {
+        setMemberDetailsDialog({
+            open: false,
+            member: null,
+            loading: false
+        });
     };
 
     return (
@@ -443,6 +475,11 @@ export default function Members({ showActions = true }) {
                 onClose={handleDeleteCancel}
                 onSuccess={() => handleMemberRemoveSuccess(deleteDialog.memberId)}
                 type="deleteAccount"
+            />
+            <MemberDetailsDialog
+                open={memberDetailsDialog.open}
+                onClose={handleDetailsClose}
+                member={memberDetailsDialog.member}
             />
         </Box>
     );
