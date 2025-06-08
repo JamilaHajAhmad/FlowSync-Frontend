@@ -91,7 +91,7 @@ const DownloadDialog = ({ open, handleClose, handleDownload, reportType }) => {
                                 '&.MuiInputLabel-shrink': {
                                     background: 'white',
                                     px: 1,
-                                    margin: '5px -2px'
+                                    margin: '6px -1px'
                                 }
                             }} >Select file type</InputLabel>
                         <Select
