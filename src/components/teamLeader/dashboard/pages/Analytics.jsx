@@ -1,4 +1,4 @@
-import { Card, CardContent, CardActionArea, Typography, Grid, Container, Box, CircularProgress } from '@mui/material';
+import { Card, CardContent, CardActionArea, Typography, Grid, Container, Box, CircularProgress, IconButton, Tooltip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -8,6 +8,8 @@ import Stacked from '../../analytics/stacked/Stacked';
 import Pie from '../../analytics/pie/Pie';
 import HeatMap from '../../analytics/heatmap/HeatMap';
 import Funnel from '../../analytics/funnel/Funnel';
+import { Help as HelpIcon } from '@mui/icons-material';
+import HelpDialog from '../../analytics/help/HelpDialog';
 
 const Analytics = () => {
     const [ barChartStats, setBarChartStats ] = useState({ value: '0', trend: '0%' });
@@ -16,6 +18,7 @@ const Analytics = () => {
     const [ heatmapStats, setHeatmapStats ] = useState({ value: '0', trend: '0%' });
     const [ stackedStats, setStackedStats ] = useState({ value: '0', trend: '0%' });
     const [ funnelStats, setFunnelStats ] = useState({ value: '0', trend: '0%' });
+    const [helpOpen, setHelpOpen] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -28,6 +31,13 @@ const Analytics = () => {
                         headers: { Authorization: `Bearer ${token}` }
                     }
                 );
+                if (!response.data?.date || response.data.date.length === 0) {
+                    setBarChartStats({
+                        value: 'No Data',
+                        trend: '0%'
+                    });
+                    return;
+                }
 
                 // Calculate total tasks from the new response format
                 const totalTasks = response.data.date.reduce((sum, item) => sum + item.count, 0);
@@ -69,6 +79,13 @@ const Analytics = () => {
                         headers: { Authorization: `Bearer ${token}` }
                     }
                 );
+                if (!response.data?.date || response.data.date.length === 0) {
+                    setPieChartStats({
+                        value: 'No Data',
+                        trend: '0%'
+                    });
+                    return;
+                }
 
                 // Calculate total tasks from the new response format
                 const totalTasks = response.data.date.reduce((sum, item) => sum + item.count, 0);
@@ -112,6 +129,14 @@ const Analytics = () => {
                         headers: { Authorization: `Bearer ${token}` }
                     }
                 );
+                // Handle empty response
+                if (!response.data?.date || response.data.date.length === 0) {
+                    setLineChartStats({
+                        value: 'No Data',
+                        trend: '0%'
+                    });
+                    return;
+                }
 
                 // Calculate totals from all months
                 const totalCreated = response.data.date.reduce((sum, month) => sum + month.created, 0);
@@ -153,6 +178,14 @@ const Analytics = () => {
                         headers: { Authorization: `Bearer ${token}` }
                     }
                 );
+                // Handle empty response
+                if (!response.data?.date || response.data.date.length === 0) {
+                    setHeatmapStats({
+                        value: 'No Data',
+                        trend: '0%'
+                    });
+                    return;
+                }
 
                 // Calculate total tasks across all departments
                 const totalTasks = response.data.date.reduce((sum, item) => sum + item.count, 0);
@@ -189,6 +222,14 @@ const Analytics = () => {
                         headers: { Authorization: `Bearer ${token}` }
                     }
                 );
+                // Handle empty response
+                if (!response.data?.date || response.data.date.length === 0) {
+                    setStackedStats({
+                        value: 'No Activities',
+                        trend: '0%'
+                    });
+                    return;
+                }
 
                 // Calculate total activities
                 const totalActivities = response.data.date.reduce((sum, item) => sum + item.count, 0);
@@ -226,22 +267,33 @@ const Analytics = () => {
                     }
                 );
 
+                // Handle empty response
+                if (!response.data?.date || response.data.date.length === 0) {
+                    setFunnelStats({
+                        value: 'No Activities',
+                        trend: '0%'
+                    });
+                    return;
+                }
+
                 // Calculate total activities
                 const totalActivities = response.data.date.reduce((sum, item) => sum + item.count, 0);
                 
-                // Calculate activity distribution and trend
+                // Calculate activity types
                 const activityTypes = new Set(response.data.date.map(item => item.type));
                 const uniqueActivitiesCount = activityTypes.size;
                 
-                // Calculate month-over-month growth
+                // Calculate month-over-month growth with safety checks
                 const monthlyTotals = response.data.date.reduce((acc, item) => {
-                    const key = `${item.year}-${item.month}`;
-                    acc[key] = (acc[key] || 0) + item.count;
+                    if (item.year && item.month) {
+                        const key = `${item.year}-${item.month.toString().padStart(2, '0')}`;
+                        acc[key] = (acc[key] || 0) + item.count;
+                    }
                     return acc;
                 }, {});
                 
                 const months = Object.keys(monthlyTotals).sort();
-                const currentMonth = monthlyTotals[months[months.length - 1]];
+                const currentMonth = monthlyTotals[months[months.length - 1]] || 0;
                 const previousMonth = monthlyTotals[months[months.length - 2]] || 0;
                 
                 const growthRate = previousMonth > 0 
@@ -257,7 +309,7 @@ const Analytics = () => {
             } catch (error) {
                 console.error('Error fetching funnel data:', error);
                 setFunnelStats({
-                    value: '0',
+                    value: 'Error Loading Data',
                     trend: '0%'
                 });
             }
@@ -315,7 +367,7 @@ const Analytics = () => {
             trend: stackedStats.trend,
             path: '/analytics/stacked',
             component: <Stacked />,
-            gridSize: { xs: 12, md: 5 }
+            gridSize: { xs: 12, md: 7 }
         },
         {
             title: 'Requests stream by type',
@@ -324,7 +376,7 @@ const Analytics = () => {
             trend: funnelStats.trend,
             path: '/analytics/funnel',
             component: <Funnel />,
-            gridSize: { xs: 12, md: 7 }
+            gridSize: { xs: 12, md: 5 }
         }
     ];
 
@@ -334,6 +386,31 @@ const Analytics = () => {
 
     return (
         <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                <Tooltip 
+                    title="View Analytics Guide"
+                    placement="left"
+                    arrow
+                >
+                    <IconButton
+                        onClick={() => setHelpOpen(true)}
+                        sx={{
+                            background: 'linear-gradient(135deg, #064E3B 0%, #059669 100%)',
+                            color: 'white',
+                            '&:hover': {
+                                background: 'linear-gradient(135deg, #059669 0%, #064E3B 100%)',
+                            }
+                        }}
+                    >
+                        <HelpIcon />
+                    </IconButton>
+                </Tooltip>
+            </Box>
+
+            <HelpDialog 
+                open={helpOpen}
+                onClose={() => setHelpOpen(false)}
+            />
 
             <Grid container spacing={3}>
                 {charts.map((chart, index) => (
