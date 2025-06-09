@@ -69,13 +69,13 @@ const DeleteAccountModal = ({ open, onClose }) => {
                 handleLogout();
             }
             else {
-                const errorMessage = response.data.detail || response.data || 'Failed to delete account';
+                const errorMessage = response.data.detail || response.data || 'Failed to deactivate account';
                 setError(errorMessage);
                 toast.error(errorMessage);
             }
         } catch (err) {
-            console.error('Error deleting account:', err);
-            const errorMessage = err.response.data.detail || err.response.data || 'Failed to delete account';
+            console.error('Error deactivating account:', err);
+            const errorMessage = err.response.data.detail || err.response.data || 'Failed to deactivate account';
             setError(errorMessage);
             toast.error(errorMessage);
         } finally {
@@ -99,7 +99,7 @@ const DeleteAccountModal = ({ open, onClose }) => {
             }}>
                 <WarningIcon color="error" />
                 <Typography color="error.main" fontWeight="bold">
-                    Delete Account
+                    Deactivate Account
                 </Typography>
             </DialogTitle>
 
@@ -147,7 +147,7 @@ const DeleteAccountModal = ({ open, onClose }) => {
                     onChange={(e) => setReason(e.target.value)}
                     disabled={loading}
                     sx={{ mb: 2, mt: 2 }}
-                    placeholder="Please tell us why you're deleting your account..."
+                    placeholder="Please tell us why you're deactivating your account..."
                 />
             </DialogContent>
 
@@ -166,7 +166,7 @@ const DeleteAccountModal = ({ open, onClose }) => {
                     disabled={!password || loading}
                     startIcon={loading && <CircularProgress size={20} />}
                 >
-                    Delete Account
+                    Deactivate Account
                 </Button>
             </DialogActions>
         </Dialog>

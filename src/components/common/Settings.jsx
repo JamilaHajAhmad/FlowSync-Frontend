@@ -203,7 +203,7 @@ const Settings = () => {
                                 <ListItemIcon>
                                     <Delete color="error" />
                                 </ListItemIcon>
-                                <ListItemText primary="Delete Account" sx={{ color: "error.main" }} />
+                                <ListItemText primary="Deactivate Account" sx={{ color: "error.main" }} />
                             </ListItem>
                         </List>
                     </AccordionDetails>
