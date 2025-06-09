@@ -11,6 +11,9 @@ import { areaElementClasses } from '@mui/x-charts/LineChart';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import CircularProgress from '@mui/material/CircularProgress';
+import { 
+    DataUsageOutlined as NoDataIcon
+} from '@mui/icons-material';
 
 function getDaysInMonth(month, year) {
   const date = new Date(year, month, 0);
@@ -113,6 +116,22 @@ function StatsCard({ taskType }) {
                     headers: { Authorization: `Bearer ${token}` },
                 }
             );
+            console.log('Task statistics response:', response);
+            if (!response.data || response.data.length === 0) {
+  setCardData({
+    title: `${taskType} Tasks`,
+    value: '0',
+    interval: '',
+    trend: 'neutral',
+    trendPercentage: 0,
+    data: [],
+    daysInWeek: [],
+    months: [],
+  });
+  setLoading(false);
+  return;
+}
+
 
             // Sort data by year and month to ensure latest month is first
             const sortedData = [...response.data].sort((a, b) => {
@@ -218,31 +237,70 @@ function StatsCard({ taskType }) {
             </Typography>
           </Stack>
           <Box sx={{ width: '100%', height: 50 }}>
-            <SparkLineChart
-              colors={[chartColor]}
-              data={cardData.data}
-              area
-              showHighlight
-              showTooltip
-              tooltip={{
-                label: 'Tasks',
-                format: (value, index) => {
-                  const date = cardData.daysInWeek?.[index];
-                  return `${date}: ${value} tasks`;
-                },
-              }}
-              xAxis={{
-                scaleType: 'band',
-                data: cardData.daysInWeek || [],
-              }}
-              sx={{
-                [`& .${areaElementClasses.root}`]: {
-                  fill: `url(#area-gradient-${taskType})`,
-                },
-              }}
-            >
-              <AreaGradient color={chartColor} id={`area-gradient-${taskType}`} />
-            </SparkLineChart>
+            {cardData.data.length != 0 ? (
+              <SparkLineChart
+                colors={[chartColor]}
+                data={cardData.data}
+                area
+                showHighlight
+                showTooltip
+                tooltip={{
+                  label: 'Tasks',
+                  format: (value, index) => {
+                    const date = cardData.daysInWeek?.[index];
+                    return `${date}: ${value} tasks`;
+                  },
+                }}
+                xAxis={{
+                  scaleType: 'band',
+                  data: cardData.daysInWeek || [],
+                }}
+                sx={{
+                  [`& .${areaElementClasses.root}`]: {
+                    fill: `url(#area-gradient-${taskType})`,
+                  },
+                }}
+              >
+                <AreaGradient color={chartColor} id={`area-gradient-${taskType}`} />
+              </SparkLineChart>
+            ) : (
+              <Box
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 2,
+                  p: 1.5,
+                  
+                }}
+              >
+                <Stack 
+                    direction="row" 
+                    spacing={1} 
+                    alignItems="center"
+                    sx={{ 
+                        mb: 0.5,
+                        color: trendColors[taskType]
+                    }}
+                >
+                    <NoDataIcon sx={{ fontSize: 18 }} />
+                    
+                </Stack>
+                <Typography 
+                    variant="body2" 
+                    sx={{ 
+                        color: 'text.secondary',
+                        textAlign: 'center',
+                        fontWeight: 500
+                    }}
+                >
+                    No activity recorded
+                </Typography>
+                
+              </Box>
+            )}
           </Box>
         </Stack>
       </CardContent>

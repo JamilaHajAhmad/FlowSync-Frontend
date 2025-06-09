@@ -128,7 +128,7 @@ export default function TasksChart() {
           colors={[theme.palette.primary.main]}
           xAxis={[{
             scaleType: 'point',
-            data: [taskData?.year.toString()],
+            data: [taskData?.year.toString() || new Date().getFullYear().toString()],
             tickInterval: () => true,
           }]}
           series={[
