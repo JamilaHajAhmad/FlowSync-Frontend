@@ -13,7 +13,7 @@ import { toast } from 'react-toastify';
 import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 import CountdownTimer from '../components/CountdownTimer';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import ReactPlayer from 'react-player';
+import TaskHelpDialog from '../help/TaskHelpDialog';
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -496,92 +496,6 @@ const DroppableColumn = ({ status, children }) => {
   );
 };
 
-const DragDropHelpDialog = ({ open, onClose }) => {
-  return (
-    <Dialog 
-      open={open} 
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-    >
-      <DialogTitle sx={{ 
-        borderBottom: '1px solid #e0e0e0',
-        backgroundColor: '#f5f5f5'
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <HelpOutlineIcon />
-          <Typography variant="h6">Task Board Help Guide</Typography>
-        </Box>
-      </DialogTitle>
-      <DialogContent sx={{ mt: 2 }}>
-        <Typography variant="h6" gutterBottom>Drag and Drop Rules:</Typography>
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="body1" gutterBottom>• Tasks can be dragged between columns based on these rules:</Typography>
-          <Box sx={{ pl: 3 }}>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              - Opened tasks can be moved to Frozen or Completed
-            </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              - Frozen tasks can only be moved back to Opened
-            </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              - Delayed tasks can only be moved to Completed
-            </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              - Completed tasks cannot be moved
-            </Typography>
-          </Box>
-        </Box>
-        
-        <Typography variant="h6" gutterBottom>How to Use:</Typography>
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            1. Click and hold the drag handle (⋮⋮) on any task card
-          </Typography>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            2. Drag the task to the desired column
-          </Typography>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            3. Complete any required forms when prompted
-          </Typography>
-        </Box>
-
-        <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>Demo Video:</Typography>
-        <Box sx={{ 
-          position: 'relative',
-          paddingTop: '56.25%' // 16:9 aspect ratio
-        }}>
-          <ReactPlayer
-            url="/videos/drag-drop-demo.mp4" // Update path to start from public folder
-            width="100%"
-            height="100%"
-            controls={true}
-            playing={false}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0
-            }}
-            config={{
-              file: {
-                attributes: {
-                  controlsList: 'download',
-                  disablePictureInPicture: true
-                },
-                forceVideo: true
-              }
-            }}
-            onError={(e) => console.error('Video player error:', e)}
-          />
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Close</Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
-
 const Tasks = () => {
   const [ tasksList, setTasksList ] = useState([]);
   const [ loading, setLoading ] = useState(true);
@@ -909,7 +823,7 @@ const Tasks = () => {
         />
       </DndContext>
       {renderHelpLink()}
-      <DragDropHelpDialog 
+      <TaskHelpDialog 
         open={helpDialogOpen}
         onClose={() => setHelpDialogOpen(false)}
       />
