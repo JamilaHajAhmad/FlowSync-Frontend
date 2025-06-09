@@ -594,13 +594,23 @@ export default function Tasks({
                                 label="Start Date"
                                 value={startDate}
                                 onChange={(newValue) => setStartDate(newValue)}
-                                renderInput={(params) => <TextField {...params} size="small" />}
+                                slotProps={{ 
+                                    textField: { 
+                                        size: "small",
+                                        sx: { width: 200 } // Match width with other fields
+                                    } 
+                                }}
                             />
                             <DatePicker
                                 label="End Date"
                                 value={endDate}
                                 onChange={(newValue) => setEndDate(newValue)}
-                                renderInput={(params) => <TextField {...params} size="small" />}
+                                slotProps={{ 
+                                    textField: { 
+                                        size: "small",
+                                        sx: { width: 200 } // Match width with other fields
+                                    } 
+                                }}
                             />
                         </LocalizationProvider>
 
@@ -649,7 +659,11 @@ export default function Tasks({
                                 setSelectedEmployee('');
                                 setSelectedTaskType('');
                             }}
-                            sx={{ height: 40 }}
+                            sx={{ 
+                                height: 40,
+                                minWidth: 120,
+                                borderColor: 'divider'
+                            }}
                         >
                             Clear Filters
                         </Button>
