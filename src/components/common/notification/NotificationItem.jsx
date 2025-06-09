@@ -92,7 +92,11 @@ export const NotificationItem = ({ notification, onMarkAsRead }) => {
                         sx={{
                             '&:hover': {
                                 bgcolor: 'rgba(5, 150, 105, 0.08)'
-                            }
+                            },
+                            position: 'absolute',
+                            right: 8,
+                            top: '50%',
+                            transform: 'translateY(-20%)',
                         }}
                     >
                         {getIcon()}
