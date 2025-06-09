@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
     Box,
     Button,
@@ -52,10 +52,10 @@ const TwoFactorAuth = () => {
             const role = decodedToken.role;
             const user = JSON.parse(localStorage.getItem('user'));
             if (role === 'Leader') {
-                toast.success(`Welcome back, ${user.displayName}!`);
+                toast.success(`Welcome, ${user.displayName}!`);
                 navigate('/leader-dashboard');
             } else {
-                toast.success(`Welcome back, ${user.displayName}!`);
+                toast.success(`Welcome, ${user.displayName}!`);
                 navigate('/member-dashboard');
             }
         } catch (err) {
