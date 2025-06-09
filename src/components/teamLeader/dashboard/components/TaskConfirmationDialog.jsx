@@ -258,7 +258,7 @@ const TaskConfirmationDialog = ({ open, onClose, taskData, onConfirm, loading })
                         }
                     }}
                 >
-                    Cancel
+                    Back
                 </Button>
                 <Button
                     onClick={onConfirm}
