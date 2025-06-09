@@ -596,7 +596,6 @@ const Requests = () => {
                 )
             }));
             
-            toast.success('Account deletion request approved successfully');
             handleDeleteMemberDialogClose();
             fetchRequests('deleteAccount');
         } catch (error) {
@@ -619,7 +618,6 @@ const Requests = () => {
                 )
             }));
             
-            toast.success('Status change request approved successfully');
             handleDeleteMemberDialogClose(); // Use the existing close handler
             fetchRequests('changeStatus');
         } catch (error) {
@@ -650,7 +648,7 @@ const Requests = () => {
                 <Tab label="Sign Up" />
                 <Tab label="Freeze" />
                 <Tab label="Completion" />
-                <Tab label="Delete Account" />
+                <Tab label="Deactivate Account" />
                 <Tab label="Change Status" />
             </Tabs>
 
