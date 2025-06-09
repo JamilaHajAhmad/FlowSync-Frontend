@@ -17,7 +17,10 @@ import {
     Snackbar,
     ThemeProvider,
     createTheme,
-    Tooltip
+    Tooltip,
+    Popper,
+    ClickAwayListener,
+    Paper as EmojiPaper
 } from '@mui/material';
 import {
     Send as SendIcon,
@@ -26,7 +29,8 @@ import {
     Schedule as PendingIcon,
     Check as CheckIcon,
     People as TeamIcon,
-    ArrowBack
+    ArrowBack,
+    InsertEmoticon as EmojiIcon
 } from '@mui/icons-material';
 import { sendMessage, getConversation, getUnreadMessages, markMessagesAsRead, getChatUsers, sendMessageToTeam } from '../../../services/chatService';
 import * as signalR from '@microsoft/signalr';
@@ -35,6 +39,7 @@ import Logo from '../../../assets/images/logo.png';
 import { decodeToken } from '../../../utils';
 import { toast } from 'react-toastify';
 import TeamMessageDialog from './TeamMessageDialog';
+import EmojiPicker from 'emoji-picker-react';
 
 // Message status constants
 const MESSAGE_STATUS = {
@@ -91,13 +96,17 @@ export default function Chat() {
         }
     });
     // Add new state for team message dialog
-    const [teamMessageDialog, setTeamMessageDialog] = useState(false);
+    const [ teamMessageDialog, setTeamMessageDialog ] = useState(false);
+    const [ showEmojiPicker, setShowEmojiPicker ] = useState(false);
+    const [ emojiAnchorEl, setEmojiAnchorEl ] = useState(null);
 
     // Refs
     const messageEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
     const conversationCacheRef = useRef(new Map());
     const selectedUserIdRef = useRef(null);
+    const emojiButtonRef = useRef(null);
+    const textFieldRef = useRef(null);
 
     // Constants - moved to refs to prevent recreating on each render
     const tokenRef = useRef(localStorage.getItem('authToken'));
@@ -343,9 +352,7 @@ export default function Chat() {
         if (isTeamMessage && isTeamMessageEnabled) {
             try {
                 await sendMessageToTeam(messageContent, tokenRef.current);
-                // Show success notification
                 toast.success('Team message sent successfully');
-                // Reset to direct message mode
                 setIsTeamMessage(false);
             } catch (error) {
                 console.error('Error sending team message:', error);
@@ -357,7 +364,9 @@ export default function Chat() {
         // Handle direct message
         if (!selectedUser) return;
 
-        // Optimistic update
+        const isSelfMessage = selectedUser.id === currentUserIdRef.current;
+
+        // Always do optimistic update - including for self messages
         const tempMessage = {
             id: tempId,
             senderId: currentUserIdRef.current,
@@ -376,12 +385,15 @@ export default function Chat() {
             const response = await sendMessage(selectedUser.id, messageContent, tokenRef.current);
             const sentMessageId = response.data?.id || response.data?.messageId;
 
-            // Update message status to delivered
-            setMessages(prev => prev.map(msg =>
-                msg.id === tempId
-                    ? { ...msg, id: sentMessageId || tempId, status: MESSAGE_STATUS.DELIVERED }
-                    : msg
-            ));
+            // For self messages, don't update status here - let SignalR handle it
+            // For other messages, update status as normal
+            if (!isSelfMessage) {
+                setMessages(prev => prev.map(msg =>
+                    msg.id === tempId
+                        ? { ...msg, id: sentMessageId || tempId, status: MESSAGE_STATUS.DELIVERED }
+                        : msg
+                ));
+            }
 
             // Clear cache for this conversation to force refresh
             conversationCacheRef.current.delete(selectedUser.id);
@@ -389,7 +401,7 @@ export default function Chat() {
         } catch (error) {
             console.error('Error sending message:', error);
 
-            // Update message status to failed
+            // Update message status to failed for all messages (including self messages)
             setMessages(prev => prev.map(msg =>
                 msg.id === tempId
                     ? { ...msg, status: MESSAGE_STATUS.FAILED }
@@ -398,8 +410,9 @@ export default function Chat() {
 
             showError('Failed to send message. Please try again.');
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ newMessage, selectedUser, isTeamMessage, isTeamMessageEnabled, showError ]);
+
 
     // SignalR connection management - Fixed dependencies
     useEffect(() => {
@@ -427,27 +440,58 @@ export default function Chat() {
                     }
                 });
 
+                // Updated SignalR event handler
                 newConnection.on("ReceiveMessage", async (senderId, messageContent, messageId, timestamp, isMine) => {
                     if (!isMounted) return;
 
-                    const newMsg = {
-                        id: messageId,
-                        senderId,
-                        content: messageContent,
-                        timestamp,
-                        isRead: selectedUserIdRef.current === senderId,
-                        isMine
-                    };
+                    const isSelfMessage = senderId === currentUserIdRef.current;
+
+                    // Skip if this is our own message that we just sent to someone else (it's already in the UI)
+                    if (isMine && !isSelfMessage) return;
 
                     if (selectedUserIdRef.current === senderId) {
                         setMessages(prev => {
+                            // For self messages, find and replace the temp message
+                            if (isSelfMessage) {
+                                const existingTempIndex = prev.findIndex(m =>
+                                    m.content === messageContent &&
+                                    m.senderId === senderId &&
+                                    m.id.toString().startsWith('temp-')
+                                );
+
+                                if (existingTempIndex !== -1) {
+                                    // Replace temp message with real message from server
+                                    const newMessages = [ ...prev ];
+                                    newMessages[ existingTempIndex ] = {
+                                        id: messageId,
+                                        senderId,
+                                        content: messageContent,
+                                        timestamp,
+                                        isRead: true,
+                                        isMine: true,
+                                        status: MESSAGE_STATUS.DELIVERED
+                                    };
+                                    return newMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                                }
+                            }
+
                             // Check if message already exists to prevent duplicates
                             if (prev.some(m => m.id === messageId)) return prev;
 
-                            // Add new message and sort by timestamp
+                            // Add new message for non-self messages
+                            const newMsg = {
+                                id: messageId,
+                                senderId,
+                                content: messageContent,
+                                timestamp,
+                                isRead: selectedUserIdRef.current === senderId,
+                                isMine
+                            };
+
                             const newMessages = [ ...prev, newMsg ];
                             return newMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
                         });
+
                         setTimeout(() => {
                             messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
                         }, 100);
@@ -623,7 +667,7 @@ export default function Chat() {
         if (isTeamMessageEnabled) {
             setTeamMessageDialog(true);
         }
-    }, [isTeamMessageEnabled]);
+    }, [ isTeamMessageEnabled ]);
 
     // Add the send team message handler
     const handleSendTeamMessage = async (message) => {
@@ -640,6 +684,24 @@ export default function Chat() {
             console.error('Error sending team message:', error);
             showError('Failed to send team message');
         }
+    };
+
+    // Emoji picker handlers
+    const handleEmojiPickerClick = (event) => {
+        setEmojiAnchorEl(event.currentTarget);
+        setShowEmojiPicker((prev) => !prev);
+    };
+
+    const handleEmojiSelect = (emojiData) => {
+        const emoji = emojiData.emoji;
+        const cursor = textFieldRef.current?.selectionStart || newMessage.length;
+        const newText = newMessage.slice(0, cursor) + emoji + newMessage.slice(cursor);
+        setNewMessage(newText);
+        setShowEmojiPicker(false);
+    };
+
+    const handleClickAway = () => {
+        setShowEmojiPicker(false);
     };
 
     return (
@@ -675,8 +737,8 @@ export default function Chat() {
                 </Snackbar>
 
                 {/* Sidebar */}
-                <Paper className="chat-sidebar" elevation={2} 
-                    sx={{ 
+                <Paper className="chat-sidebar" elevation={2}
+                    sx={{
                         width: 300,
                         height: '100%',
                         display: 'flex',
@@ -687,8 +749,8 @@ export default function Chat() {
                         overflow: 'hidden' // Prevent horizontal scroll
                     }}
                 >
-                    <Box sx={{ 
-                        p: 2, 
+                    <Box sx={{
+                        p: 2,
                         background: 'linear-gradient(135deg, #065f46 0%, #047857 100%)',
                         display: 'flex',
                         alignItems: 'center',
@@ -699,21 +761,21 @@ export default function Chat() {
                                 const role = decodeToken(tokenRef.current).role;
                                 if (role === 'Leader') {
                                     window.location.href = '/leader-dashboard';
-                                }   
+                                }
                                 else {
                                     window.location.href = '/member-dashboard';
                                 }
                             }}
-                            sx={{ 
+                            sx={{
                                 color: 'white',
-                                '&:hover': { 
-                                    bgcolor: 'rgba(255,255,255,0.1)' 
+                                '&:hover': {
+                                    bgcolor: 'rgba(255,255,255,0.1)'
                                 }
                             }}
                         >
                             <ArrowBack />
                         </IconButton>
-                        <img src={Logo} alt="FlowSync" style={{ height: 32 }} />
+                        <img src={Logo} alt="FlowSync" style={{ height: 45 }} />
                         <Box>
                             <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
                                 FlowSync
@@ -939,6 +1001,18 @@ export default function Chat() {
                                 <Box>
                                     <Typography variant="h6" sx={{ fontWeight: 600 }}>
                                         {selectedUser.fullName}
+                                        {selectedUser.id === currentUserIdRef.current && (
+                                            <Typography
+                                                component="span"
+                                                sx={{
+                                                    ml: 1,
+                                                    color: 'text.secondary',
+                                                    fontSize: '0.8rem'
+                                                }}
+                                            >
+                                                (You)
+                                            </Typography>
+                                        )}
                                     </Typography>
                                     <Typography variant="caption" color="text.secondary">
                                         {selectedUser.isOnline ? 'Online' : 'Offline'}
@@ -968,7 +1042,8 @@ export default function Chat() {
                                 }}
                             >
                                 {messages.map((message, index) => {
-                                    const isOwn = message.isMine;
+                                    // In the message rendering part:
+                                    const isOwn = message.isMine || message.senderId === currentUserIdRef.current;
                                     const showAvatar = !isOwn && (
                                         index === 0 ||
                                         messages[ index - 1 ].isMine
@@ -999,7 +1074,7 @@ export default function Chat() {
                                                         src={selectedUser.pictureURL}
                                                         alt={selectedUser.fullName}
                                                     >
-                                                        {selectedUser.fullName[0]?.toUpperCase()}
+                                                        {selectedUser.fullName[ 0 ]?.toUpperCase()}
                                                     </Avatar>
                                                 )}
 
@@ -1020,7 +1095,7 @@ export default function Chat() {
                                                             content: '""',
                                                             position: 'absolute',
                                                             bottom: 0,
-                                                            [isOwn ? 'right' : 'left']: -8,
+                                                            [ isOwn ? 'right' : 'left' ]: -8,
                                                             borderStyle: 'solid',
                                                             borderWidth: '10px',
                                                             borderColor: `transparent ${isOwn ? theme.palette.primary.main : '#f9fafb'} transparent transparent`,
@@ -1028,9 +1103,9 @@ export default function Chat() {
                                                         }
                                                     }}
                                                 >
-                                                    <Typography 
+                                                    <Typography
                                                         variant="body1"
-                                                        sx={{ 
+                                                        sx={{
                                                             fontSize: '0.95rem',
                                                             lineHeight: 1.5,
                                                             wordBreak: 'break-word',
@@ -1046,7 +1121,7 @@ export default function Chat() {
                                                     )}
                                                 </Box>
                                             </Box>
-                                            
+
                                             <Typography
                                                 variant="caption"
                                                 sx={{
@@ -1154,7 +1229,8 @@ export default function Chat() {
                                     borderColor: 'secondary.light',
                                     display: 'flex',
                                     gap: 1,
-                                    bgcolor: 'background.paper'
+                                    bgcolor: 'background.paper',
+                                    position: 'relative' // Add this
                                 }}
                             >
                                 <TextField
@@ -1164,6 +1240,7 @@ export default function Chat() {
                                     variant="outlined"
                                     placeholder="Type a message..."
                                     value={newMessage}
+                                    inputRef={textFieldRef}
                                     onChange={(e) => {
                                         setNewMessage(e.target.value);
                                         handleTyping();
@@ -1182,7 +1259,8 @@ export default function Chat() {
                                             '& textarea': {
                                                 lineHeight: '1.5',
                                                 overflow: 'hidden',
-                                                whiteSpace: 'pre-wrap' // Always allow wrapping for multiline input
+                                                whiteSpace: 'pre-wrap',
+                                                paddingRight: '40px' // Make space for emoji button
                                             },
                                             '&:hover': {
                                                 borderColor: 'primary.main'
@@ -1193,7 +1271,28 @@ export default function Chat() {
                                             }
                                         }
                                     }}
+                                    InputProps={{
+                                        endAdornment: (
+                                            <IconButton
+                                                ref={emojiButtonRef}
+                                                onClick={handleEmojiPickerClick}
+                                                sx={{
+                                                    position: 'absolute',
+                                                    right: 8,
+                                                    top: '50%',
+                                                    transform: 'translateY(-50%)',
+                                                    color: showEmojiPicker ? 'primary.main' : 'action.active',
+                                                    '&:hover': {
+                                                        color: 'primary.main'
+                                                    }
+                                                }}
+                                            >
+                                                <EmojiIcon />
+                                            </IconButton>
+                                        )
+                                    }}
                                 />
+                                
                                 <IconButton
                                     color="primary"
                                     type="submit"
@@ -1208,12 +1307,47 @@ export default function Chat() {
                                             bgcolor: 'grey.200'
                                         },
                                         width: 40,
-                                        height: 40,
-
+                                        height: 40
                                     }}
                                 >
                                     <SendIcon />
                                 </IconButton>
+
+                                {/* Emoji Picker Popper */}
+                                <Popper
+                                    open={showEmojiPicker}
+                                    anchorEl={emojiAnchorEl}
+                                    placement="top-end"
+                                    sx={{ zIndex: 1300 }}
+                                >
+                                    <ClickAwayListener onClickAway={handleClickAway}>
+                                        <EmojiPaper 
+                                            elevation={8}
+                                            sx={{ 
+                                                borderRadius: 2,
+                                                mt: 1,
+                                                overflow: 'hidden',
+                                                '& .EmojiPickerReact': {
+                                                    border: 'none',
+                                                    boxShadow: 'none'
+                                                }
+                                            }}
+                                        >
+                                            <EmojiPicker
+                                                onEmojiClick={handleEmojiSelect}
+                                                autoFocusSearch={false}
+                                                width={320}
+                                                height={400}
+                                                searchDisabled
+                                                skinTonesDisabled
+                                                previewConfig={{
+                                                    showPreview: false
+                                                }}
+                                                lazyLoadEmojis
+                                            />
+                                        </EmojiPaper>
+                                    </ClickAwayListener>
+                                </Popper>
                             </Box>
                         </>
                     ) : (
