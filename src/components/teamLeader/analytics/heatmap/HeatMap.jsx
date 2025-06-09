@@ -5,6 +5,7 @@ import { DateRange as DateRangeIcon } from '@mui/icons-material';
 import axios from 'axios';
 import { transformApiData } from './data';
 import { useChartData } from '../../../../context/ChartDataContext';
+import { DataUsageOutlined as NoDataIcon } from '@mui/icons-material';
 
 const HeatMap = () => {
     const [data, setData] = useState([]);
@@ -46,13 +47,37 @@ const HeatMap = () => {
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;
 
+    // Handle empty or invalid data states
+    if (!data || data.length === 0 || (data.length === 1 && data[0].id === 'No Data')) {
+        return (
+            <Box
+                sx={{
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'column',
+                    gap: 1,
+                    color: 'text.secondary',
+                    bgcolor: 'background.paper',
+                    borderRadius: 1
+                }}
+            >
+                <NoDataIcon sx={{ fontSize: 40, opacity: 0.7 }} />
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    No department activity data available
+                </Typography>
+            </Box>
+        );
+    }
+
     return (
         <Box sx={{ position: 'relative', height: '100%' }}>
             {dateRange && (
                 <Box
                     sx={{
                         position: 'absolute',
-                         top: -20,
+                        top: -20,
                         right: 40,
                         display: 'flex',
                         alignItems: 'center',

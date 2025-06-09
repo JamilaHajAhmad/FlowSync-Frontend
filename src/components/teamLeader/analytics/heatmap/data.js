@@ -1,8 +1,28 @@
 const transformApiData = (response) => {
     const { date: apiData, dateRange } = response;
     
+    // Handle empty response
+    if (!apiData || apiData.length === 0) {
+        return {
+            data: [{
+                id: 'No Data',
+                data: ['Opened', 'Completed', 'Delayed', 'Frozen'].map(status => ({
+                    x: status,
+                    y: 0
+                }))
+            }],
+            dateRange: {
+                from: 'No date range',
+                to: 'No date range'
+            },
+            totalDepartments: 0,
+            totalTasks: 0
+        };
+    }
+    
     // Group data by department and status
     const departmentMap = {};
+    let totalTasks = 0;
     
     // Initialize all departments with all statuses set to 0
     const statuses = ['Opened', 'Completed', 'Delayed', 'Frozen'];
@@ -24,27 +44,35 @@ const transformApiData = (response) => {
         );
         if (statusIndex !== -1) {
             departmentMap[item.department].data[statusIndex].y = item.count;
+            totalTasks += item.count;
         }
     });
 
-    // Format date range
+    // Format date range with safety checks
+    const formatDate = (dateString) => {
+        if (!dateString) return 'No date';
+        try {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        } catch {
+            return 'Invalid date';
+        }
+    };
+
     const formattedDateRange = {
-        from: formatDate(dateRange.from),
-        to: formatDate(dateRange.to)
+        from: formatDate(dateRange?.from),
+        to: formatDate(dateRange?.to)
     };
 
     return {
         data: Object.values(departmentMap),
-        dateRange: formattedDateRange
+        dateRange: formattedDateRange,
+        totalDepartments: Object.keys(departmentMap).length,
+        totalTasks: totalTasks
     };
-};
-
-const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-    });
 };
 
 export { transformApiData };

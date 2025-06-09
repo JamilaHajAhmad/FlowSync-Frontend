@@ -5,10 +5,11 @@ import { useState, useEffect, useRef } from 'react';
 import { transformApiData } from './data';
 import axios from 'axios';
 import { useChartData } from '../../../../context/ChartDataContext';
+import { DataUsageOutlined } from '@mui/icons-material'; 
 
 const Funnel = () => {
-    const [ data, setData ] = useState([]);
     const [ dateRange, setDateRange ] = useState(null);
+    const [ data, setData ] = useState([]);
     const [ loading, setLoading ] = useState(true);
     const [ error, setError ] = useState(null);
     const { updateChartData } = useChartData();
@@ -46,6 +47,25 @@ const Funnel = () => {
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;
+
+    if (!data || data.length === 0 || (data.length === 1 && data[0].id === 'empty_state')) {
+        return (
+            <Box
+                sx={{
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'column',
+                    gap: 1,
+                    color: 'text.secondary'
+                }}
+            >
+                <DataUsageOutlined sx={{ fontSize: 40, opacity: 0.7 }} />
+                <Typography variant="body2">No activity data available</Typography>
+            </Box>
+        );
+    }
 
     return (
         <Box sx={{ position: 'relative', height: '100%' }}>

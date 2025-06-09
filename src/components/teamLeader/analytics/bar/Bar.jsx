@@ -5,6 +5,7 @@ import { transformApiData } from './data';
 import { ResponsiveBar } from '@nivo/bar';
 import { useChartData } from '../../../../context/ChartDataContext';
 import axios from 'axios';
+import { DataUsageOutlined } from '@mui/icons-material'; // Importing icon for empty state
 
 const Bar = () => {
     const [ data, setData ] = useState([]);
@@ -51,6 +52,25 @@ const Bar = () => {
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;
+
+    if (!data || data.length === 0 || (data.length === 1 && data[0].member === 'No Data Available')) {
+        return (
+            <Box
+                sx={{
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'column',
+                    gap: 1,
+                    color: 'text.secondary'
+                }}
+            >
+                <DataUsageOutlined sx={{ fontSize: 40, opacity: 0.7 }} />
+                <Typography variant="body2">No member activity data available</Typography>
+            </Box>
+        );
+    }
 
     return (
         <Box sx={{ position: 'relative', height: '100%' }}>

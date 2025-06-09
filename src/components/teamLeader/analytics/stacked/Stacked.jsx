@@ -1,10 +1,11 @@
 import { Box, Typography } from '@mui/material';
 import { ResponsiveBar } from '@nivo/bar';
-import { DateRange as DateRangeIcon } from '@mui/icons-material';
+import { DataUsageOutlined as NoDataIcon } from '@mui/icons-material';
 import { useState, useEffect, useRef } from 'react';
 import { transformApiData } from './data';
 import axios from 'axios';
 import { useChartData } from '../../../../context/ChartDataContext';
+import { DateRange as DateRangeIcon } from '@mui/icons-material';
 
 const Stacked = () => {
     const [data, setData] = useState([]);
@@ -47,14 +48,40 @@ const Stacked = () => {
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;
 
+    // Handle empty or invalid data states
+    if (!data || 
+        data.length === 0 || 
+        (data.length === 1 && data[0].date === 'No Data')) {
+        return (
+            <Box
+                sx={{
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'column',
+                    gap: 1,
+                    color: 'text.secondary',
+                    bgcolor: 'background.paper',
+                    borderRadius: 1
+                }}
+            >
+                <NoDataIcon sx={{ fontSize: 40, opacity: 0.7 }} />
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    No activity data available
+                </Typography>
+            </Box>
+        );
+    }
+
     return (
         <Box sx={{ position: 'relative', height: '100%' }}>
             {dateRange && (
                 <Box
                     sx={{
                         position: 'absolute',
-                        top: -5,
-                        right: 40,
+                        top: -20,
+                        right: 50,
                         display: 'flex',
                         alignItems: 'center',
                         gap: 1,
@@ -86,29 +113,15 @@ const Stacked = () => {
                 data={data}
                 keys={['activities']}
                 indexBy="date"
-                margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
+                margin={{ top: 20, right: 30, bottom: 50, left: 60 }}
                 padding={0.3}
-                colors={'#ed6c02'} // Use the orange color from your data
-                theme={{
-                    background: 'transparent',
-                    textColor: '#333333',
-                    fontSize: 11,
-                    axis: {
-                        ticks: {
-                            text: {
-                                fill: '#666666'
-                            }
-                        },
-                        legend: {
-                            text: {
-                                fill: '#333333'
-                            }
-                        }
-                    }
-                }}
+                valueScale={{ type: 'linear' }}
+                indexScale={{ type: 'band', round: true }}
+                colors={({ data }) => data.activitiesColor}
+                borderRadius={4}
                 borderColor={{
                     from: 'color',
-                    modifiers: [['darker', 0.2]]
+                    modifiers: [['darker', 1.6]]
                 }}
                 axisTop={null}
                 axisRight={null}
@@ -124,7 +137,7 @@ const Stacked = () => {
                     tickSize: 5,
                     tickPadding: 5,
                     tickRotation: 0,
-                    legend: 'Activity Count',
+                    legend: 'Activities',
                     legendPosition: 'middle',
                     legendOffset: -40
                 }}
@@ -134,30 +147,45 @@ const Stacked = () => {
                     from: 'color',
                     modifiers: [['darker', 1.6]]
                 }}
-                legends={[
-                    {
-                        dataFrom: 'keys',
-                        anchor: 'bottom-right',
-                        direction: 'column',
-                        justify: false,
-                        translateX: 120,
-                        translateY: 0,
-                        itemsSpacing: 2,
-                        itemWidth: 100,
-                        itemHeight: 20,
-                        itemDirection: 'left-to-right',
-                        itemOpacity: 0.85,
-                        symbolSize: 20,
-                        effects: [
-                            {
-                                on: 'hover',
-                                style: {
-                                    itemOpacity: 1
-                                }
+                animate={true}
+                motionConfig="gentle"
+                tooltip={({ value, indexValue }) => (
+                    <Box
+                        sx={{
+                            padding: '8px 12px',
+                            background: 'rgba(255, 255, 255, 0.95)',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+                            borderRadius: 1,
+                            fontSize: '13px',
+                            color: 'text.primary'
+                        }}
+                    >
+                        <strong>{indexValue}:</strong> {value} activities
+                    </Box>
+                )}
+                theme={{
+                    axis: {
+                        ticks: {
+                            text: {
+                                fill: '#6B7280',
+                                fontSize: 11
                             }
-                        ]
+                        },
+                        legend: {
+                            text: {
+                                fill: '#374151',
+                                fontSize: 12,
+                                fontWeight: 500
+                            }
+                        }
+                    },
+                    tooltip: {
+                        container: {
+                            background: 'white',
+                            fontSize: 12
+                        }
                     }
-                ]}
+                }}
                 role="application"
                 ariaLabel="Activity calendar chart"
                 barAriaLabel={e=>e.id+": "+e.formattedValue+" activities on "+e.indexValue}

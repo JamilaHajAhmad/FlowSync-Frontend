@@ -1,7 +1,23 @@
 const transformApiData = (response) => {
     const { date: apiData, dateRange } = response;
     
-    if (!apiData || apiData.length === 0) return { data: [], dateRange: null };
+    // Return default structure for empty data
+    if (!apiData || apiData.length === 0) {
+        return {
+            data: [
+                {
+                    id: 'empty_state',
+                    value: 0,
+                    label: 'No Data Available',
+                    color: '#cbd5e1'
+                }
+            ],
+            dateRange: {
+                from: 'No date range',
+                to: 'No date range'
+            }
+        };
+    }
 
     // Define color mapping
     const colorMap = {
@@ -33,12 +49,17 @@ const transformApiData = (response) => {
         .sort((a, b) => b.value - a.value);
 
     const formattedDateRange = {
-        from: formatDate(dateRange.from),
-        to: formatDate(dateRange.to)
+        from: dateRange?.from ? formatDate(dateRange.from) : 'No start date',
+        to: dateRange?.to ? formatDate(dateRange.to) : 'No end date'
     };
 
     return {
-        data: result,
+        data: result.length > 0 ? result : [{
+            id: 'empty_state',
+            value: 0,
+            label: 'No Activity Recorded',
+            color: '#cbd5e1'
+        }],
         dateRange: formattedDateRange
     };
 };

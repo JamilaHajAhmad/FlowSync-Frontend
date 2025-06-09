@@ -1,10 +1,11 @@
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { ResponsivePie } from '@nivo/pie';
-import { DateRange as DateRangeIcon } from '@mui/icons-material';
+import { DataUsageOutlined as NoDataIcon } from '@mui/icons-material';
 import { useState, useEffect, useRef } from 'react';
 import { transformApiData } from './data';
 import axios from 'axios';
 import { useChartData } from '../../../../context/ChartDataContext';
+import DateRangeIcon from '@mui/icons-material/DateRange';
 
 const Pie = () => {
     const [data, setData] = useState([]);
@@ -46,6 +47,32 @@ const Pie = () => {
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;
+
+    // Handle empty or invalid data states
+    if (!data || 
+        data.length === 0 || 
+        (data.length === 1 && data[0].id === 'No Data')) {
+        return (
+            <Box
+                sx={{
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'column',
+                    gap: 1,
+                    color: 'text.secondary',
+                    bgcolor: 'background.paper',
+                    borderRadius: 1
+                }}
+            >
+                <NoDataIcon sx={{ fontSize: 40, opacity: 0.7 }} />
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    No task status data available
+                </Typography>
+            </Box>
+        );
+    }
 
     return (
         <Box sx={{ position: 'relative', height: '100%' }}>
@@ -98,6 +125,17 @@ const Pie = () => {
                 arcLinkLabelsColor={{ from: 'color' }}
                 arcLabelsSkipAngle={10}
                 arcLabelsTextColor={{ from: 'color', modifiers: [['darker', 2]] }}
+                defs={[
+                    {
+                        id: 'dots',
+                        type: 'patternDots',
+                        background: 'inherit',
+                        color: 'rgba(255, 255, 255, 0.3)',
+                        size: 4,
+                        padding: 1,
+                        stagger: true
+                    }
+                ]}
                 legends={[
                     {
                         anchor: 'bottom',
@@ -114,6 +152,46 @@ const Pie = () => {
                         symbolShape: 'circle'
                     }
                 ]}
+                tooltip={({ datum }) => (
+                    <Box
+                        sx={{
+                            padding: '8px 12px',
+                            background: 'rgba(255, 255, 255, 0.95)',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+                            borderRadius: 1,
+                            fontSize: '13px',
+                            color: 'text.primary'
+                        }}
+                    >
+                        <strong>{datum.label}:</strong> {datum.value} tasks
+                        <br />
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            {((datum.value / data.reduce((sum, d) => sum + d.value, 0)) * 100).toFixed(1)}% of total
+                        </Typography>
+                    </Box>
+                )}
+                theme={{
+                    tooltip: {
+                        container: {
+                            background: 'white',
+                            fontSize: 12
+                        }
+                    },
+                    labels: {
+                        text: {
+                            fontSize: 11,
+                            fontWeight: 500
+                        }
+                    },
+                    legends: {
+                        text: {
+                            fontSize: 11,
+                            fill: '#333333'
+                        }
+                    }
+                }}
+                animate={true}
+                motionConfig="gentle"
             />
         </Box>
     );
