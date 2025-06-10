@@ -9,16 +9,18 @@ import {
     Button,
     Menu,
     MenuItem,
-    TextField,
     Select,
     FormControl,
     InputLabel,
     OutlinedInput,
+    Tooltip,
+    IconButton 
 } from "@mui/material";
-import { Add as AddIcon, FileDownload as FileDownloadIcon } from '@mui/icons-material';
+import { Add as AddIcon, FileDownload as FileDownloadIcon, Edit as EditIcon } from '@mui/icons-material';
 import Box from "@mui/material/Box";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import CreateTaskForm from '../components/CreateTaskForm';
+import EditTaskForm from '../components/EditTaskForm';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -47,7 +49,7 @@ const getStatusColor = (status) => {
     }
 };
 
-const getColumns = (tab) => {
+const getColumns = (tab, handleEditTask) => {
     const baseColumns = [
         {
             accessorKey: "name",
@@ -93,15 +95,35 @@ const getColumns = (tab) => {
         accessorKey: "status",
         header: "Status",
         size: 100,
-        Cell: ({ cell }) => (
-            <Chip
-                label={cell.getValue()}
-                sx={{
-                    fontSize: "12px",
-                    color: getStatusColor(cell.getValue()).color,
-                    backgroundColor: getStatusColor(cell.getValue()).background,
-                }}
-            />
+        Cell: ({ cell, row }) => (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Chip
+                    label={cell.getValue()}
+                    sx={{
+                        fontSize: "12px",
+                        color: getStatusColor(cell.getValue()).color,
+                        backgroundColor: getStatusColor(cell.getValue()).background,
+                    }}
+                />
+                {cell.getValue() === "Completed" && row.original.isDelayed && (
+                    <Tooltip title="This task was delayed before completion" placement="top">
+                        <Chip
+                            size="small"
+                            label="Was Delayed"
+                            sx={{
+                                height: '20px',
+                                fontSize: '10px',
+                                color: '#991b1b',
+                                backgroundColor: '#fee2e2',
+                                border: '1px dashed #ef4444',
+                                '& .MuiChip-label': {
+                                    padding: '0 6px',
+                            }
+                        }}
+                    />
+                    </Tooltip>
+                )}
+            </Box>
         ),
     };
 
@@ -124,6 +146,43 @@ const getColumns = (tab) => {
                     accessorKey: "caseSource",
                     header: "Case Source",
                     size: 110,
+                },
+                {
+                    id: 'actions',
+                    header: 'Actions',
+                    size: 100,
+                    Cell: ({ row }) => (
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Tooltip 
+                                title={
+                                    row.original.status === "Completed" 
+                                        ? "Completed tasks cannot be edited" 
+                                        : "Edit Task"
+                                } 
+                                placement="left"
+                            >
+                                <span> {/* Wrapper to handle disabled state */}
+                                    <IconButton
+                                        size="small"
+                                        color="primary"
+                                        onClick={() => handleEditTask(row.original)}
+                                        disabled={row.original.status === "Completed"}
+                                        sx={{
+                                            '&:hover': {
+                                                backgroundColor: 'rgba(5, 150, 105, 0.04)'
+                                            },
+                                            '&.Mui-disabled': {
+                                                opacity: 0.5,
+                                                color: 'grey.400'
+                                            }
+                                        }}
+                                    >
+                                        <EditIcon fontSize="small" />
+                                    </IconButton>
+                                </span>
+                            </Tooltip>
+                        </Box>
+                    ),
                 }
             ];
         case 'Completed':
@@ -196,11 +255,24 @@ export default function Tasks({
     const [selectedEmployee, setSelectedEmployee] = useState('');
     const [selectedTaskType, setSelectedTaskType] = useState('');
     const [members, setMembers] = useState([]); // New state for member names
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [selectedTask, setSelectedTask] = useState(null);
     
     const open = Boolean(anchorEl);
 
     const handleOpenDialog = () => setOpenDialog(true);
     const handleCloseDialog = () => setOpenDialog(false);
+
+    // Define handleEditTask with useCallback to prevent unnecessary re-renders
+    const handleEditTask = useCallback((task) => {
+        setSelectedTask(task);
+        setEditDialogOpen(true);
+    }, []);
+
+    const handleEditClose = () => {
+        setSelectedTask(null);
+        setEditDialogOpen(false);
+    };
 
     const handleExportClick = (event) => {
         setAnchorEl(event.currentTarget);
@@ -237,18 +309,46 @@ export default function Tasks({
         window.URL.revokeObjectURL(url);
     };
 
+    const getExportTitle = () => {
+        const filters = [];
+        
+        // Add active filters to the title
+        if (selectedTaskType) filters.push(selectedTaskType);
+        if (selectedEmployee) {
+            const employeeName = members.find(m => m.id === selectedEmployee)?.fullName;
+            if (employeeName) filters.push(`${employeeName}'s Tasks`);
+        }
+        if (startDate || endDate) {
+            const dateRange = [];
+            if (startDate) dateRange.push(startDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+            if (endDate) dateRange.push(endDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+            filters.push(`${dateRange.join('-')}`);
+        }
+
+        // If no filters are active, use the tab name
+        if (filters.length === 0) {
+            return `${activeTab}-tasks`;
+        }
+
+        // Combine filters for the title
+        return `tasks-${filters.join('-')}`.toLowerCase().replace(/\s+/g, '-');
+    };
+
     const handleDownload = (fileType) => {
+        const fileName = getExportTitle();
+        
+        // Update export data mapping
         const exportData = filteredTasks.map(task => ({
             Name: task.name,
             Title: task.title,
-            Status: task.status,
+            Status: task.status + (task.status === "Completed" && task.isDelayed ? ' (Was Delayed)' : ''),
             Priority: task.priority,
             'FRN Number': task.frnNumber,
             'OSS Number': task.ossNumber,
             'Open Date': task.openDate,
             ...(activeTab === 'Completed' && { 
                 'Completed At': task.completedAt,
-                'Notes': task.notes 
+                'Notes': task.notes
             }),
             ...(activeTab === 'Frozen' && { 
                 'Frozen At': task.frozenAt,
@@ -262,7 +362,7 @@ export default function Tasks({
 
         if (fileType === 'csv') {
             try {
-                exportToCSV(exportData, `${activeTab.toLowerCase()}-tasks`);
+                exportToCSV(exportData, fileName);
                 toast.success('CSV file exported successfully');
             } catch (error) {
                 console.error("Error creating CSV file:", error);
@@ -271,10 +371,10 @@ export default function Tasks({
         } else if (fileType === 'pdf') {
             const doc = new jsPDF('landscape');
             
-            // Add title
+            // Update PDF title to reflect filters
             doc.setFontSize(16);
             doc.setTextColor(5, 150, 105);
-            doc.text(`${activeTab} Tasks`, 14, 15);
+            doc.text(getExportTitle().replace(/-/g, ' ').toUpperCase(), 14, 15);
 
             // Add date range metadata
             doc.setFontSize(10);
@@ -312,21 +412,22 @@ export default function Tasks({
                 columnStyles: {
                     0: { cellWidth: 30 }, // Name
                     1: { cellWidth: 30 }, // Title
-                    2: { cellWidth: 20 }, // Status
+                    2: { cellWidth: 25 }, // Status (increased width for delayed info)
                     3: { cellWidth: 20 }, // Priority
                     4: { cellWidth: 25 }, // FRN
                     5: { cellWidth: 25 }, // OSS
                     6: { cellWidth: 25 }, // Open Date
                     ...(columns.length > 7 && {
                         7: { cellWidth: 25 },
-                        8: { cellWidth: 30 },
-                        9: { cellWidth: 30 }
+                        8: { cellWidth: 25 },
+                        9: { cellWidth: 25 },
+                        10: { cellWidth: 20 } // Was Delayed column
                     })
                 },
                 margin: { top: yPosition + 5 }
             });
 
-            doc.save(`${activeTab.toLowerCase()}-tasks.pdf`);
+            doc.save(`${fileName}.pdf`);
             toast.success('PDF file exported successfully');
         } 
         else if (fileType === 'excel') {
@@ -359,17 +460,18 @@ export default function Tasks({
                 ws['!cols'] = [
                     { wch: 20 }, // Name
                     { wch: 30 }, // Title
-                    { wch: 15 }, // Status
+                    { wch: 20 }, // Status (increased width for delayed info)
                     { wch: 15 }, // Priority
                     { wch: 15 }, // FRN
                     { wch: 15 }, // OSS
                     { wch: 15 }, // Open Date
                     { wch: 20 }, // Additional columns
-                    { wch: 25 }  // Additional columns
+                    { wch: 25 }, // Additional columns
+                    { wch: 15 }  // Was Delayed column
                 ];
 
-                XLSX.utils.book_append_sheet(wb, ws, `${activeTab} Tasks`);
-                XLSX.writeFile(wb, `${activeTab.toLowerCase()}-tasks.xlsx`);
+                XLSX.utils.book_append_sheet(wb, ws, getExportTitle().replace(/-/g, ' '));
+                XLSX.writeFile(wb, `${fileName}.xlsx`);
                 toast.success('Excel file exported successfully');
             } catch (error) {
                 console.error("Error creating Excel file:", error);
@@ -391,12 +493,13 @@ export default function Tasks({
                 console.log('Fetched tasks:', response.data);
                 
                 const formattedTasks = response.data.map(task => ({
-                    id: task.id,
+                    taskId: task.taskId,
                     name: task.assignedMember.fullName,
                     assignedMember: task.assignedMember, // Keep full member object
                     title: task.taskTitle,
                     deadline: task.deadline ? new Date(task.deadline) : null,
                     status: task.status,
+                    isDelayed: task.isDelayed,
                     priority: task.priority,
                     frnNumber: task.frnNumber,
                     ossNumber: task.ossNumber,
@@ -484,9 +587,12 @@ export default function Tasks({
         setFilteredTasks(displayTasks);
     }, [rawTasks, startDate, endDate, selectedEmployee, selectedTaskType]);
 
+    // Memoize columns to prevent unnecessary recalculations
+    const columns = useMemo(() => getColumns(activeTab, handleEditTask), [activeTab, handleEditTask]);
+
     // Update table configuration
     const table = useMaterialReactTable({
-        columns: getColumns(activeTab),
+        columns,
         data: filteredTasks,
         enableTopToolbar: true,
         enableBottomToolbar: true,
@@ -676,6 +782,14 @@ export default function Tasks({
     return (
         <Box sx={{ height: 520, width: containerWidth, flexGrow: 1 }}>
             <CreateTaskForm open={openDialog} onClose={handleCloseDialog} />
+            {/* Add EditTaskForm component */}
+            {selectedTask && (
+                <EditTaskForm
+                    open={editDialogOpen}
+                    onClose={handleEditClose}
+                    task={selectedTask}
+                />
+            )}
             
             {!hideCreateButton && (
                 <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
