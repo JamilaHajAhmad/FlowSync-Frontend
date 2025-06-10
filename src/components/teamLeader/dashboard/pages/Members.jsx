@@ -47,7 +47,7 @@ export default function Members({ showActions = true }) {
                     email: member.email,
                     tasks: member.ongoingTasks,
                     pictureURL: member.pictureURL,
-                    isRemoved: member.isRemoved,
+                    isDeactivated: member.isDeactivated,
                 }));
                 setRows(formattedMembers);
             } catch (error) {
@@ -61,8 +61,8 @@ export default function Members({ showActions = true }) {
         fetchMembers();
     }, []);
 
-    const getStatusColor = (status, isRemoved) => {
-        if (isRemoved) {
+    const getStatusColor = (status, isDeactivated) => {
+        if (isDeactivated) {
             return { color: "#ef4444", background: "#fef2f2" };
         }
         status = formatString(status);
@@ -98,14 +98,14 @@ export default function Members({ showActions = true }) {
                                 width: 32,
                                 height: 32,
                                 border: '2px solid #f3f4f6',
-                                filter: row.original.isRemoved ? 'grayscale(100%)' : 'none'
+                                filter: row.original.isDeactivated ? 'grayscale(100%)' : 'none'
                             }}
                         />
                     </Box>
                     <Typography
                         sx={{
                             fontWeight: 500,
-                            color: row.original.isRemoved ? '#94a3b8' : '#111827',
+                            color: row.original.isDeactivated ? '#94a3b8' : '#111827',
                         }}
                     >
                         {cell.getValue()}
@@ -118,11 +118,11 @@ export default function Members({ showActions = true }) {
             header: "Status",
             Cell: ({ cell, row }) => (
                 <Chip
-                    label={row.original.isRemoved ? "Deactivated" : formatString(cell.getValue())}
+                    label={row.original.isDeactivated ? "Deactivated" : formatString(cell.getValue())}
                     sx={{
                         fontSize: "12px",
-                        color: getStatusColor(cell.getValue(), row.original.isRemoved).color,
-                        backgroundColor: getStatusColor(cell.getValue(), row.original.isRemoved).background,
+                        color: getStatusColor(cell.getValue(), row.original.isDeactivated).color,
+                        backgroundColor: getStatusColor(cell.getValue(), row.original.isDeactivated).background,
                     }}
                 />
             ),
@@ -140,7 +140,7 @@ export default function Members({ showActions = true }) {
             header: "Actions",
             enableColumnFilter: false,
             Cell: ({ row }) => {
-                if (row.original.isRemoved) {
+                if (row.original.isDeactivated) {
                     return (
                         <Stack direction="row" spacing={1}>
                             <Button
@@ -259,7 +259,7 @@ export default function Members({ showActions = true }) {
     const handleDownload = (fileType) => {
         // Filter out removed members and prepare export data
         const exportData = rows
-            .filter(row => !row.isRemoved)
+            .filter(row => !row.isDeactivated)
             .map(row => ({
                 Name: row.name,
                 Status: formatString(row.status),
@@ -364,16 +364,16 @@ export default function Members({ showActions = true }) {
         },
         muiTableBodyRowProps: ({ row }) => ({
             sx: {
-                backgroundColor: row.original.isRemoved ? '#f8fafc' : 'inherit',
+                backgroundColor: row.original.isDeactivated ? '#f8fafc' : 'inherit',
                 '&:hover': {
-                    backgroundColor: row.original.isRemoved ? '#f1f5f9' : undefined,
+                    backgroundColor: row.original.isDeactivated ? '#f1f5f9' : undefined,
                 },
-                opacity: row.original.isRemoved ? 0.75 : 1,
+                opacity: row.original.isDeactivated ? 0.75 : 1,
             }
         }),
         muiTableBodyCellProps: ({ row }) => ({
             sx: {
-                color: row.original.isRemoved ? '#94a3b8' : 'inherit',
+                color: row.original.isDeactivated ? '#94a3b8' : 'inherit',
             }
         }),
         renderTopToolbarCustomActions: () => (
@@ -423,7 +423,7 @@ export default function Members({ showActions = true }) {
         setRows(prevRows => 
             prevRows.map(row => 
                 row.id === memberId 
-                    ? { ...row, isRemoved: true, status: 'Removed', tasks: 0 }
+                    ? { ...row, isDeactivated: true, status: 'Removed', tasks: 0 }
                     : row
             )
         );
