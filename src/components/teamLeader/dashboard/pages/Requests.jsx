@@ -179,7 +179,7 @@ const Requests = () => {
                 [type]: prev[type].filter(req => req.requestId !== id)
             }));
             
-            toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} request rejected successfully`);
+            toast.success(`${type === 'deleteAccount' ? 'DeactivateAccount ' : type.charAt(0).toUpperCase() + type.slice(1)} request rejected successfully`);
             fetchRequests(type);
         } catch (error) {
             console.error('Error rejecting request:', error);
