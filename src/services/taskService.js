@@ -81,3 +81,13 @@ export const reassignTask = async (frnNumber, newMemberId, token) => {
     );
 };
 
+export const editTask = async (taskId, taskData, token) => {
+    return await api.patch(
+        `/taskmanagement/edit-task/${taskId}`,
+        taskData,
+        {
+            headers: { Authorization: `Bearer ${token}` }
+        }
+    );
+};
+
