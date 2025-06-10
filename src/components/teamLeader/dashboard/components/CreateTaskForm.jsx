@@ -29,31 +29,31 @@ import { getEmployeesWithTasks } from '../../../../services/employeeService';
 import TaskConfirmationDialog from './TaskConfirmationDialog';
 
 const caseSources = [
-  'JebelAli',          
-  'AlRaffa',              
-  'AlRashidiya',          
-  'AlBarsha',             
-  'BurDubai',            
-  'Lahbab',               
-  'AlFuqaa',              
-  'Ports',                
-  'AlQusais',             
-  'AlMuraqqabat',         
-  'Naif',                 
-  'AlKhawanij',        
-  'Hatta',                
-  'AirportSecurity',      
-  'PublicProsecution',    
-  'DubaiMunicipality',    
-  'DubaiCustoms',         
-  'RasAlKhaimah',         
-  'UmmAlQuwain',      
-  'Ajman',                
-  'AbuDhabi',             
-  'Fujairah',             
-  'Sharjah',              
-  'Forensics',            
-  'MinistryOfDefense'     
+  'JebelAli',
+  'AlRaffa',
+  'AlRashidiya',
+  'AlBarsha',
+  'BurDubai',
+  'Lahbab',
+  'AlFuqaa',
+  'Ports',
+  'AlQusais',
+  'AlMuraqqabat',
+  'Naif',
+  'AlKhawanij',
+  'Hatta',
+  'AirportSecurity',
+  'PublicProsecution',
+  'DubaiMunicipality',
+  'DubaiCustoms',
+  'RasAlKhaimah',
+  'UmmAlQuwain',
+  'Ajman',
+  'AbuDhabi',
+  'Fujairah',
+  'Sharjah',
+  'Forensics',
+  'MinistryOfDefense'
 ];
 
 const validationSchema = Yup.object({
@@ -81,42 +81,42 @@ const validationSchema = Yup.object({
 
 const CreateTaskForm = ({ open, onClose }) => {
   const token = localStorage.getItem('authToken');
-  const [loading, setLoading] = useState(false);
-  const [employees, setEmployees] = useState([]);
-  const [employeesLoading, setEmployeesLoading] = useState(true);
-  const [employeesError, setEmployeesError] = useState(null);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [confirmationData, setConfirmationData] = useState(null);
+  const [ loading, setLoading ] = useState(false);
+  const [ employees, setEmployees ] = useState([]);
+  const [ employeesLoading, setEmployeesLoading ] = useState(true);
+  const [ employeesError, setEmployeesError ] = useState(null);
+  const [ showConfirmation, setShowConfirmation ] = useState(false);
+  const [ confirmationData, setConfirmationData ] = useState(null);
 
   // Add useEffect to fetch employees
   useEffect(() => {
     const fetchEmployees = async () => {
-        try {
-            setEmployeesLoading(true);
-            const data = await getEmployeesWithTasks(token);
-            console.log('Fetched employees:', data.data);
-            // Sort by tasks count, then alphabetically
-            const sortedEmployees = data.data.sort((a, b) => {
-                const taskDiff = a.ongoingTasks - b.ongoingTasks;
-                // If task counts are equal, sort alphabetically
-                return taskDiff === 0 ? 
-                    a.fullName.localeCompare(b.fullName) : 
-                    taskDiff;
-            });
-            setEmployees(sortedEmployees);
-        } catch (error) {
-            setEmployeesError(error.message);
-            toast.error('Failed to load employees');
-        } finally {
-            setEmployeesLoading(false);
-        }
+      try {
+        setEmployeesLoading(true);
+        const data = await getEmployeesWithTasks(token);
+        console.log('Fetched employees:', data.data);
+        // Sort by tasks count, then alphabetically
+        const sortedEmployees = data.data.sort((a, b) => {
+          const taskDiff = a.ongoingTasks - b.ongoingTasks;
+          // If task counts are equal, sort alphabetically
+          return taskDiff === 0 ?
+            a.fullName.localeCompare(b.fullName) :
+            taskDiff;
+        });
+        setEmployees(sortedEmployees);
+      } catch (error) {
+        setEmployeesError(error.message);
+        toast.error('Failed to load employees');
+      } finally {
+        setEmployeesLoading(false);
+      }
     };
 
     fetchEmployees();
-  }, [token]);
+  }, [ token ]);
 
   const mapPriorityToEnum = (priority) => {
-    switch(priority) {
+    switch (priority) {
       case 'Regular': return 1;
       case 'Important': return 2;
       case 'Urgent': return 0;
@@ -126,7 +126,7 @@ const CreateTaskForm = ({ open, onClose }) => {
 
   const handleSubmit = (values) => {
     const selectedEmployee = employees.find(emp => emp.id === values.selectedMemberId);
-    
+
     setConfirmationData({
       ...values,
       selectedMemberName: selectedEmployee?.fullName,
@@ -137,40 +137,40 @@ const CreateTaskForm = ({ open, onClose }) => {
 
   // Add updateEmployeeTaskCount to update a specific employee's task count
   const updateEmployeeTaskCount = (employeeId) => {
-    setEmployees(prevEmployees => 
-        prevEmployees.map(emp => 
-            emp.id === employeeId
-                ? { ...emp, ongoingTasks: emp.ongoingTasks + 1 }
-                : emp
-        )
+    setEmployees(prevEmployees =>
+      prevEmployees.map(emp =>
+        emp.id === employeeId
+          ? { ...emp, ongoingTasks: emp.ongoingTasks + 1 }
+          : emp
+      )
     );
   };
 
   // Update the handleConfirm function
   const handleConfirm = async () => {
     try {
-        setLoading(true);
-        const payload = {
-            ...confirmationData,
-            priority: mapPriorityToEnum(confirmationData.priority),
-            type: 'Opened'
-        };
-        
-        const response = await createTask(payload, token);
-        console.log('Task created successfully:', response.data);
-        
-        // Update the task count immediately
-        updateEmployeeTaskCount(confirmationData.selectedMemberId);
-        
-        toast.success('Task created successfully');
-        onClose();
-        formik.resetForm();
+      setLoading(true);
+      const payload = {
+        ...confirmationData,
+        priority: mapPriorityToEnum(confirmationData.priority),
+        type: 'Opened'
+      };
+
+      const response = await createTask(payload, token);
+      console.log('Task created successfully:', response.data);
+
+      // Update the task count immediately
+      updateEmployeeTaskCount(confirmationData.selectedMemberId);
+
+      toast.success('Task created successfully');
+      onClose();
+      formik.resetForm();
     } catch (error) {
-        console.error('Error creating task:', error);
-        toast.error(error.response.data || 'Failed to create task');
+      console.error('Error creating task:', error);
+      toast.error(error.response.data || 'Failed to create task');
     } finally {
-        setLoading(false);
-        setShowConfirmation(false);
+      setLoading(false);
+      setShowConfirmation(false);
     }
   };
 
@@ -180,7 +180,7 @@ const CreateTaskForm = ({ open, onClose }) => {
       title: '',
       frnNumber: '',
       ossNumber: '',
-      priority: 'Regular', 
+      priority: 'Regular',
       caseType: '',
       caseSource: '',
       selectedMemberId: '',
@@ -279,7 +279,7 @@ const CreateTaskForm = ({ open, onClose }) => {
               </Typography>
             </Box>
 
-            
+
 
             <RadioGroup
               row
@@ -293,7 +293,7 @@ const CreateTaskForm = ({ open, onClose }) => {
               <FormControlLabel value="Urgent" control={<Radio color="error" />} label="Urgent" />
             </RadioGroup>
 
-            <FormControl 
+            <FormControl
               fullWidth
               error={formik.touched.employee && Boolean(formik.errors.employee)}
             >
@@ -307,20 +307,20 @@ const CreateTaskForm = ({ open, onClose }) => {
                 label="Select Employee"
                 disabled={employeesLoading}
                 renderValue={(selected) => {
-                    const employee = employees.find(emp => emp.id === selected);
-                    if (!employee) return '';
-                    return (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Avatar
-                                src={employee.pictureURL}
-                                alt={employee.fullName}
-                                sx={{ width: 24, height: 24 }}
-                            />
-                            <Typography>
-                                {employee.fullName} ({employee.ongoingTasks} tasks)
-                            </Typography>
-                        </Box>
-                    );
+                  const employee = employees.find(emp => emp.id === selected);
+                  if (!employee) return '';
+                  return (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Avatar
+                        src={employee.pictureURL}
+                        alt={employee.fullName}
+                        sx={{ width: 24, height: 24 }}
+                      />
+                      <Typography>
+                        {employee.fullName}
+                      </Typography>
+                    </Box>
+                  );
                 }}
               >
                 {employeesLoading ? (
@@ -329,22 +329,40 @@ const CreateTaskForm = ({ open, onClose }) => {
                   <MenuItem disabled>Error loading employees</MenuItem>
                 ) : Array.isArray(employees) && employees.length > 0 ? (
                   employees.map((emp) => (
-                    <MenuItem 
-                      key={emp.id} 
+                    <MenuItem
+                      key={emp.id}
                       value={emp.id}
                       sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1
+                        display: 'flex',
+                        justifyContent: 'space-between', // This ensures proper spacing
+                        width: '100%',
+                        py: 1 // Add consistent padding
                       }}
                     >
-                      <Avatar
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Avatar
                           src={emp.pictureURL}
                           alt={emp.fullName}
                           sx={{ width: 24, height: 24 }}
-                      />
-                      <Typography>
-                          {emp.fullName} ({emp.ongoingTasks} tasks)
+                        />
+                        <Typography>
+                          {emp.fullName} 
+                        </Typography>
+                      </Box>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          px: 1,
+                          py: 0.5,
+                          borderRadius: 1,
+                          backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                          color: '#059669',
+                          fontWeight: 'medium',
+                          minWidth: '60px', // Ensure consistent width for the tasks count
+                          textAlign: 'center' // Center the text within the pill
+                        }}
+                      >
+                        {emp.ongoingTasks || 0} tasks
                       </Typography>
                     </MenuItem>
                   ))
@@ -359,7 +377,7 @@ const CreateTaskForm = ({ open, onClose }) => {
               )}
             </FormControl>
 
-          
+
             <Autocomplete
               options={caseSources}
               value={formik.values.caseSource}
@@ -379,23 +397,23 @@ const CreateTaskForm = ({ open, onClose }) => {
 
               fullWidth
             />
-              <TextField
-  label="Case Type"
-  name="caseType"
-  fullWidth
-  value={formik.values.caseType}
-  onChange={formik.handleChange}
-  onBlur={formik.handleBlur}
-  error={formik.touched.caseType && Boolean(formik.errors.caseType)}
-  helperText={formik.touched.caseType && formik.errors.caseType}
-  placeholder="(Optional)"
-  InputLabelProps={{
-    shrink: true,
-  }}
-  InputProps={{
-    notched: true,
-  }}
-/>
+            <TextField
+              label="Case Type"
+              name="caseType"
+              fullWidth
+              value={formik.values.caseType}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.caseType && Boolean(formik.errors.caseType)}
+              helperText={formik.touched.caseType && formik.errors.caseType}
+              placeholder="Optional"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              InputProps={{
+                notched: true,
+              }}
+            />
           </Box>
         </DialogContent>
 
