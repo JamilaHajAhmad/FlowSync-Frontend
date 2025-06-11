@@ -72,7 +72,7 @@ const validationSchema = Yup.object({
     caseSource: Yup.string()
 });
 
-const EditTaskForm = ({ open, onClose, task }) => {
+const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
     const [ members, setMembers ] = useState([]);
     const [ loading, setLoading ] = useState(false);
 
@@ -102,7 +102,7 @@ const EditTaskForm = ({ open, onClose, task }) => {
 
                 if (response.status === 200) {
                     toast.success('Task updated successfully');
-                    onClose();
+                    onTaskUpdated(); // Call the callback instead of onClose
                 }
             } catch (error) {
                 console.error('Error updating task:', error);

@@ -257,7 +257,8 @@ export default function Tasks({
     const [members, setMembers] = useState([]); // New state for member names
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
-    
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+
     const open = Boolean(anchorEl);
 
     const handleOpenDialog = () => setOpenDialog(true);
@@ -482,48 +483,48 @@ export default function Tasks({
     };
 
     // Fetch tasks from API
+    const fetchTasks = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('authToken');
+            const type = activeTab === 'All' ? '' : activeTab.toLowerCase();
+
+            const response = await getAllTasks(token, type);
+            console.log('Fetched tasks:', response.data);
+            
+            const formattedTasks = response.data.map(task => ({
+                taskId: task.taskId,
+                name: task.assignedMember.fullName,
+                assignedMember: task.assignedMember,
+                title: task.taskTitle,
+                deadline: task.deadline ? new Date(task.deadline) : null,
+                status: task.status,
+                isDelayed: task.isDelayed,
+                priority: task.priority,
+                frnNumber: task.frnNumber,
+                ossNumber: task.ossNumber,
+                openDate: new Date(task.openDate),
+                completedAt: task.completedAt ? new Date(task.completedAt) : null,
+                reason: task.reason,
+                notes: task.notes,
+                frozenAt: task.frozenAt ? new Date(task.frozenAt) : null,
+                caseType: task.caseType,
+                caseSource: task.caseSource,
+                taskType: task.taskType
+            }));
+
+            setRawTasks(formattedTasks);
+        } catch (error) {
+            console.error('Error fetching tasks:', error);
+            toast.error('Failed to load tasks');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchTasks = async () => {
-            try {
-                setLoading(true);
-                const token = localStorage.getItem('authToken');
-                const type = activeTab === 'All' ? '' : activeTab.toLowerCase();
-
-                const response = await getAllTasks(token, type);
-                console.log('Fetched tasks:', response.data);
-                
-                const formattedTasks = response.data.map(task => ({
-                    taskId: task.taskId,
-                    name: task.assignedMember.fullName,
-                    assignedMember: task.assignedMember, // Keep full member object
-                    title: task.taskTitle,
-                    deadline: task.deadline ? new Date(task.deadline) : null,
-                    status: task.status,
-                    isDelayed: task.isDelayed,
-                    priority: task.priority,
-                    frnNumber: task.frnNumber,
-                    ossNumber: task.ossNumber,
-                    openDate: new Date(task.openDate),
-                    completedAt: task.completedAt ? new Date(task.completedAt) : null,
-                    reason: task.reason,
-                    notes: task.notes,
-                    frozenAt: task.frozenAt ? new Date(task.frozenAt) : null,
-                    caseType: task.caseType,
-                    caseSource: task.caseSource,
-                    taskType: task.taskType
-                }));
-
-                setRawTasks(formattedTasks);
-            } catch (error) {
-                console.error('Error fetching tasks:', error);
-                toast.error('Failed to load tasks');
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchTasks();
-    }, [activeTab]); // Only refetch when tab changes
+    }, [activeTab, refreshTrigger]); // Add refreshTrigger to dependencies
 
     // Fetch member names for the dropdown
     useEffect(() => {
@@ -788,6 +789,10 @@ export default function Tasks({
                     open={editDialogOpen}
                     onClose={handleEditClose}
                     task={selectedTask}
+                    onTaskUpdated={() => {
+                        setRefreshTrigger(prev => prev + 1);
+                        handleEditClose();
+                    }}
                 />
             )}
             
