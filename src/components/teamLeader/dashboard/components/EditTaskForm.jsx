@@ -134,6 +134,7 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
             formik.setValues({
                 taskTitle: task.title || '',
                 taskId: task.taskId || '',
+                priority: task.priority || 'Regular',
                 assignedMemberId: task.assignedMember?.id || '',
                 frnNumber: task.frnNumber || '',
                 ossNumber: task.ossNumber || '',
