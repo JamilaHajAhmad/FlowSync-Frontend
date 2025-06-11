@@ -67,7 +67,6 @@ const validationSchema = Yup.object({
         .matches(/^\d{5}$/, 'FRN Number must be exactly 5 digits'),
     ossNumber: Yup.string()
         .matches(/^\d{12}$/, 'OSS Number must be exactly 12 digits'),
-    priority: Yup.string(),
     assignedMemberId: Yup.string(),
     caseType: Yup.string(),
     caseSource: Yup.string()
@@ -81,7 +80,6 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
         initialValues: {
             taskTitle: '',
             assignedMemberId: '',
-            priority: '',
             frnNumber: '',
             ossNumber: '',
             caseType: '',
@@ -137,7 +135,6 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
                 taskTitle: task.title || '',
                 taskId: task.taskId || '',
                 assignedMemberId: task.assignedMember?.id || '',
-                priority: task.priority || '',
                 frnNumber: task.frnNumber || '',
                 ossNumber: task.ossNumber || '',
                 caseType: task.caseType || '',
