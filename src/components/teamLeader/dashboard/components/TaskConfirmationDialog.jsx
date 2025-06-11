@@ -63,9 +63,6 @@ const TaskConfirmationDialog = ({ open, onClose, taskData, onConfirm, loading })
                         <Typography variant="h5" sx={{ fontWeight: 700, color: '#1e293b', mb: 0.5 }}>
                             Confirm Task Creation
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            Please review the task details before proceeding
-                        </Typography>
                     </Box>
                     <IconButton
                         onClick={onClose}
@@ -96,7 +93,8 @@ const TaskConfirmationDialog = ({ open, onClose, taskData, onConfirm, loading })
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <WarningIcon sx={{ color: '#f59e0b', fontSize: 32 }} />
                         <Typography variant="body1" color="warning.dark">
-                            This action cannot be undone. The task cannot be edited or deleted once created.
+                            Please ensure all details are correct before proceeding.<br/>
+                            All fields can be edited later, except the priority.
                         </Typography>
                     </Box>
                 </Paper>
