@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { alpha } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -21,7 +20,7 @@ export default function Home() {
                     spacing={2}
                     sx={{
                         alignItems: 'center',
-                        mx: 3,
+                        mx: 1,
                         pb: 5,
                         mt: { xs: 8, md: 0 },
                     }}
