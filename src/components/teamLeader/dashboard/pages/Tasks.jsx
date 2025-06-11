@@ -53,33 +53,33 @@ const getColumns = (tab, handleEditTask) => {
     const baseColumns = [
         {
             accessorKey: "name",
-            header: "Name",
-            size: 150,
+            header: "Member Name",
+            size: 160,
         },
         {
             accessorKey: "title",
             header: "Task Title",
-            size: 150,
+            size: 130,
         },
         {
             accessorKey: "frnNumber",
             header: "FRN Number",
-            size: 100,
+            size: 160,
         },
         {
             accessorKey: "ossNumber",
             header: "OSS Number",
-            size: 100,
+            size: 160,
         },
         {
             accessorKey: "openDate",
             header: "Open Date",
-            size: 100,
+            size: 120,
         },
         {
             accessorKey: "deadline",
             header: "Deadline",
-            size: 100,
+            size: 120,
             Cell: ({ cell }) => {
                 const date = new Date(cell.getValue());
                 return date.toLocaleDateString('en-US', {
@@ -94,7 +94,7 @@ const getColumns = (tab, handleEditTask) => {
     const statusColumn = {
         accessorKey: "status",
         header: "Status",
-        size: 100,
+        size: 110,
         Cell: ({ cell, row }) => (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <Chip
@@ -135,22 +135,22 @@ const getColumns = (tab, handleEditTask) => {
                 {
                     accessorKey: "priority",
                     header: "Priority",
-                    size: 90,
+                    size: 100,
                 },
                 {
                     accessorKey: "caseType",
                     header: "Case Type",
-                    size: 110,
+                    size: 120,
                 },
                 {
                     accessorKey: "caseSource",
                     header: "Case Source",
-                    size: 110,
+                    size: 120,
                 },
                 {
                     id: 'actions',
                     header: 'Actions',
-                    size: 100,
+                    size: 90,
                     Cell: ({ row }) => (
                         <Box sx={{ display: 'flex', gap: 1 }}>
                             <Tooltip 
@@ -338,9 +338,32 @@ export default function Tasks({
     const handleDownload = (fileType) => {
         const fileName = getExportTitle();
         
-        // Update export data mapping
-        const exportData = filteredTasks.map(task => ({
-            Name: task.name,
+        // Get current sorting from the table
+        const currentSorting = table.getState().sorting;
+        
+        // Sort the data according to table's current sorting
+        let sortedData = [...filteredTasks];
+        if (currentSorting.length > 0) {
+            const { id: sortField, desc } = currentSorting[0];
+            sortedData.sort((a, b) => {
+                let aValue = a[sortField];
+                let bValue = b[sortField];
+
+                // Handle date fields
+                if (['openDate', 'completedAt', 'frozenAt', 'deadline'].includes(sortField)) {
+                    aValue = new Date(aValue).getTime();
+                    bValue = new Date(bValue).getTime();
+                }
+
+                if (aValue < bValue) return desc ? 1 : -1;
+                if (aValue > bValue) return desc ? -1 : 1;
+                return 0;
+            });
+        }
+        
+        // Update export data mapping with sorted data
+        const exportData = sortedData.map(task => ({
+            'Member Name': task.name,
             Title: task.title,
             Status: task.status + (task.status === "Completed" && task.isDelayed ? ' (Was Delayed)' : ''),
             Priority: task.priority,
@@ -349,7 +372,7 @@ export default function Tasks({
             'Open Date': task.openDate,
             ...(activeTab === 'Completed' && { 
                 'Completed At': task.completedAt,
-                'Notes': task.notes
+                'Notes': task.notes,
             }),
             ...(activeTab === 'Frozen' && { 
                 'Frozen At': task.frozenAt,
@@ -357,7 +380,7 @@ export default function Tasks({
             }),
             ...(activeTab === 'All' && {
                 'Case Type': task.caseType,
-                'Case Source': task.caseSource
+                'Case Source': task.caseSource,
             })
         }));
 
@@ -524,6 +547,7 @@ export default function Tasks({
 
     useEffect(() => {
         fetchTasks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab, refreshTrigger]); // Add refreshTrigger to dependencies
 
     // Fetch member names for the dropdown
@@ -603,6 +627,7 @@ export default function Tasks({
             pagination: { pageSize: 5, pageIndex: 0 },
             sorting: [{ id: 'openDate', desc: true }],
         },
+        enableColumnResizing: true,
         enableSorting: true,
         getRowId: (row) => row.id,
         sortingFns: {
@@ -722,14 +747,14 @@ export default function Tasks({
                         </LocalizationProvider>
 
                         <FormControl size="small" sx={{ width: 200 }}>
-                            <InputLabel>Employee</InputLabel>
+                            <InputLabel>Member</InputLabel>
                             <Select
                                 value={selectedEmployee}
                                 onChange={(e) => setSelectedEmployee(e.target.value)}
                                 input={<OutlinedInput label="Employee" />}
                             >
                                 <MenuItem value="">
-                                    <em>All Employees</em>
+                                    <em>All Members</em>
                                 </MenuItem>
                                 {members.map((member) => (
                                     <MenuItem key={member.id} value={member.id}>
@@ -740,7 +765,7 @@ export default function Tasks({
                         </FormControl>
 
                         <FormControl size="small" sx={{ width: 200 }}>
-                            <InputLabel>Status Filter</InputLabel>
+                            <InputLabel>Status</InputLabel>
                             <Select
                                 value={selectedTaskType}
                                 onChange={(e) => setSelectedTaskType(e.target.value)}
