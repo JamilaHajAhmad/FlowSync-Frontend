@@ -35,7 +35,7 @@ export default function MiniDrawer() {
                 <CssBaseline />
                 <Topbar open={open} handleDrawerOpen={handleDrawerOpen} setMode={setMode} />
                 <Sidebar open={open} />
-                <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+                <Box component="main" sx={{ flexGrow: 1, p: 2 }}>
                     <DrawerHeader />
                     <PageHeading title="Team Tasks Overview" subtitle="Manage and monitor the progress of your team's tasks efficiently" />
                     <Tasks 
