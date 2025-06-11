@@ -26,6 +26,7 @@ import { useFormik } from 'formik';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import Tooltip from '@mui/material/Tooltip';
 
 const caseSources = [
     'JebelAli',
@@ -154,7 +155,7 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
             toast.error('Authentication token not found');
             onClose();
         }
-    }, [onClose]);
+    }, [ onClose ]);
 
     return (
         <Dialog
@@ -234,12 +235,77 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
                             helperText={formik.touched.ossNumber && formik.errors.ossNumber}
                             fullWidth
                         />
+                        <FormControl
+                            component="fieldset"
+                            sx={{ mt: 3, width: '100%' }}
+                        >
+                            <Box sx={{ mt: 1, mb: 1 }}>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1a3d37' }}>
+                                    Task Priority
+                                </Typography>
+                            </Box>
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: 1
+                                }}
+                            >
+                                <Tooltip
+                                    title="Priority cannot be changed after task creation"
+                                    placement="top"
+                                    arrow
+                                >
+                                    <div style={{ cursor: 'not-allowed' }}> {/* Wrapper div to handle tooltip */}
+                                        <RadioGroup
+                                            row
+                                            sx={{
+                                                gap: 2,
+                                                pointerEvents: 'none',
+                                                opacity: 0.7
+                                            }}
+                                        >
+                                            <FormControlLabel
+                                                value="Regular"
+                                                control={
+                                                    <Radio
+                                                        color="success"
+                                                        checked={formik.values.priority === 'Regular'}
+                                                    />
+                                                }
+                                                label="Regular"
+                                            />
+                                            <FormControlLabel
+                                                value="Important"
+                                                control={
+                                                    <Radio
+                                                        color="warning"
+                                                        checked={formik.values.priority === 'Important'}
+                                                    />
+                                                }
+                                                label="Important"
+                                            />
+                                            <FormControlLabel
+                                                value="Urgent"
+                                                control={
+                                                    <Radio
+                                                        color="error"
+                                                        checked={formik.values.priority === 'Urgent'}
+                                                    />
+                                                }
+                                                label="Urgent"
+                                            />
+                                        </RadioGroup>
+                                    </div>
+                                </Tooltip>
+                            </Box>
+                        </FormControl>
 
                         <FormControl
                             fullWidth
                             error={formik.touched.assignedMemberId && Boolean(formik.errors.assignedMemberId)}
                         >
-                            <InputLabel>Assigned Member</InputLabel>
+                            <InputLabel>Selected Member</InputLabel>
                             <Select
                                 name="assignedMemberId"
                                 value={formik.values.assignedMemberId}
@@ -261,10 +327,10 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
                                 }}
                             >
                                 {members.map((member) => (
-                                    <MenuItem 
-                                        key={member.id} 
+                                    <MenuItem
+                                        key={member.id}
                                         value={member.id}
-                                        sx={{ 
+                                        sx={{
                                             display: 'flex',
                                             justifyContent: 'space-between',
                                             width: '100%'
@@ -297,27 +363,6 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
                             </Select>
                             {formik.touched.assignedMemberId && formik.errors.assignedMemberId && (
                                 <FormHelperText>{formik.errors.assignedMemberId}</FormHelperText>
-                            )}
-                        </FormControl>
-
-                        <FormControl
-                            component="fieldset"
-                            error={formik.touched.priority && Boolean(formik.errors.priority)}
-                        >
-                            <RadioGroup
-                                row
-                                name="priority"
-                                value={formik.values.priority}
-                                onChange={formik.handleChange}
-                                onBlur={formik.handleBlur}
-                                sx={{ gap: 2 }}
-                            >
-                                <FormControlLabel value="Regular" control={<Radio color="success" />} label="Regular" />
-                                <FormControlLabel value="Important" control={<Radio color="warning" />} label="Important" />
-                                <FormControlLabel value="Urgent" control={<Radio color="error" />} label="Urgent" />
-                            </RadioGroup>
-                            {formik.touched.priority && formik.errors.priority && (
-                                <FormHelperText>{formik.errors.priority}</FormHelperText>
                             )}
                         </FormControl>
 
