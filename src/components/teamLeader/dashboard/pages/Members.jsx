@@ -81,7 +81,7 @@ export default function Members({ showActions = true }) {
     const columns = [
         {
             accessorKey: "name",
-            header: "Users",
+            header: "Member Name",
             Cell: ({ cell, row }) => (
                 <Box
                     sx={{
@@ -261,7 +261,7 @@ export default function Members({ showActions = true }) {
         const exportData = rows
             .filter(row => !row.isDeactivated)
             .map(row => ({
-                Name: row.name,
+                'Member Name': row.name,
                 Status: formatString(row.status),
                 Email: row.email,
                 'Opened Tasks': row.tasks
