@@ -91,13 +91,27 @@ const EditTaskForm = ({ open, onClose, task }) => {
             setLoading(true);
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await editTask(task.taskId, values, token);
-                console.log('Task updated successfully:', response.data);
-                toast.success('Task updated successfully');
-                onClose();
+                if (!token) {
+                    throw new Error('No authentication token found');
+                }
+
+                const response = await editTask(task.taskId, {
+                    ...values,
+                    taskTitle: values.taskTitle, // Ensure this matches the API expectation
+                }, token);
+
+                if (response.status === 200) {
+                    toast.success('Task updated successfully');
+                    onClose();
+                }
             } catch (error) {
                 console.error('Error updating task:', error);
-                toast.error(error.response?.data || 'Failed to update task');
+                if (error.response?.status === 401) {
+                    toast.error('Session expired. Please login again.');
+                    // Optionally redirect to login page
+                } else {
+                    toast.error(error.response?.data || 'Failed to update task');
+                }
             } finally {
                 setLoading(false);
             }
@@ -133,6 +147,14 @@ const EditTaskForm = ({ open, onClose, task }) => {
         fetchMembers();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ task ]);
+
+    useEffect(() => {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            toast.error('Authentication token not found');
+            onClose();
+        }
+    }, [onClose]);
 
     return (
         <Dialog

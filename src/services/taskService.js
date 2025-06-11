@@ -81,12 +81,27 @@ export const reassignTask = async (frnNumber, newMemberId, token) => {
     );
 };
 
-export const editTask = async (taskId, taskData, token) => {
-    return await api.patch(
-        `/taskmanagement/edit-task/${taskId}`,
-        taskData,
+export const editTask = async (taskId, values, token) => {
+    if (!token) {
+        throw new Error('No authentication token found');
+    }
+
+    return api.patch(
+        `/taskmanagement/edit-task/${taskId}`, 
         {
-            headers: { Authorization: `Bearer ${token}` }
+            frnNumber: values.frnNumber,
+            ossNumber: values.ossNumber,
+            title: values.taskTitle, // Note: mapping taskTitle to title
+            caseSource: values.caseSource,
+            caseType: values.caseType,
+            priority: values.priority,
+            selectedMemberId: values.assignedMemberId // Note: mapping assignedMemberId to selectedMemberId
+        },
+        {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
         }
     );
 };
