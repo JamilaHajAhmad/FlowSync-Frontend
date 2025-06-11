@@ -297,7 +297,7 @@ const CreateTaskForm = ({ open, onClose }) => {
               fullWidth
               error={formik.touched.employee && Boolean(formik.errors.employee)}
             >
-              <InputLabel id="employee-label">Select Employee</InputLabel>
+              <InputLabel id="employee-label">Select Member</InputLabel>
               <Select
                 labelId="employee-label"
                 name="selectedMemberId"
