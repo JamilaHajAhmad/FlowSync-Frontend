@@ -11,7 +11,7 @@ export const getAllMembers = async (token) => {
 };
 
 export const deleteMember = async (id, token) => {
-    return await api.delete(`/membermanagement/delete-member/${id}`,
+    return await api.delete(`/membermanagement/deactivate-member/${id}`,
         {
             headers: {  
                 Authorization: `Bearer ${token}`,
