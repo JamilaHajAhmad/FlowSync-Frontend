@@ -95,8 +95,8 @@ const Requests = () => {
                 [type]: pendingRequests
             }));
         } catch (error) {
-            console.error(`Error fetching ${type} requests:`, error);
-            toast.error(`Failed to fetch ${type} requests`);
+            console.error(`Error fetching ${type === 'deleteAccount' ? 'deactivateAccount ' : type} requests:`, error);
+            toast.error(`Failed to fetch ${type === 'deleteAccount' ? 'deactivateAccount ' : type} requests`);
         } finally {
             setIsLoading(false);
         }
@@ -220,7 +220,7 @@ const Requests = () => {
                     'FRN': row => row.frnNumber,
                     'Notes': row => row.notes
                 },
-                'deleteAccount': {
+                deleteAccount: {
                     'Reason': row => row.reason
                 },
                 'changeStatus': {
