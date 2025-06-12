@@ -220,7 +220,7 @@ const Requests = () => {
                     'FRN': row => row.frnNumber,
                     'Notes': row => row.notes
                 },
-                deleteAccount: {
+                'deactivateAccount': {
                     'Reason': row => row.reason
                 },
                 'changeStatus': {
@@ -599,8 +599,8 @@ const Requests = () => {
             handleDeleteMemberDialogClose();
             fetchRequests('deleteAccount');
         } catch (error) {
-            console.error('Error approving delete account request:', error);
-            toast.error('Failed to approve delete account request');
+            console.error('Error approving deactivate account request:', error);
+            toast.error('Failed to approve deactivate account request');
         }
     };
 
