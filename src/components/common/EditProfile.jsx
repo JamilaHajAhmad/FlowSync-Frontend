@@ -277,16 +277,36 @@ const EditProfile = () => {
             <Box sx={{
                 maxWidth: 900,
                 margin: "auto",
-                padding: 4,
+                padding: { xs: 2, sm: 3, md: 4 },
                 minHeight: '100vh',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 4
+                gap: { xs: 2, sm: 3, md: 4 }
             }}>
                 {/* Logo & Title */}
-                <Box display="flex" alignItems="center" position="relative" left="-200px">
-                    <img src={logo} alt="FlowSync Logo" style={{ height: 40, marginRight: 10 }} />
-                    <Typography variant="h6" sx={{ color: '#059669', fontWeight: 'bold' }}>
+                <Box display="flex" 
+                    alignItems="center" 
+                    sx={{
+                        position: { xs: 'static', md: 'relative' },
+                        left: { xs: 0, md: "-310px" },
+                        mb: { xs: 2, md: 0 }
+                    }}
+                >
+                    <img src={logo} 
+                        alt="FlowSync Logo" 
+                        style={{ 
+                            height: 'clamp(30px, 5vw, 40px)', 
+                            marginRight: 10 
+                        }} 
+                    />
+                    <Typography 
+                        variant="h6" 
+                        sx={{ 
+                            color: '#059669', 
+                            fontWeight: 'bold',
+                            fontSize: { xs: '1.1rem', sm: '1.25rem' }
+                        }}
+                    >
                         FlowSync
                     </Typography>
                 </Box>
@@ -296,17 +316,18 @@ const EditProfile = () => {
                     startIcon={<ArrowBack />}
                     onClick={handleBackToProfile}
                     sx={{
-                        position: 'absolute',
-                        top: 32,
-                        left: 32,
+                        position: { xs: 'static', md: 'absolute' },
+                        bottom: { md: 35 },
+                        left: { md: 32 },
+                        mb: { xs: 2, md: 0 },
                         color: '#064e3b',
-                        '&:hover': {
-                            bgcolor: '#ecfdf5'
-                        },
+                        '&:hover': { bgcolor: '#ecfdf5' },
                         textTransform: 'capitalize',
-                        fontWeight: 500
+                        fontWeight: 500,
+                        width: { xs: '100%', md: 'auto' }
                     }}
                 >
+                    Back to Profile
                 </Button>
 
                 {/* Profile Edit Section */}
@@ -314,8 +335,9 @@ const EditProfile = () => {
                     <Typography
                         variant="h4"
                         sx={{
-                            mb: 5,
-                            mt: -6,
+                            mb: { xs: 3, md: 5 },
+                            mt: { xs: -3, md: -6 },
+                            fontSize: { xs: '1.75rem', sm: '2rem', md: '2.5rem' },
                             background: 'linear-gradient(45deg, #064E3B 30%, #059669 90%)',
                             backgroundClip: 'text',
                             color: 'transparent',
@@ -327,7 +349,13 @@ const EditProfile = () => {
 
                     <Box display="flex" alignItems="center" gap={3} mb={4}>
                         {/* Profile Avatar */}
-                        <Box sx={{ position: 'relative', top: -190, left: -25 }}>
+                        <Box sx={{ 
+                            position: 'relative', // Changed to relative
+                            display: 'flex',
+                            justifyContent: { xs: 'center', md: 'flex-start' },
+                            mb: { xs: 50, md: 50 }
+                        }}>
+
                             <Avatar
                                 src={formik.values.pictureURL || "/profile.jpg"}
                                 sx={{
@@ -349,8 +377,8 @@ const EditProfile = () => {
                                     component="span"
                                     sx={{
                                         position: 'absolute',
-                                        bottom:10,
-                                        right: 0,
+                                        bottom: 0,
+                                        right: -5, // Adjusted right position
                                         bgcolor: '#059669',
                                         width: 32,
                                         height: 32,
@@ -358,7 +386,8 @@ const EditProfile = () => {
                                             bgcolor: '#047857'
                                         },
                                         color: '#fff',
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                                        zIndex: 1 // Added zIndex
                                     }}
                                     disabled={imageLoading}
                                 >
@@ -373,7 +402,7 @@ const EditProfile = () => {
 
                         {/* Profile Form */}
                         <form onSubmit={formik.handleSubmit} style={{ flexGrow: 1 }}>
-                            <Grid container spacing={3}>
+                            <Grid container spacing={{ xs: 2, sm: 3 }}>
                                 {/* First Name */}
                                 <Grid item xs={12} sm={6}>
                                     <StyledTextField
@@ -386,6 +415,11 @@ const EditProfile = () => {
                                         error={formik.touched.firstName && Boolean(formik.errors.firstName)}
                                         helperText={formik.touched.firstName && formik.errors.firstName}
                                         InputLabelProps={{ shrink: true }}
+                                        sx={{
+                                            '& .MuiInputBase-input': {
+                                                fontSize: { xs: '0.875rem', sm: '1rem' }
+                                            }
+                                        }}
                                     />
                                 </Grid>
 
@@ -401,6 +435,11 @@ const EditProfile = () => {
                                         error={formik.touched.lastName && Boolean(formik.errors.lastName)}
                                         helperText={formik.touched.lastName && formik.errors.lastName}
                                         InputLabelProps={{ shrink: true }}
+                                        sx={{
+                                            '& .MuiInputBase-input': {
+                                                fontSize: { xs: '0.875rem', sm: '1rem' }
+                                            }
+                                        }}
                                     />
                                 </Grid>
 
@@ -417,6 +456,11 @@ const EditProfile = () => {
                                         error={formik.touched.email && Boolean(formik.errors.email)}
                                         helperText={formik.touched.email && formik.errors.email}
                                         InputLabelProps={{ shrink: true }}
+                                        sx={{
+                                            '& .MuiInputBase-input': {
+                                                fontSize: { xs: '0.875rem', sm: '1rem' }
+                                            }
+                                        }}
                                     />
                                 </Grid>
 
@@ -554,7 +598,7 @@ const EditProfile = () => {
                             </Grid>
 
                             {/* Save Button */}
-                            <Box mt={4} textAlign="right">
+                            <Box mt={4} textAlign="right" sx={{ width: '100%' }}>
                                 <Button
                                     type="submit"
                                     variant="contained"
@@ -565,7 +609,8 @@ const EditProfile = () => {
                                         '&:hover': { bgcolor: '#047857' },
                                         '&.Mui-disabled': {
                                             bgcolor: '#82c4b3'
-                                        }
+                                        },
+                                        width: { xs: '100%', md: 'auto' }
                                     }}
                                 >
                                     {loading ? "Saving..." : "Save Changes"}
