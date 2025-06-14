@@ -8,7 +8,7 @@ import {
     Search as SearchIcon,
     Menu as MenuIcon,
     Clear as ClearIcon,
-    ChatBubbleOutline as MessageIcon, // Replace the existing Message import
+    ChatBubbleOutline as MessageIcon,
 } from '@mui/icons-material';
 import { 
     useTheme, 
@@ -35,6 +35,7 @@ import { getUnreadMessages } from '../../services/chatService';
 
 const Search = styled('div')(({ theme }) => ({
     position: 'relative',
+    top: '-22px',
     borderRadius: 25,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     '&:hover': {
@@ -119,6 +120,30 @@ const StyledBadge = styled(Badge)(() => ({
     }
 }));
 
+const StyledIconStack = styled(Stack)(({ theme }) => ({
+    position: 'relative',
+    top: '-22px', // Match search bar position
+    marginLeft: theme.spacing(2),
+}));
+
+const LogoContainer = styled(Box)(() => ({
+    display: 'flex',
+    alignItems: 'center',
+    position: 'relative',
+    top: '-22px', // Match search bar position
+}));
+
+const MenuIconButton = styled(IconButton)(({ theme }) => ({
+    position: 'relative',
+    top: '-22px', // Match search bar position
+    left: '-30px',
+    marginRight: theme.spacing(5),
+    color: 'white',
+    '&:hover': {
+        backgroundColor: 'rgba(255, 255, 255, 0.08)'
+    }
+}));
+
 export default function Topbar({ open, handleDrawerOpen, setMode }) {
     const theme = useTheme();
     const token = localStorage.getItem('authToken');
@@ -163,6 +188,7 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
         fetchUnreadMessages();
         const interval = setInterval(fetchUnreadMessages, 30000); // Check every 30 seconds
         return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchUnreadMessages = async () => {
@@ -232,26 +258,18 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                 }}
             >
                 <Toolbar>
-                    <IconButton
+                    {/* Menu Icon */}
+                    <MenuIconButton
                         color="inherit"
                         aria-label={open ? "close drawer" : "open drawer"}
                         onClick={handleDrawerOpen}
                         edge="start"
-                        sx={{
-                            marginRight: 5,
-                            color: 'white',
-                            '&:hover': {
-                                backgroundColor: 'rgba(255, 255, 255, 0.08)'
-                            }
-                        }}
                     >
                         {open ? <MenuOpenIcon /> : <MenuIcon />}
-                    </IconButton>
+                    </MenuIconButton>
 
-                    <Box 
-                        display="flex" 
-                        alignItems="center" 
-                    >
+                    {/* Logo and Platform Name */}
+                    <LogoContainer>
                         <img 
                             src={logo} 
                             alt="FlowSync" 
@@ -271,10 +289,11 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                         >
                             FlowSync
                         </Typography>
-                    </Box>
+                    </LogoContainer>
 
                     <Box sx={{ flexGrow: 1 }} />
                     
+                    {/* Search Component - Keep your existing Search component here */}
                     <Search>
                         <SearchIconWrapper>
                             <SearchIcon />
@@ -318,7 +337,8 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                         )}
                     </Search>
 
-                    <Stack direction="row" spacing={-0.5}>
+                    {/* Icons Stack */}
+                    <StyledIconStack direction="row" spacing={-0.5}>
                         <IconButton
                             size="large"
                             color="inherit"
@@ -329,70 +349,62 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                             </StyledBadge>
                         </IconButton>
 
-                        {theme.palette.mode === 'light' ? (
-                            <IconButton color='inherit' onClick={() => {
-                                localStorage.setItem("currentMode", theme.palette.mode === 'dark' ? 'light' : 'dark');
-                                setMode((prevMode) =>
-                                    prevMode === 'light' ? 'dark' : 'light')
-                            }}>
-                                <LightModeOutlined />
-                            </IconButton>
-                        ) : (
-                            <IconButton color='inherit' onClick={() => {
-                                localStorage.setItem("currentMode", theme.palette.mode === 'dark' ? 'light' : 'dark');
-                                setMode((prevMode) =>
-                                    prevMode === 'light' ? 'dark' : 'light');
-                            }}>
-                                <DarkModeOutlined />
-                            </IconButton>
-                        )}
-                        <IconButton color='inherit' onClick={handleClick} aria-controls="notification-menu" aria-haspopup="true">
+                        <IconButton color='inherit' onClick={() => {
+                            localStorage.setItem("currentMode", theme.palette.mode === 'dark' ? 'light' : 'dark');
+                            setMode((prevMode) =>
+                                prevMode === 'light' ? 'dark' : 'light')
+                        }}>
+                            {theme.palette.mode === 'light' ? <LightModeOutlined /> : <DarkModeOutlined />}
+                        </IconButton>
+
+                        <IconButton color='inherit' onClick={handleClick}>
                             <Badge badgeContent={unreadCount} color="error">
                                 <NotificationsNoneOutlined />
                             </Badge>
                         </IconButton>
 
-                        <Menu
-                            id="notification-menu"
-                            anchorEl={anchorEl}
-                            open={Boolean(anchorEl)}
-                            onClose={handleClose}
-                            PaperProps={{
-                                sx: {
-                                    maxHeight: '80vh',
-                                    width: 350,
-                                    mt: 1.5,
-                                    overflowY: 'auto',
-                                    '&::-webkit-scrollbar': {
-                                        width: '6px'
-                                    },
-                                    '&::-webkit-scrollbar-track': {
-                                        background: '#f1f1f1'
-                                    },
-                                    '&::-webkit-scrollbar-thumb': {
-                                        backgroundColor: '#888',
-                                        borderRadius: '3px'
-                                    }
-                                }
-                            }}
-                            anchorOrigin={{
-                                vertical: 'bottom',
-                                horizontal: 'right',
-                            }}
-                            transformOrigin={{
-                                vertical: 'top',
-                                horizontal: 'right',
-                            }}
-                        >
-                            <NotificationList onClose={handleClose} />
-                        </Menu>
-
                         <IconButton color='inherit'>
                             <Link to="/settings" style={{ color: 'white' }}> 
-                                <SettingsOutlined sx={{ mt: -0.5 }}/> 
+                                <SettingsOutlined sx={{ mt: -0.5}}/> 
                             </Link>
                         </IconButton>
-                    </Stack>
+                    </StyledIconStack>
+
+                    {/* Keep the existing Menu component */}
+                    <Menu
+                        id="notification-menu"
+                        anchorEl={anchorEl}
+                        open={Boolean(anchorEl)}
+                        onClose={handleClose}
+                        PaperProps={{
+                            sx: {
+                                maxHeight: '80vh',
+                                width: 350,
+                                mt: 1.5,
+                                overflowY: 'auto',
+                                '&::-webkit-scrollbar': {
+                                    width: '6px'
+                                },
+                                '&::-webkit-scrollbar-track': {
+                                    background: '#f1f1f1'
+                                },
+                                '&::-webkit-scrollbar-thumb': {
+                                    backgroundColor: '#888',
+                                    borderRadius: '3px'
+                                }
+                            }
+                        }}
+                        anchorOrigin={{
+                            vertical: 'bottom',
+                            horizontal: 'right',
+                        }}
+                        transformOrigin={{
+                            vertical: 'top',
+                            horizontal: 'right',
+                        }}
+                    >
+                        <NotificationList onClose={handleClose} />
+                    </Menu>
                 </Toolbar>
             </StyledAppBar>
             <TopbarOffset /> 
