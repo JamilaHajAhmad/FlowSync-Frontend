@@ -181,7 +181,7 @@ const ChangePW = () => {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                p: 3,
+                p: { xs: 2, sm: 3 }, // Responsive padding
                 backgroundColor: 'background.default',
                 position: 'relative'
             }}>
@@ -189,18 +189,18 @@ const ChangePW = () => {
                     startIcon={<ArrowBack />}
                     onClick={handleBack}
                     sx={{
-                        position: 'absolute',
-                        top: 24,
-                        left: 24,
+                        position: { xs: 'static', md: 'absolute' },
+                        top: { md: 24 },
+                        left: { md: 24 },
+                        mb: { xs: 2, md: 0 },
+                        width: { xs: '100%', md: 'auto' },
                         color: '#064e3b',
-                        '&:hover': {
-                            bgcolor: '#ecfdf5'
-                        },
+                        '&:hover': { bgcolor: '#ecfdf5' },
                         textTransform: 'capitalize',
                         fontWeight: 500
                     }}
                 >
-                    
+                    Back to Profile
                 </Button>
 
                 <Motion.div
@@ -212,21 +212,44 @@ const ChangePW = () => {
                         elevation={1}
                         sx={{
                             width: { xs: '100%', sm: 450 },
-                            p: 4,
+                            p: { xs: 3, sm: 4 }, // Responsive padding
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: 3
+                            gap: { xs: 2, sm: 3 }, // Responsive gap
+                            mx: { xs: 2, sm: 0 } // Add margin on mobile
                         }}
                     >
                         <Box display="flex" alignItems="center" justifyContent="center">
-                            <img src={logo} alt="FlowSync Logo" style={{ height: 50 }} />
+                            <img 
+                                src={logo} 
+                                alt="FlowSync Logo" 
+                                style={{ 
+                                    height: 'clamp(40px, 8vw, 50px)',
+                                    width: 'auto'
+                                }} 
+                            />
                         </Box>
 
                         <Box textAlign="center">
-                            <Typography variant="h5" fontWeight="bold" color="primary.main" gutterBottom>
+                            <Typography 
+                                variant="h5" 
+                                fontWeight="bold" 
+                                color="primary.main" 
+                                gutterBottom
+                                sx={{
+                                    fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                                }}
+                            >
                                 Change Password
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography 
+                                variant="body2" 
+                                color="text.secondary"
+                                sx={{
+                                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                                    px: { xs: 1, sm: 0 }
+                                }}
+                            >
                                 <Typewriter
                                     words={['Keep your account secure by updating your password regularly']}
                                     cursor={false}
@@ -237,7 +260,11 @@ const ChangePW = () => {
                         </Box>
 
                         <form onSubmit={formik.handleSubmit}>
-                            <Box display="flex" flexDirection="column" gap={2}>
+                            <Box 
+                                display="flex" 
+                                flexDirection="column" 
+                                gap={{ xs: 1.5, sm: 2 }}
+                            >
                                 {[
                                     {
                                         name: 'currentPassword',
@@ -292,17 +319,33 @@ const ChangePW = () => {
                                                 </InputAdornment>
                                             )
                                         }}
+                                        sx={{
+                                            '& .MuiInputBase-input': {
+                                                fontSize: { xs: '0.875rem', sm: '1rem' },
+                                                padding: { xs: '12px 14px', sm: '16.5px 14px' }
+                                            },
+                                            '& .MuiInputLabel-root': {
+                                                fontSize: { xs: '0.875rem', sm: '1rem' }
+                                            }
+                                        }}
                                     />
                                 ))}
 
                                 {formik.values.newPassword && (
-                                    <Box>
+                                    <Box sx={{ px: { xs: 1, sm: 0 } }}>
                                         <PasswordStrengthBar
                                             variant="determinate"
                                             value={(strength + 1) * 20}
                                             strength={strength}
                                         />
-                                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                                        <Typography 
+                                            variant="caption" 
+                                            color="text.secondary" 
+                                            sx={{ 
+                                                mt: 0.5,
+                                                fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                                            }}
+                                        >
                                             Password strength: {
                                                 strength === 0 ? 'Very Weak' :
                                                     strength === 1 ? 'Weak' :
@@ -325,10 +368,10 @@ const ChangePW = () => {
                                         size="large"
                                         disabled={formik.isSubmitting || !formik.isValid}
                                         sx={{
-                                            mt: 2,
-                                            height: 48,
+                                            mt: { xs: 1, sm: 2 },
+                                            height: { xs: 42, sm: 48 },
                                             textTransform: 'none',
-                                            fontSize: '1rem'
+                                            fontSize: { xs: '0.875rem', sm: '1rem' }
                                         }}
                                     >
                                         {formik.isSubmitting ? 'Updating...' : 'Update Password'}
