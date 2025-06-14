@@ -70,72 +70,115 @@ const NotificationsPage = () => {
                 <CssBaseline />
                 <Topbar open={open} handleDrawerOpen={handleDrawerOpen} setMode={setMode} />
                 {renderSidebar()}
-                <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-                    <Box sx={{ height: 64 }} />
-                    <PageHeading 
-                        title="Notifications" 
-                        subtitle="View and manage your notifications"
-                    />
-                    <Box>
+                <Box component="main" sx={{ 
+                    flexGrow: 1, 
+                    p: { xs: 2, sm: 3 },
+                    width: '100%'
+                }}>
+                    <Box sx={{ height: { xs: 56, sm: 64 } }} />
+                    
+                    {/* Header Container */}
+                    <Box sx={{
+                        display: 'flex',
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        alignItems: { xs: 'stretch', sm: 'center' },
+                        justifyContent: 'space-between',
+                        mb: { xs: 2, sm: 3 }
+                    }}>
+                        {/* Page Heading */}
+                        <Box sx={{ flex: 1 }}>
+                            <PageHeading 
+                                title="Notifications" 
+                                subtitle="View and manage your notifications"
+                            />
+                        </Box>
+
+                        {/* Mark All as Read Button */}
                         {notifications.some(n => !n.read) && (
-                            <Button 
-                                onClick={handleMarkAllAsRead}
-                                sx={{ 
-                                    color: '#4caf50',
-                                    borderColor: '#4caf50',
-                                    '&:hover': {
-                                        borderColor: '#2e7d32',
-                                        backgroundColor: 'rgba(76, 175, 80, 0.04)'
-                                    },
-                                    position: 'absolute',
-                                    right: 40,
-                                    top: 200,
-                                }}
-                                variant="outlined"
-                            >
-                                Mark all as read
-                            </Button>
+                            <Box sx={{ 
+                                mt: { xs: 2, sm: 0 },
+                                ml: { xs: 0, sm: 2 }
+                            }}>
+                                <Button 
+                                    onClick={handleMarkAllAsRead}
+                                    sx={{ 
+                                        color: '#4caf50',
+                                        borderColor: '#4caf50',
+                                        '&:hover': {
+                                            borderColor: '#2e7d32',
+                                            backgroundColor: 'rgba(76, 175, 80, 0.04)'
+                                        },
+                                        width: { xs: '100%', sm: 'auto' }
+                                    }}
+                                    variant="outlined"
+                                >
+                                    Mark all as read
+                                </Button>
+                            </Box>
                         )}
                     </Box>
 
-                    <Container maxWidth="sm" sx={{ py: 4 }}>
+                    {/* Rest of the notifications content */}
+                    <Container 
+                        maxWidth="sm" 
+                        sx={{ 
+                            py: { xs: 2, sm: 4 },
+                            px: { xs: 1, sm: 2 }
+                        }}
+                    >
                         <Paper 
                             elevation={0} 
                             sx={{ 
-                                borderRadius: 2,
+                                borderRadius: { xs: 1, sm: 2 },
                                 border: '1px solid #e0e0e0',
                                 overflow: 'hidden'
                             }}
                         >
                             {notifications.length === 0 ? (
-                                <Box sx={{ p: 4, textAlign: 'center' }}>
-                                    <Typography color="text.secondary">
+                                <Box sx={{ 
+                                    p: { xs: 3, sm: 4 }, 
+                                    textAlign: 'center' 
+                            }}>
+                                    <Typography 
+                                        color="text.secondary"
+                                        sx={{
+                                            fontSize: { xs: '0.875rem', sm: '1rem' }
+                                        }}
+                                    >
                                         No notifications to display
                                     </Typography>
                                 </Box>
                             ) : (
-                                <>
-                                    <List sx={{ p: 0 }}>
-                                        {notifications.map((notification, index) => (
-                                            <React.Fragment key={notification.id}>
-                                                <Box sx={{ position: 'relative' }}>
-                                                    <NotificationItem 
-                                                        notification={notification}
-                                                        onMarkAsRead={() => markAsRead(notification.id)}
-                                                    />
-                                                </Box>
-                                                {index < notifications.length - 1 && <Divider />}
-                                            </React.Fragment>
-                                        ))}
-                                    </List>
-                                </>
-                            )}
-                        </Paper>
-                    </Container>
-                </Box>
+                                <List sx={{ 
+                                    p: 0,
+                                    '& .MuiListItem-root': {
+                                        px: { xs: 1.5, sm: 2 },
+                                        py: { xs: 1.5, sm: 2 }
+                                    }
+                            }}>
+                                {notifications.map((notification, index) => (
+                                    <React.Fragment key={notification.id}>
+                                        <Box sx={{ position: 'relative' }}>
+                                            <NotificationItem 
+                                                notification={notification}
+                                                onMarkAsRead={() => markAsRead(notification.id)}
+                                            />
+                                        </Box>
+                                        {index < notifications.length - 1 && (
+                                            <Divider sx={{ 
+                                                mx: { xs: 1, sm: 2 }
+                                            }} />
+                                        )}
+                                    </React.Fragment>
+                                ))}
+                            </List>
+                        )}
+                    </Paper>
+                </Container>
             </Box>
-        </ThemeProvider>
-    );
+        </Box>
+    </ThemeProvider>
+);
 };
 
 export default NotificationsPage;
