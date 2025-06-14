@@ -6,7 +6,7 @@
 
 .register-container {
     display: flex;
-    height: 100vh;
+    min-height: 100vh;
 }
 
 .register-left {
@@ -17,24 +17,26 @@
     align-items: center;
     background-color: white;
     color: #102027;
-    padding: 2.5rem;
+    padding: clamp(1.5rem, 3vw, 2.5rem);
 }
 
 .register-logo {
-    width: 15rem;
+    width: clamp(8rem, 15vw, 15rem);
     margin-bottom: 1.5rem;
 }
 
 .register-title {
-    font-size: 2.5rem;
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
     font-weight: bold;
-    font-family:'Times New Roman', Times, serif;
+    font-family: 'Times New Roman', Times, serif;
+    text-align: center;
 }
 
 .register-text {
     margin-top: 1rem;
-    font-size: 1.25rem;
+    font-size: clamp(0.9rem, 2vw, 1.25rem);
     text-align: center;
+    padding: 0 1rem;
 }
 
 .register-right {
@@ -42,25 +44,20 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 2.5rem;
+    padding: clamp(1.5rem, 3vw, 2.5rem);
     background: linear-gradient(135deg, #064e3b, #16a34a, #10b981);
     color: white;
 }
 
 .register-form {
-    padding: 2rem 3rem;
+    padding: clamp(1.5rem, 3vw, 3rem);
     width: 100%;
-    height: max-content;
     max-width: 28rem;
 }
 
 .form-title {
-    font-size: 1.75rem;
-    font-weight: 600;
-    text-align: center;
-    margin-bottom: 1rem;
-    font-family: "Oswald", sans-serif;
-    color: white;
+    font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+    margin-bottom: clamp(1rem, 2vw, 1.5rem);
 }
 
 .form-input {
@@ -213,4 +210,105 @@
 .password-field input {
     padding-right: 40px;
     width: 100%;
+}
+
+/* Media Queries */
+@media screen and (max-width: 1024px) {
+    .register-container {
+        flex-direction: column;
+    }
+
+    .register-left, .register-right {
+        width: 100%;
+        padding: 2rem;
+    }
+
+    .register-right {
+        min-height: 100vh;
+    }
+
+    .register-left {
+        min-height: 30vh;
+    }
+
+    .register-form {
+        padding: 1.5rem;
+    }
+
+    .form-button {
+        margin: 0 auto;
+        display: block;
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .register-left {
+        padding: 1.5rem;
+        min-height: 25vh;
+    }
+
+    .register-right {
+        padding: 1rem;
+        min-height: 100vh;
+    }
+
+    .register-form {
+        padding: 1rem;
+    }
+
+    .form-input {
+        padding: 0.625rem;
+        font-size: 0.875rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .form-radio-group {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .form-radio-group label {
+        font-size: 0.875rem;
+    }
+
+    .form-button {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 1rem;
+    }
+
+    .login-option {
+        font-size: 0.875rem;
+        margin-top: 1.5rem;
+    }
+
+    .password-toggle {
+        top: 35%;
+    }
+}
+
+/* Landscape Mode */
+@media screen and (max-height: 600px) and (orientation: landscape) {
+    .register-container {
+        flex-direction: row;
+    }
+
+    .register-left {
+        width: 35%;
+        padding: 1rem;
+    }
+
+    .register-right {
+        width: 65%;
+        padding: 1rem;
+        min-height: 100vh;
+    }
+
+    .register-form {
+        padding: 1rem;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
 }

@@ -1,4 +1,4 @@
-import React, { useState } from "react"; // Update the import
+import { useState } from "react"; // Update the import
 import { toast } from "react-toastify";
 import { FaEye, FaEyeSlash } from 'react-icons/fa'; // Add this import
 import "react-toastify/dist/ReactToastify.css";

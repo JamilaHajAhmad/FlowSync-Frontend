@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
@@ -146,7 +146,7 @@ const ResetPassword = () => {
                     </button>
 
                     <p className="login-option">
-                        Remember your password? <Link to="/login" className="link">Log in</Link>
+                        Remembered your password? <Link to="/login" className="link">Log in</Link>
                     </p>
                 </form>
             </div>

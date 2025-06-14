@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
