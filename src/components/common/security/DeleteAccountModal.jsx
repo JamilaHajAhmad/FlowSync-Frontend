@@ -40,6 +40,18 @@ const StyledTextField = styled(TextField)(() => ({
     }
 }));
 
+const StyledDialog = styled(Dialog)(({ theme }) => ({
+    '& .MuiDialog-paper': {
+        width: '90%',
+        maxWidth: 500,
+        margin: theme.spacing(2),
+        [theme.breakpoints.down('sm')]: {
+            margin: theme.spacing(1),
+            width: 'calc(100% - 16px)'
+        }
+    }
+}));
+
 const DeleteAccountModal = ({ open, onClose }) => {
     const [password, setPassword] = useState('');
     const [reason, setReason] = useState('');
@@ -85,7 +97,7 @@ const DeleteAccountModal = ({ open, onClose }) => {
     };
 
     return (
-        <Dialog 
+        <StyledDialog 
             open={open} 
             onClose={() => !loading && onClose()}
             maxWidth="sm"
@@ -95,22 +107,54 @@ const DeleteAccountModal = ({ open, onClose }) => {
                 bgcolor: 'error.lighter', 
                 display: 'flex', 
                 alignItems: 'center', 
-                gap: 1 
+                gap: 1,
+                py: { xs: 1.5, sm: 2 },
+                px: { xs: 2, sm: 3 }
             }}>
-                <WarningIcon color="error" />
-                <Typography color="error.main" fontWeight="bold">
+                <WarningIcon 
+                    color="error" 
+                    sx={{ 
+                        fontSize: { xs: '1.25rem', sm: '1.5rem' } 
+                    }} 
+                />
+                <Typography 
+                    color="error.main" 
+                    fontWeight="bold"
+                    sx={{
+                        fontSize: { xs: '1rem', sm: '1.25rem' }
+                    }}
+                >
                     Deactivate Account
                 </Typography>
             </DialogTitle>
 
-            <DialogContent sx={{ mt: 2 }}>
+            <DialogContent sx={{ 
+                mt: 2,
+                px: { xs: 2, sm: 3 },
+                py: { xs: 1.5, sm: 2 }
+            }}>
                 {error && (
-                    <Alert severity="error" sx={{ mb: 2 }}>
+                    <Alert 
+                        severity="error" 
+                        sx={{ 
+                            mb: 2,
+                            '& .MuiAlert-message': {
+                                fontSize: { xs: '0.813rem', sm: '0.875rem' }
+                            }
+                        }}
+                    >
                         {error}
                     </Alert>
                 )}
                 
-                <Typography variant="body1" paragraph>
+                <Typography 
+                    variant="body1" 
+                    paragraph
+                    sx={{
+                        fontSize: { xs: '0.875rem', sm: '1rem' },
+                        mb: { xs: 1.5, sm: 2 }
+                    }}
+                >
                     This action cannot be undone. Please enter your password to confirm.
                 </Typography>
 
@@ -122,6 +166,15 @@ const DeleteAccountModal = ({ open, onClose }) => {
                     onChange={(e) => setPassword(e.target.value)}
                     error={!!error}
                     disabled={loading}
+                    sx={{
+                        mb: { xs: 1.5, sm: 2 },
+                        '& .MuiInputBase-input': {
+                            fontSize: { xs: '0.875rem', sm: '1rem' }
+                        },
+                        '& .MuiInputLabel-root': {
+                            fontSize: { xs: '0.875rem', sm: '1rem' }
+                        }
+                    }}
                     InputProps={{
                         endAdornment: (
                             <InputAdornment position="end">
@@ -130,8 +183,14 @@ const DeleteAccountModal = ({ open, onClose }) => {
                                     onClick={handleTogglePasswordVisibility}
                                     edge="end"
                                     disabled={loading}
+                                    sx={{
+                                        padding: { xs: '4px', sm: '8px' }
+                                    }}
                                 >
-                                    {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                                    {showPassword ? 
+                                        <VisibilityOffIcon sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }} /> : 
+                                        <VisibilityIcon sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }} />
+                                    }
                                 </IconButton>
                             </InputAdornment>
                         )
@@ -146,16 +205,31 @@ const DeleteAccountModal = ({ open, onClose }) => {
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     disabled={loading}
-                    sx={{ mb: 2, mt: 2 }}
+                    sx={{
+                        mb: { xs: 1.5, sm: 2 },
+                        '& .MuiInputBase-input': {
+                            fontSize: { xs: '0.875rem', sm: '1rem' }
+                        },
+                        '& .MuiInputLabel-root': {
+                            fontSize: { xs: '0.875rem', sm: '1rem' }
+                        }
+                    }}
                     placeholder="Please tell us why you're deactivating your account..."
                 />
             </DialogContent>
 
-            <DialogActions sx={{ p: 2, pt: 0 }}>
+            <DialogActions sx={{ 
+                p: { xs: 1.5, sm: 2 }, 
+                pt: 0,
+                gap: { xs: 1, sm: 2 }
+            }}>
                 <Button
                     onClick={onClose}
                     disabled={loading}
-                    sx={{ color: 'text.secondary' }}
+                    sx={{ 
+                        color: 'text.secondary',
+                        fontSize: { xs: '0.813rem', sm: '0.875rem' }
+                    }}
                 >
                     Cancel
                 </Button>
@@ -164,12 +238,23 @@ const DeleteAccountModal = ({ open, onClose }) => {
                     color="error"
                     onClick={handleDeleteAccount}
                     disabled={!password || loading}
-                    startIcon={loading && <CircularProgress size={20} />}
+                    startIcon={loading && 
+                        <CircularProgress 
+                            size={16} 
+                            sx={{ 
+                                mr: { xs: 0.5, sm: 1 } 
+                            }} 
+                        />
+                    }
+                    sx={{
+                        fontSize: { xs: '0.813rem', sm: '0.875rem' },
+                        py: { xs: 0.75, sm: 1 }
+                    }}
                 >
                     Deactivate Account
                 </Button>
             </DialogActions>
-        </Dialog>
+        </StyledDialog>
     );
 };
 

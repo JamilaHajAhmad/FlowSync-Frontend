@@ -121,50 +121,93 @@ const ConnectedDevices = () => {
     }
 
     return (
-        <Box sx={{ maxWidth: 800, mx: 'auto', mt: 4, p: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, ml: -30 }}>
-                <img src={logo} alt="FlowSync Logo" style={{ width: '60px', marginRight: '12px' }} />
+        <Box sx={{ 
+            maxWidth: 800, 
+            mx: 'auto', 
+            mt: { xs: 2, sm: 4 }, 
+            p: { xs: 1, sm: 2 },
+            minHeight: '100vh'
+        }}>
+            {/* Logo and Title Section */}
+            <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                mb: { xs: 2, sm: 4 }, 
+                ml: { xs: 0, sm: -15, md: -30 },
+                justifyContent: { xs: 'center', sm: 'flex-start' }
+            }}>
+                <img 
+                    src={logo} 
+                    alt="FlowSync Logo" 
+                    style={{ 
+                        width: 'clamp(40px, 8vw, 60px)', 
+                        marginRight: '12px' 
+                    }} 
+                />
                 <Typography 
                     variant="h5" 
                     sx={{ 
                         color: '#059669',
                         fontWeight: 'bold',
-                        fontSize: '24px',
+                        fontSize: { xs: '20px', sm: '24px' }
                     }}
                 >
                     FlowSync
                 </Typography>
             </Box>
 
+            {/* Back Button */}
             <Button
                 startIcon={<ArrowBackIcon />}
                 onClick={handleBack}
                 sx={{
                     mb: 2,
                     color: '#064e3b',
-                    '&:hover': {
-                        bgcolor: '#ecfdf5'
-                    }
+                    '&:hover': { bgcolor: '#ecfdf5' },
+                    width: { xs: '100%', sm: 'auto' }
                 }}
             >
                 Back to Settings
             </Button>
 
-            <Card elevation={3} sx={{ bgcolor: 'white' }}>
-                <CardContent>
-                    <Box display="flex" alignItems="center" mb={3}>
-                        <DevicesIcon sx={{ fontSize: 30, mr: 1, color: '#064e3b' }} />
-                        <Typography variant="h5" component="h2" sx={{ color: '#064e3b' }}>
+            {/* Main Card */}
+            <Card elevation={3} sx={{ 
+                bgcolor: 'white',
+                borderRadius: { xs: 2, sm: 3 }
+            }}>
+                <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                    {/* Card Header */}
+                    <Box display="flex" 
+                        alignItems="center" 
+                        mb={3}
+                        flexDirection={{ xs: 'column', sm: 'row' }}
+                        gap={{ xs: 1, sm: 0 }}
+                    >
+                        <DevicesIcon sx={{ 
+                            fontSize: { xs: 24, sm: 30 }, 
+                            mr: { xs: 0, sm: 1 }, 
+                            color: '#064e3b' 
+                        }} />
+                        <Typography 
+                            variant="h5" 
+                            component="h2" 
+                            sx={{ 
+                                color: '#064e3b',
+                                fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                            }}
+                        >
                             Connected Devices
                         </Typography>
                     </Box>
 
+                    {/* Error Alert */}
                     {error && (
                         <Alert severity="error" sx={{ mb: 2 }}>
                             {error}
                         </Alert>
                     )}
 
+                    {/* Devices List */}
                     <List>
                         {devices.map((device, index) => {
                             const deviceDetails = parseDeviceInfo(device.deviceInfo);
@@ -173,9 +216,10 @@ const ConnectedDevices = () => {
                                 <React.Fragment key={device.id}>
                                     <ListItem
                                         sx={{
-                                            '&:hover': {
-                                                bgcolor: '#ecfdf5'
-                                            }
+                                            flexDirection: { xs: 'column', sm: 'row' },
+                                            alignItems: { xs: 'flex-start', sm: 'center' },
+                                            py: { xs: 2, sm: 1 },
+                                            '&:hover': { bgcolor: '#ecfdf5' }
                                         }}
                                         secondaryAction={
                                             <Tooltip title="Logout Device">
@@ -184,9 +228,9 @@ const ConnectedDevices = () => {
                                                     onClick={() => handleLogoutDevice(device.id)}
                                                     sx={{
                                                         color: '#dc2626',
-                                                        '&:hover': {
-                                                            bgcolor: '#fee2e2'
-                                                        }
+                                                        '&:hover': { bgcolor: '#fee2e2' },
+                                                        position: { xs: 'static', sm: 'absolute' },
+                                                        mt: { xs: 1, sm: 0 }
                                                     }}
                                                 >
                                                     <LogoutIcon />
@@ -194,37 +238,64 @@ const ConnectedDevices = () => {
                                             </Tooltip>
                                         }
                                     >
-                                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                                            <Box sx={{ color: '#064e3b' }}>
+                                        <Box sx={{ 
+                                            display: 'flex', 
+                                            alignItems: 'flex-start',
+                                            width: '100%',
+                                            flexDirection: { xs: 'column', sm: 'row' },
+                                            gap: { xs: 1, sm: 0 }
+                                        }}>
+                                            <Box sx={{ 
+                                                color: '#064e3b',
+                                                mr: { xs: 0, sm: 2 }
+                                            }}>
                                                 {getDeviceIcon(deviceDetails.type)}
                                             </Box>
-                                            <Box sx={{ ml: 2, flex: 1 }}>
+                                            <Box sx={{ 
+                                                flex: 1,
+                                                width: { xs: '100%', sm: 'auto' }
+                                            }}>
                                                 <ListItemText
                                                     primary={
-                                                        <Typography >
+                                                        <Typography sx={{
+                                                            fontSize: { xs: '0.9rem', sm: '1rem' }
+                                                        }}>
                                                             {deviceDetails.os}
                                                         </Typography>
                                                     }
                                                     secondary={
-                                                        <Typography variant="body2">
+                                                        <Typography variant="body2" sx={{
+                                                            fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                                                        }}>
                                                             {`${deviceDetails.browser} • ${formatIPAddress(device.ipAddress)}`}
                                                         </Typography>
                                                     }
                                                 />
-                                                <Typography variant="caption">
+                                                <Typography variant="caption" sx={{
+                                                    fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                                                }}>
                                                     Login time: {formatLastActive(device.loginTime)}
                                                 </Typography>
                                             </Box>
                                         </Box>
                                     </ListItem>
-                                    {index < devices.length - 1 && <Divider sx={{ borderColor: '#d1fae5' }} />}
+                                    {index < devices.length - 1 && 
+                                        <Divider sx={{ borderColor: '#d1fae5' }} />
+                                    }
                                 </React.Fragment>
                             );
                         })}
                     </List>
 
                     {devices.length === 0 && (
-                        <Typography sx={{ color: '#059669', py: 4 }} align="center">
+                        <Typography 
+                            sx={{ 
+                                color: '#059669', 
+                                py: { xs: 2, sm: 4 },
+                                fontSize: { xs: '0.875rem', sm: '1rem' }
+                            }} 
+                            align="center"
+                        >
                             No connected devices found
                         </Typography>
                     )}

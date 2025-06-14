@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Box,
     Card,
@@ -42,16 +42,35 @@ const LoginNotifications = () => {
     };
 
     return (
-        <Box sx={{ maxWidth: 600, mx: 'auto', mt: 4, p: 2 }}>
+        <Box sx={{ 
+            maxWidth: 600, 
+            mx: 'auto', 
+            mt: { xs: 2, sm: 4 }, 
+            p: { xs: 1.5, sm: 2 },
+            minHeight: '100vh'
+        }}>
             {/* Logo and Title */}
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, ml: -30 }}>
-                <img src={logo} alt="FlowSync Logo" style={{ width: '60px', marginRight: '12px' }} />
+            <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                mb: { xs: 2, sm: 4 }, 
+                ml: { xs: 0, sm: -15, md: -30 },
+                justifyContent: { xs: 'center', sm: 'flex-start' }
+            }}>
+                <img 
+                    src={logo} 
+                    alt="FlowSync Logo" 
+                    style={{ 
+                        width: 'clamp(40px, 8vw, 60px)',
+                        marginRight: '12px' 
+                    }} 
+                />
                 <Typography 
                     variant="h5" 
                     sx={{ 
                         color: '#059669',
                         fontWeight: 'bold',
-                        fontSize: '24px',
+                        fontSize: { xs: '20px', sm: '24px' }
                     }}
                 >
                     FlowSync
@@ -65,24 +84,37 @@ const LoginNotifications = () => {
                 sx={{
                     mb: 2,
                     color: '#064e3b',
-                    '&:hover': {
-                        bgcolor: '#ecfdf5'
-                    }
+                    '&:hover': { bgcolor: '#ecfdf5' },
+                    width: { xs: '100%', sm: 'auto' }
                 }}
             >
                 Back to Settings
             </Button>
 
-            <Card elevation={3} sx={{ bgcolor: 'white' }}>
-                <CardContent>
-                    <Box display="flex" alignItems="center" mb={3}>
-                        <NotificationsIcon sx={{ fontSize: 30, mr: 1, color: '#064e3b' }} />
+            <Card elevation={3} sx={{ 
+                bgcolor: 'white',
+                borderRadius: { xs: 2, sm: 3 }
+            }}>
+                <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                    <Box display="flex" 
+                        alignItems="center" 
+                        mb={3}
+                        flexDirection={{ xs: 'column', sm: 'row' }}
+                        gap={{ xs: 1, sm: 0 }}
+                    >
+                        <NotificationsIcon sx={{ 
+                            fontSize: { xs: 24, sm: 30 }, 
+                            mr: { xs: 0, sm: 1 }, 
+                            color: '#064e3b' 
+                        }} />
                         <Typography 
                             variant="h5" 
                             component="h2" 
                             sx={{ 
                                 color: '#064e3b',
-                                fontWeight: 'bold'
+                                fontWeight: 'bold',
+                                fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                                textAlign: { xs: 'center', sm: 'left' }
                             }}
                         >
                             Login Notifications
@@ -108,15 +140,23 @@ const LoginNotifications = () => {
                             />
                         }
                         label={
-                            <Typography sx={{ color: '#064e3b', fontWeight: 500 }}>
+                            <Typography sx={{ 
+                                color: '#064e3b', 
+                                fontWeight: 500,
+                                fontSize: { xs: '0.875rem', sm: '1rem' }
+                            }}>
                                 {`Login notifications are ${isEnabled ? 'enabled' : 'disabled'}`}
                             </Typography>
                         }
+                        sx={{
+                            mx: { xs: 0, sm: 1 },
+                            mt: { xs: 1, sm: 0 }
+                        }}
                     />
                     
                     <Box sx={{ 
                         mt: 3, 
-                        p: 2, 
+                        p: { xs: 1.5, sm: 2 }, 
                         bgcolor: '#f0fdf4', 
                         borderRadius: 1,
                         border: '1px solid #d1fae5'
@@ -124,12 +164,16 @@ const LoginNotifications = () => {
                         <Typography 
                             variant="body2" 
                             sx={{ 
-                                
-                                lineHeight: 1.6
+                                lineHeight: 1.6,
+                                fontSize: { xs: '0.813rem', sm: '0.875rem' }
                             }}
                         >
                             When enabled, you'll receive notifications about:
-                            <Box component="ul" sx={{ mt: 1, mb: 0 }}>
+                            <Box component="ul" sx={{ 
+                                mt: 1, 
+                                mb: 0,
+                                pl: { xs: 2.5, sm: 3 }
+                            }}>
                                 <li>New login attempts</li>
                                 <li>Suspicious activity detection</li>
                                 <li>Security-related events</li>
