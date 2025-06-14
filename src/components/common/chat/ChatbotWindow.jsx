@@ -24,7 +24,7 @@ import { toast } from 'react-toastify';
 import { sendMessageToAI } from "./ChatbotAPI"; 
 import LoadingDots from './LoadingDots';
 
-const ChatbotWindow = ({ open }) => {
+const ChatbotWindow = ({ open, isOnChatPage }) => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(true);
@@ -63,6 +63,7 @@ const ChatbotWindow = ({ open }) => {
 
             return () => clearTimeout(timer);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, isFirstOpen]);
 
     useEffect(() => {
@@ -209,13 +210,25 @@ const ChatbotWindow = ({ open }) => {
     };
 
     return (
-        <Grow in={open} mountOnEnter unmountOnExit timeout={1000} style={{ transformOrigin: 'bottom right' }}>
+        <Grow 
+            in={open} 
+            mountOnEnter 
+            unmountOnExit 
+            timeout={1000} 
+            style={{ 
+                transformOrigin: isOnChatPage ? 'bottom left' : 'bottom right' 
+            }}
+        >
             <Paper
                 elevation={6}
                 sx={{
                     position: "fixed",
                     bottom: 80,
-                    right: 20,
+                    ...(isOnChatPage ? {
+                        left: 20,
+                    } : {
+                        right: 20,
+                    }),
                     width: 380,
                     maxHeight: "calc(100vh - 160px)",
                     height: 500,
