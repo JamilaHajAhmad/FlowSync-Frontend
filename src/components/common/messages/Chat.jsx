@@ -19,8 +19,7 @@ import {
     createTheme,
     Tooltip,
     Popper,
-    ClickAwayListener,
-    Paper as EmojiPaper
+    ClickAwayListener
 } from '@mui/material';
 import {
     Send as SendIcon,
@@ -70,7 +69,7 @@ const theme = createTheme({
     }
 });
 
-export default function Chat() {
+const Chat = () => {
     // State management
     const [ conversations, setConversations ] = useState([]);
     const [ selectedUser, setSelectedUser ] = useState(null);
@@ -111,6 +110,12 @@ export default function Chat() {
     // Constants - moved to refs to prevent recreating on each render
     const tokenRef = useRef(localStorage.getItem('authToken'));
     const currentUserIdRef = useRef(decodeToken(tokenRef.current).id);
+
+    // Find the current user object from users array
+    const currentUser = useMemo(
+        () => users.find(u => u.id === currentUserIdRef.current),
+        [ users ]
+    );
 
     // Update refs when selectedUser changes
     useEffect(() => {
@@ -706,7 +711,13 @@ export default function Chat() {
 
     return (
         <ThemeProvider theme={theme}>
-            <Box className="chat-container" sx={{ overflowX: 'hidden' }}> {/* Prevent horizontal scroll */}
+            <Box className="chat-container" sx={{
+                display: 'flex',
+                height: '100vh',
+                overflow: 'hidden',
+                flexDirection: { xs: 'column', md: 'row' },
+                bgcolor: 'background.default'
+            }}>
                 {/* Connection status banner */}
                 {connectionState !== 'connected' && (
                     <Alert
@@ -737,18 +748,17 @@ export default function Chat() {
                 </Snackbar>
 
                 {/* Sidebar */}
-                <Paper className="chat-sidebar" elevation={2}
-                    sx={{
-                        width: 300,
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        borderRight: '1px solid',
-                        borderColor: 'secondary.light',
-                        bgcolor: 'background.paper',
-                        overflow: 'hidden' // Prevent horizontal scroll
-                    }}
-                >
+                <Paper className="chat-sidebar" elevation={2} sx={{
+                    width: { xs: '100%', md: 300 },
+                    height: { xs: selectedUser ? '0px' : '100vh', md: '100%' },
+                    display: { xs: selectedUser ? 'none' : 'flex', md: 'flex' },
+                    flexDirection: 'column',
+                    borderRight: '1px solid',
+                    borderColor: 'secondary.light',
+                    bgcolor: 'background.paper',
+                    overflow: 'hidden',
+                    transition: 'all 0.3s ease'
+                }}>
                     <Box sx={{
                         p: 2,
                         background: 'linear-gradient(135deg, #065f46 0%, #047857 100%)',
@@ -965,20 +975,35 @@ export default function Chat() {
                 </Paper>
 
                 {/* Main chat area */}
-                <Paper className="chat-main" elevation={1} sx={{ overflowX: 'hidden' }}> {/* Prevent horizontal scroll */}
+                <Paper className="chat-main" elevation={1} sx={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: { xs: selectedUser ? '100vh' : '0px', md: '100%' },
+                    visibility: { xs: selectedUser ? 'visible' : 'hidden', md: 'visible' },
+                    transition: 'all 0.3s ease'
+                }}>
                     {selectedUser ? (
                         <>
                             {/* Chat header */}
-                            <Box
-                                sx={{
-                                    p: 2,
-                                    borderBottom: 1,
-                                    borderColor: 'divider',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 2
-                                }}
-                            >
+                            <Box sx={{
+                                p: { xs: 1.5, sm: 2 },
+                                borderBottom: 1,
+                                borderColor: 'divider',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: { xs: 1, sm: 2 }
+                            }}>
+                                {/* Add back button for mobile */}
+                                <IconButton
+                                    sx={{
+                                        display: { xs: 'flex', md: 'none' },
+                                        mr: 1
+                                    }}
+                                    onClick={() => setSelectedUser(null)}
+                                >
+                                    <ArrowBack />
+                                </IconButton>
                                 <Badge
                                     overlap="circular"
                                     anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
@@ -1033,130 +1058,100 @@ export default function Chat() {
                                 sx={{
                                     flexGrow: 1,
                                     overflowY: 'auto',
-                                    p: 1,
+                                    p: { xs: 1.5, sm: 2 },
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    minHeight: 0,
-                                    maxWidth: '100%', // Prevent horizontal scroll
-                                    overflowX: 'hidden' // Prevent horizontal scroll
+                                    gap: 2
                                 }}
                             >
-                                {messages.map((message, index) => {
-                                    // In the message rendering part:
-                                    const isOwn = message.isMine || message.senderId === currentUserIdRef.current;
-                                    const showAvatar = !isOwn && (
-                                        index === 0 ||
-                                        messages[ index - 1 ].isMine
-                                    );
-
-                                    return (
-                                        <Box
-                                            key={message.id}
+                                {messages.map((message) => (
+                                    <Box key={message.id} sx={{
+                                        display: 'flex',
+                                        alignItems: 'flex-start',
+                                        flexDirection: message.isMine ? 'row-reverse' : 'row',
+                                        gap: 1,
+                                        mb: 0.5
+                                    }}>
+                                        {/* Avatar - Enhanced positioning */}
+                                        <Avatar
+                                            src={message.isMine ? currentUser?.pictureURL : selectedUser.pictureURL}
+                                            alt={message.isMine ? currentUser?.fullName : selectedUser.fullName}
                                             sx={{
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                alignItems: isOwn ? 'flex-end' : 'flex-start',
-                                                mb: 1,
-                                                maxWidth: '80%', // Limit message width
-                                                alignSelf: isOwn ? 'flex-end' : 'flex-start',
-                                                ml: isOwn ? 'auto' : 0, // Keep own messages close to right
-                                                mr: isOwn ? 0 : 'auto' // Keep received messages close to left
+                                                width: 36,
+                                                height: 36,
+                                                mt: 0.5,
+                                                flexShrink: 0,
+                                                alignSelf: 'flex-start'
                                             }}
                                         >
-                                            <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1 }}>
-                                                {!isOwn && (
-                                                    <Avatar
-                                                        sx={{
-                                                            width: 32,
-                                                            height: 32,
-                                                            visibility: showAvatar ? 'visible' : 'hidden'
-                                                        }}
-                                                        src={selectedUser.pictureURL}
-                                                        alt={selectedUser.fullName}
-                                                    >
-                                                        {selectedUser.fullName[ 0 ]?.toUpperCase()}
-                                                    </Avatar>
-                                                )}
+                                            {message.isMine
+                                                ? currentUser?.fullName[ 0 ]?.toUpperCase()
+                                                : selectedUser.fullName[ 0 ]?.toUpperCase()
+                                            }
+                                        </Avatar>
 
-                                                <Box
-                                                    sx={{
-                                                        maxWidth: '100%', // Use full available width
-                                                        minWidth: '80px', // Add minimum width
-                                                        bgcolor: isOwn ? 'primary.main' : 'grey.50',
-                                                        color: isOwn ? 'primary.contrastText' : 'text.primary',
-                                                        borderRadius: isOwn ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
-                                                        paddingTop: 1,
-                                                        paddingBottom: 1,
-                                                        paddingLeft: 2,
-                                                        paddingRight: 2,
-                                                        position: 'relative',
-                                                        boxShadow: 1,
-                                                        '&::before': {
-                                                            content: '""',
-                                                            position: 'absolute',
-                                                            bottom: 0,
-                                                            [ isOwn ? 'right' : 'left' ]: -8,
-                                                            borderStyle: 'solid',
-                                                            borderWidth: '10px',
-                                                            borderColor: `transparent ${isOwn ? theme.palette.primary.main : '#f9fafb'} transparent transparent`,
-                                                            transform: isOwn ? 'rotate(-45deg)' : 'rotate(45deg)'
-                                                        }
-                                                    }}
-                                                >
-                                                    <Typography
-                                                        variant="body1"
-                                                        sx={{
-                                                            fontSize: '0.95rem',
-                                                            lineHeight: 1.5,
-                                                            wordBreak: 'break-word',
-                                                            whiteSpace: 'pre-wrap' // Preserve line breaks
-                                                        }}
-                                                    >
-                                                        {message.content}
-                                                    </Typography>
-                                                    {isOwn && (
-                                                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
-                                                            {renderMessageStatus(message.status)}
-                                                        </Box>
-                                                    )}
-                                                </Box>
+                                        {/* Message content and status */}
+                                        <Box sx={{
+                                            maxWidth: { xs: '75%', sm: '60%' },
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: message.isMine ? 'flex-end' : 'flex-start'
+                                        }}>
+                                            <Box sx={{
+                                                bgcolor: message.isMine ? 'primary.main' : 'grey.100',
+                                                color: message.isMine ? 'white' : 'text.primary',
+                                                borderRadius: message.isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                                                p: { xs: 1.5, sm: 2 },
+                                                maxWidth: '100%',
+                                                wordBreak: 'break-word',
+                                                position: 'relative'
+                                            }}>
+                                                <Typography sx={{
+                                                    fontSize: { xs: '0.875rem', sm: '0.95rem' },
+                                                    lineHeight: 1.5
+                                                }}>
+                                                    {message.content}
+                                                </Typography>
                                             </Box>
 
-                                            <Typography
-                                                variant="caption"
-                                                sx={{
-                                                    opacity: 0.7,
-                                                    fontSize: '0.7rem',
-                                                    mt: 0.5,
-                                                    ml: !isOwn ? 5 : 0, // Add margin left for received messages to align with bubble
-                                                    color: 'text.secondary'
-                                                }}
-                                            >
-                                                {formatMessageTime(message.timestamp)}
-                                            </Typography>
+                                            <Box sx={{
+                                                mt: 0.5,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 0.5
+                                            }}>
+                                                <Typography variant="caption" sx={{
+                                                    fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                                                    opacity: 0.7
+                                                }}>
+                                                    {formatMessageTime(message.timestamp)}
+                                                </Typography>
+                                                {message.isMine && renderMessageStatus(message.status)}
+                                            </Box>
                                         </Box>
-                                    );
-                                })}
+                                    </Box>
+                                ))}
 
                                 {/* Typing indicator - enhanced visibility */}
                                 {isTyping && (
                                     <Box
                                         sx={{
                                             display: 'flex',
-                                            justifyContent: 'flex-start',
-                                            mb: 2, // Increased margin bottom
-                                            alignItems: 'flex-end',
-                                            width: '100%', // Ensure full width
-                                            minHeight: '60px', // Minimum height to prevent cutoff
-                                            pb: 1 // Add padding bottom
+                                            alignItems: 'flex-start',
+                                            flexDirection: 'row',
+                                            gap: 1,
+                                            mb: 2,
+                                            width: '100%',
+                                            minHeight: '60px',
+                                            pb: 1
                                         }}
                                     >
                                         <Avatar
                                             sx={{
-                                                width: 32,
-                                                height: 32,
-                                                mr: 1,
-                                                flexShrink: 0 // Prevent avatar from shrinking
+                                                width: 36,
+                                                height: 36,
+                                                mt: 0.5,
+                                                flexShrink: 0
                                             }}
                                             src={selectedUser.pictureURL}
                                             alt={selectedUser.fullName}
@@ -1166,16 +1161,16 @@ export default function Chat() {
                                         <Box
                                             sx={{
                                                 maxWidth: '70%',
-                                                minWidth: '60px', // Minimum width for typing indicator
+                                                minWidth: '60px',
                                                 bgcolor: 'grey.100',
                                                 color: 'text.primary',
-                                                borderRadius: 2,
-                                                p: 2, // Increased padding
+                                                borderRadius: '18px 18px 18px 4px',
+                                                p: 2,
                                                 position: 'relative',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
-                                                minHeight: '40px' // Minimum height for the bubble
+                                                minHeight: '40px'
                                             }}
                                         >
                                             <Box
@@ -1183,8 +1178,8 @@ export default function Chat() {
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
-                                                    gap: '6px', // Slightly increased gap
-                                                    height: '20px' // Fixed height for animation container
+                                                    gap: '6px',
+                                                    height: '20px'
                                                 }}
                                             >
                                                 {[ 0, 1, 2 ].map((dot) => (
@@ -1215,170 +1210,172 @@ export default function Chat() {
                                         </Box>
                                     </Box>
                                 )}
-
-                                <div ref={messageEndRef} />
                             </Box>
-
-                            {/* Message input */}
-                            <Box
-                                component="form"
-                                onSubmit={handleSendMessage}
-                                sx={{
-                                    p: 2,
-                                    borderTop: 1,
-                                    borderColor: 'secondary.light',
-                                    display: 'flex',
-                                    gap: 1,
-                                    bgcolor: 'background.paper',
-                                    position: 'relative' // Add this
-                                }}
-                            >
-                                <TextField
-                                    fullWidth
-                                    multiline
-                                    maxRows={4}
-                                    variant="outlined"
-                                    placeholder="Type a message..."
-                                    value={newMessage}
-                                    inputRef={textFieldRef}
-                                    onChange={(e) => {
-                                        setNewMessage(e.target.value);
-                                        handleTyping();
-                                    }}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && !e.shiftKey) {
-                                            e.preventDefault();
-                                            handleSendMessage(e);
-                                        }
-                                    }}
-                                    size="small"
-                                    sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: 3,
-                                            bgcolor: 'grey.50',
-                                            '& textarea': {
-                                                lineHeight: '1.5',
-                                                overflow: 'hidden',
-                                                whiteSpace: 'pre-wrap',
-                                                paddingRight: '40px' // Make space for emoji button
-                                            },
-                                            '&:hover': {
-                                                borderColor: 'primary.main'
-                                            },
-                                            '&.Mui-focused': {
-                                                borderColor: 'primary.main',
-                                                boxShadow: `0 0 0 2px ${theme.palette.primary.light}`
-                                            }
-                                        }
-                                    }}
-                                    InputProps={{
-                                        endAdornment: (
-                                            <IconButton
-                                                ref={emojiButtonRef}
-                                                onClick={handleEmojiPickerClick}
-                                                sx={{
-                                                    position: 'absolute',
-                                                    right: 8,
-                                                    top: '50%',
-                                                    transform: 'translateY(-50%)',
-                                                    color: showEmojiPicker ? 'primary.main' : 'action.active',
-                                                    '&:hover': {
-                                                        color: 'primary.main'
-                                                    }
-                                                }}
-                                            >
-                                                <EmojiIcon />
-                                            </IconButton>
-                                        )
-                                    }}
-                                />
-                                
-                                <IconButton
-                                    color="primary"
-                                    type="submit"
-                                    disabled={!newMessage.trim()}
-                                    sx={{
-                                        bgcolor: 'primary.main',
-                                        color: 'white',
-                                        '&:hover': {
-                                            bgcolor: 'primary.dark'
-                                        },
-                                        '&:disabled': {
-                                            bgcolor: 'grey.200'
-                                        },
-                                        width: 40,
-                                        height: 40
-                                    }}
-                                >
-                                    <SendIcon />
-                                </IconButton>
-
-                                {/* Emoji Picker Popper */}
-                                <Popper
-                                    open={showEmojiPicker}
-                                    anchorEl={emojiAnchorEl}
-                                    placement="top-end"
-                                    sx={{ zIndex: 1300 }}
-                                >
-                                    <ClickAwayListener onClickAway={handleClickAway}>
-                                        <EmojiPaper 
-                                            elevation={8}
-                                            sx={{ 
-                                                borderRadius: 2,
-                                                mt: 1,
-                                                overflow: 'hidden',
-                                                '& .EmojiPickerReact': {
-                                                    border: 'none',
-                                                    boxShadow: 'none'
-                                                }
-                                            }}
-                                        >
-                                            <EmojiPicker
-                                                onEmojiClick={handleEmojiSelect}
-                                                autoFocusSearch={false}
-                                                width={320}
-                                                height={400}
-                                                searchDisabled
-                                                skinTonesDisabled
-                                                previewConfig={{
-                                                    showPreview: false
-                                                }}
-                                                lazyLoadEmojis
-                                            />
-                                        </EmojiPaper>
-                                    </ClickAwayListener>
-                                </Popper>
-                            </Box>
+                            {/* Add any additional chat UI elements here */}
                         </>
-                    ) : (
+                    ) : null}
+
+                    {/* Team message dialog */}
+                    {isTeamMessageEnabled && (
+                        <TeamMessageDialog
+                            open={teamMessageDialog}
+                            onClose={() => setTeamMessageDialog(false)}
+                            onSend={handleSendTeamMessage}
+                        />
+                    )}
+
+                    {/* Emoji picker popper */}
+                    <Popper
+                        open={showEmojiPicker}
+                        anchorEl={emojiAnchorEl}
+                        placement="top-start"
+                        disablePortal
+                        style={{ zIndex: 1300 }}
+                    >
+                        <ClickAwayListener onClickAway={handleClickAway}>
+                            <Paper elevation={3} sx={{ p: 1 }}>
+                                <EmojiPicker
+                                    onEmojiClick={handleEmojiSelect}
+                                    theme="light"
+                                    searchDisabled={false}
+                                    width={320}
+                                />
+                            </Paper>
+                        </ClickAwayListener>
+                    </Popper>
+
+                    {/* Message input area */}
+                    {selectedUser && (
                         <Box
+                            component="form"
+                            onSubmit={handleSendMessage}
                             sx={{
+                                p: { xs: 1.5, sm: 2 },
+                                borderTop: 1,
+                                borderColor: 'divider',
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'center',
-                                height: '100%',
-                                textAlign: 'center'
+                                gap: 1,
+                                bgcolor: 'background.paper',
+                                position: 'sticky',
+                                bottom: 0,
+                                zIndex: 2
                             }}
                         >
-                            <Box>
-                                <Typography variant="h5" color="text.secondary" gutterBottom>
-                                    Welcome to Chat! 💬
-                                </Typography>
-                                <Typography variant="body1" color="text.secondary">
-                                    Select a conversation from the sidebar to start chatting
-                                </Typography>
-                            </Box>
+                            <IconButton
+                                ref={emojiButtonRef}
+                                onClick={handleEmojiPickerClick}
+                                sx={{
+                                    flexShrink: 0,
+                                    mr: 1
+                                }}
+                                aria-label="Insert emoji"
+                            >
+                                <EmojiIcon />
+                            </IconButton>
+                            <TextField
+                                inputRef={textFieldRef}
+                                value={newMessage}
+                                onChange={e => setNewMessage(e.target.value)}
+                                onKeyDown={handleTyping}
+                                placeholder="Type your message..."
+                                variant="outlined"
+                                size="small"
+                                fullWidth
+                                autoFocus
+                                sx={{
+                                    bgcolor: 'background.default',
+                                    borderRadius: 2,
+                                    flexGrow: 1,
+                                }}
+                                inputProps={{
+                                    maxLength: 1000
+                                }}
+                            />
+                            <IconButton
+                                type="submit"
+                                color="primary"
+                                disabled={!newMessage.trim()}
+                                sx={{
+                                    flexShrink: 0,
+                                    ml: 1,
+                                    bgcolor: 'primary.main',
+                                    color: 'white',
+                                    width: 40,
+                                    height: 40,
+                                    '&:hover': {
+                                        bgcolor: 'primary.dark'
+                                    },
+                                    '&.Mui-disabled': {
+                                        bgcolor: 'grey.300',
+                                        color: 'grey.500'
+                                    }
+                                }}
+                                aria-label="Send message"
+                            >
+                                <SendIcon />
+                            </IconButton>
                         </Box>
                     )}
+                    <div ref={messageEndRef} />
                 </Paper>
 
-                {/* Move TeamMessageDialog here - outside of selectedUser check */}
-                <TeamMessageDialog
-                    open={teamMessageDialog}
-                    onClose={() => setTeamMessageDialog(false)}
-                    onSend={handleSendTeamMessage}
-                />
+                {!selectedUser && (
+                    <Box sx={{
+                        display: { xs: 'none', md: 'flex' },
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '100%',
+                        textAlign: 'center',
+                        p: 3,
+                        flex: 1,
+                        bgcolor: 'white',
+                        position: 'absolute',
+                        top: '50%',
+                        left: '58%',
+                        transform: 'translate(-58%, -50%)',
+                    }}>
+                        <Box sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            maxWidth: '400px'
+                        }}>
+                            <img
+                                src={Logo}
+                                alt="FlowSync Logo"
+                                style={{
+                                    width: '120px',
+                                    marginBottom: '24px'
+                                }}
+                            />
+                            <Typography
+                                variant="h5"
+                                sx={{
+                                    color: 'primary.main',
+                                    fontWeight: 600,
+                                    mb: 2
+                                }}
+                            >
+                                Welcome to FlowSync Chat
+                            </Typography>
+                            <Typography
+                                variant="body1"
+                                color="text.secondary"
+                                sx={{ px: 3 }}
+                            >
+                                Select a conversation from the left to start messaging.
+                                Stay connected with your team members in real-time.
+                            </Typography>
+                        </Box>
+                    </Box>
+                )}
+
             </Box>
         </ThemeProvider>
     );
-}
+};
+
+export default Chat;
