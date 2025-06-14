@@ -21,52 +21,41 @@ import { getProfile } from '../../../services/profileService';
 import { toast } from 'react-toastify';
 import { formatString } from '../../../utils';
 import { formatDate } from '../../../utils';
-// Custom styled components
-const ProfileHeader = styled(Box)({
-  backgroundImage: `url(${backgroundImg})`,
-  backgroundSize: 'cover',
-  backgroundRepeat: 'no-repeat',
-  backgroundPosition: 'center',
-  width: '100%',
-  height: '200px',
-  position: 'relative',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(5, 150, 105, 0.8)',
-  }
-});
 
-const SidebarCard = styled(Card)({
+const SidebarCard = styled(Card)(({ theme }) => ({
   borderRadius: '10px',
   boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
   overflow: 'hidden',
   height: '100%',
-});
+  marginBottom: { xs: theme.spacing(2), md: 0 }
+}));
 
-const ProfileDetail = styled(Box)({
+const ProfileDetail = styled(Box)(({ theme }) => ({
   display: 'flex',
   justifyContent: 'space-between',
-  padding: '16px',
+  alignItems: 'center',
+  padding: theme.spacing(2),
   borderBottom: '1px solid #f0f0f0',
   '&:last-child': {
     borderBottom: 'none',
+  },
+  [ theme.breakpoints.down('sm') ]: {
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+    textAlign: 'center'
   }
-});
+}));
 
-const StyledTab = styled(Tab)({
+const StyledTab = styled(Tab)(() => ({
   textTransform: 'none',
   fontWeight: 600,
-  fontSize: '15px',
-  minWidth: 120,
+  fontSize: { xs: '13px', sm: '14px', md: '15px' },
+  minWidth: { xs: '100px', sm: '110px', md: '120px' },
+  padding: { xs: '6px 12px', sm: '8px 16px', md: '12px 16px' },
   '&.Mui-selected': {
     color: '#4caf50',
   }
-});
+}));
 
 const StyledTabs = styled(Tabs)({
   borderBottom: '1px solid #e0e0e0',
@@ -97,16 +86,18 @@ const InfoField = styled(TextField)({
   }
 });
 
-const ActionButton = styled(Button)({
+const ActionButton = styled(Button)(() => ({
   backgroundColor: '#064e3b',
   color: 'white',
   borderRadius: '30px',
-  padding: '10px 25px',
+  padding: { xs: '8px 20px', sm: '10px 25px' },
+  width: { xs: '100%', sm: 'auto' },
   boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
   '&:hover': {
     backgroundColor: '#064e3b',
   }
-});
+}));
+
 const getStatusColor = (status) => {
   switch (status) {
     case "On Duty":
@@ -125,9 +116,9 @@ const convertNullToText = (value) => {
 };
 
 const Profile = () => {
-  const [tabValue, setTabValue] = useState(0);
-  const [profileData, setProfileData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [ tabValue, setTabValue ] = useState(0);
+  const [ profileData, setProfileData ] = useState(null);
+  const [ loading, setLoading ] = useState(true);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -208,57 +199,84 @@ const Profile = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Grid container spacing={3}>
+    <Container maxWidth="lg" sx={{
+      py: { xs: 2, sm: 3, md: 4 },
+      px: { xs: 1.5, sm: 2, md: 3 }
+    }}>
+      <Grid container spacing={{ xs: 2, sm: 3 }}>
         {/* Left sidebar with avatar and details */}
         <Grid item xs={12} md={3}>
           <SidebarCard>
-            <Box sx={{ position: 'relative', textAlign: 'center', pt: 4, pb: 3, mb: 4 }}>
+            <Box sx={{
+              position: 'relative',
+              textAlign: 'center',
+              pt: { xs: 3, sm: 4 },
+              pb: { xs: 2, sm: 3 },
+              mb: { xs: 2, sm: 4 }
+            }}>
               <Avatar
                 src={profileData.picture}
                 alt={`${profileData.firstName} ${profileData.lastName}`}
                 sx={{
-                  width: 120,
-                  height: 120,
+                  width: { xs: 100, sm: 110, md: 120 },
+                  height: { xs: 100, sm: 110, md: 120 },
                   margin: '0 auto',
                   border: '4px solid white',
                   boxShadow: '0 0 10px rgba(0,0,0,0.1)',
                 }}
               />
-              <Typography variant="h6" sx={{ mt: 2, fontWeight: 600 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  mt: { xs: 1, sm: 2 },
+                  fontWeight: 600,
+                  fontSize: { xs: '1.1rem', sm: '1.25rem' }
+                }}
+              >
                 {profileData.firstName} {profileData.lastName}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+              >
                 {profileData.role}
               </Typography>
             </Box>
 
+            {/* Profile Details */}
             {profileData.details.map((detail, index) => (
               <ProfileDetail key={index}>
-                <Typography variant="body2">
-                  {detail.icon} &nbsp; {detail.label}
+                <Typography variant="body2" sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                }}>
+                  {React.cloneElement(detail.icon, {
+                    sx: { fontSize: { xs: 16, sm: 18 }, color: '#4caf50' }
+                  })}
+                  {detail.label}
                 </Typography>
                 {detail.useStatusColor ? (
-                  <Box
-                    sx={{
-                      px: 2,
-                      py: 0.5,
-                      borderRadius: '16px',
-                      ...getStatusColor(detail.value)
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontWeight: 600,
-                        color: getStatusColor(detail.value).color,
-                      }}
-                    >
+                  <Box sx={{
+                    px: { xs: 1.5, sm: 2 },
+                    py: { xs: 0.3, sm: 0.5 },
+                    borderRadius: '16px',
+                    ...getStatusColor(detail.value)
+                  }}>
+                    <Typography variant="body2" sx={{
+                      fontWeight: 600,
+                      color: getStatusColor(detail.value).color,
+                      fontSize: { xs: '0.813rem', sm: '0.875rem' }
+                    }}>
                       {detail.value}
                     </Typography>
                   </Box>
                 ) : (
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{
+                    fontSize: { xs: '0.813rem', sm: '0.875rem' }
+                  }}>
                     {detail.value}
                   </Typography>
                 )}
@@ -270,21 +288,40 @@ const Profile = () => {
 
         {/* Main content area */}
         <Grid item xs={12} md={9}>
-          <Paper
-            elevation={0}
-            sx={{
-              borderRadius: '10px',
-              overflow: 'hidden',
-              border: '1px solid #e0e0e0'
-            }}
-          >
-            <ProfileHeader />
+          <Paper elevation={0} sx={{
+            borderRadius: { xs: '8px', sm: '10px' },
+            overflow: 'hidden',
+            border: '1px solid #e0e0e0'
+          }}>
+            <Box
+              sx={{
+                backgroundImage: `url(${backgroundImg})`,
+                backgroundSize: 'cover',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+                width: '100%',
+                height: { xs: '150px', sm: '180px', md: '200px' },
+                position: 'relative',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: 'rgba(5, 150, 105, 0.8)',
+                }
+              }}
+            />
 
-            <Box sx={{ px: 3 }}>
+            <Box sx={{ px: { xs: 1.5, sm: 2, md: 3 } }}>
               <StyledTabs
                 value={tabValue}
                 onChange={handleTabChange}
                 aria-label="profile tabs"
+                variant="scrollable"
+                scrollButtons="auto"
+                allowScrollButtonsMobile
               >
                 <StyledTab label="Profile Info" />
                 <StyledTab label="Security Settings" />
@@ -334,7 +371,7 @@ const Profile = () => {
                   <Grid item xs={12} md={6}>
                     <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                       Last Name
-                    </Typography>
+                    </Typography>Typography
                     <InfoField
                       fullWidth
                       variant="outlined"
@@ -348,7 +385,7 @@ const Profile = () => {
                     <InfoField
                       fullWidth
                       variant="outlined"
-                        value={profileData.dateOfBirth ? formatDate(profileData.dateOfBirth) : 'Not added yet'}
+                      value={profileData.dateOfBirth ? formatDate(profileData.dateOfBirth) : 'Not added yet'}
 
                       InputProps={{
                         readOnly: true
@@ -485,7 +522,7 @@ const Profile = () => {
                           }}
                         >
                           <Link to="/settings/security/login-notifications"
-                            style={{ textDecoration: 'none', color: '#4caf50' }} >Configure</Link>
+                            style={{ textDecoration: 'none', color: '#4caf50' }} >Enable</Link>
                         </Button>
                       </Box>
 
