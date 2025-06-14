@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { 
     Box, 
     List, 
@@ -15,17 +15,28 @@ import { decodeToken } from '../../../utils';
 
 const ResultPaper = styled(Paper)(({ theme }) => ({
     position: 'absolute',
-    top: 'calc(100% + 12px)', // Slightly increased gap
-    left: -20,  // Extend beyond the search bar
-    right: -20, // Extend beyond the search bar
-    width: 'calc(100% + 40px)', // Compensate for the negative left/right
-    maxHeight: '75vh',
-    minWidth: '450px', // Minimum width for better readability
-    maxWidth: '800px', // Maximum width to maintain usability
-    overflowX: 'hidden', // Prevent horizontal scroll
+    top: 'calc(100% + 12px)',
+    left: { xs: -10, sm: -20 },  // Reduced left spacing on mobile
+    right: { xs: -10, sm: -20 }, // Reduced right spacing on mobile
+    width: { xs: 'calc(100% + 20px)', sm: 'calc(100% + 40px)' }, // Adjusted width
+    maxHeight: { xs: '85vh', sm: '75vh' }, // Increased height on mobile
+    minWidth: {
+        xs: '250px', // Reduced minimum width for mobile
+        sm: '350px',
+        md: '450px'
+    },
+    maxWidth: {
+        xs: 'calc(100vw - 32px)', // Adjusted max width for mobile
+        sm: '600px',
+        md: '800px'
+    },
+    overflowX: 'hidden',
     overflowY: 'auto',
     marginTop: theme.spacing(1),
-    borderRadius: theme.spacing(2),
+    borderRadius: {
+        xs: theme.spacing(1),
+        sm: theme.spacing(2)
+    },
     backgroundColor: theme.palette.mode === 'dark' 
         ? 'rgba(45, 45, 45, 0.98)' 
         : 'rgba(255, 255, 255, 0.99)',
@@ -58,9 +69,18 @@ const HighlightedText = styled('span')(() => ({
 }));
 
 const StyledListItem = styled(ListItem)(({ theme }) => ({
-    margin: '6px 12px',
-    padding: '8px 16px',
-    borderRadius: theme.spacing(1.5),
+    margin: {
+        xs: '2px 4px', // Reduced margins on mobile
+        sm: '6px 12px'
+    },
+    padding: {
+        xs: '4px 8px', // Reduced padding on mobile
+        sm: '8px 16px'
+    },
+    borderRadius: {
+        xs: theme.spacing(1),
+        sm: theme.spacing(1.5)
+    },
     transition: 'all 0.2s ease',
     borderLeft: '3px solid transparent',
     '&:hover': {
@@ -76,11 +96,16 @@ const StyledListItem = styled(ListItem)(({ theme }) => ({
     }
 }));
 
-const IconWrapper = styled(ListItemIcon)(({ theme }) => ({
-    minWidth: 48, // Increased from 40
-    color: theme.palette.primary.main,
+const IconWrapper = styled(ListItemIcon)(() => ({
+    minWidth: {
+        xs: 40,
+        sm: 48
+    },
     '& svg': {
-        fontSize: '1.5rem', // Slightly larger icons
+        fontSize: {
+            xs: '1.25rem',
+            sm: '1.5rem'
+        },
         transition: 'transform 0.2s ease',
     },
     'ListItem:hover &': {
@@ -139,34 +164,48 @@ const SearchResults = ({ results, searchTerm, selectedIndex, onSelect, onItemHov
         <ResultPaper elevation={0}>
             {filteredResults.length === 0 ? (
                 <Box sx={{ 
-                    p: 3, 
+                    p: { xs: 2, sm: 3 }, 
                     textAlign: 'center', 
                     color: 'text.secondary',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: 1
+                    gap: { xs: 0.5, sm: 1 }
                 }}>
-                    <Icons.SearchOff sx={{ fontSize: 40, opacity: 0.5 }} />
-                    <Typography variant="body2">
+                    <Icons.SearchOff sx={{ 
+                        fontSize: { xs: 32, sm: 40 }, 
+                        opacity: 0.5 
+                    }} />
+                    <Typography 
+                        variant="body2"
+                        sx={{
+                            fontSize: { xs: '0.813rem', sm: '0.875rem' }
+                        }}
+                    >
                         No results found
                     </Typography>
                 </Box>
             ) : (
                 <List dense sx={{ 
-                    py: 2, // Increased padding
-                    px: 1, 
-                    mt: 2, // Add top margin to account for close button
+                    py: { xs: 0.5, sm: 2 }, // Reduced vertical padding on mobile
+                    px: { xs: 0.25, sm: 1 }, // Reduced horizontal padding on mobile
+                    mt: { xs: 0.5, sm: 2 },
                     '& .MuiListItemText-primary': {
-                        fontSize: '1rem',
+                        fontSize: {
+                            xs: '0.813rem', // Slightly smaller font on mobile
+                            sm: '1rem'
+                        },
                         fontWeight: 500,
-                        mb: 0.5
+                        mb: { xs: 0.125, sm: 0.5 }
                     },
                     '& .MuiListItemText-secondary': {
-                        fontSize: '0.85rem',
-                        lineHeight: 1.4,
-                        maxWidth: '100%', // Ensure text doesn't overflow
-                        wordWrap: 'break-word' // Handle long words
+                        fontSize: {
+                            xs: '0.7rem', // Smaller secondary text on mobile
+                            sm: '0.85rem'
+                        },
+                        lineHeight: { xs: 1.2, sm: 1.4 }, // Tighter line height on mobile
+                        maxWidth: '100%',
+                        wordWrap: 'break-word'
                     }
                 }}>
                     {filteredResults.map((item, index) => {
@@ -206,6 +245,10 @@ const SearchResults = ({ results, searchTerm, selectedIndex, onSelect, onItemHov
                                             sx={{ 
                                                 fontWeight: selectedIndex === index ? 600 : 500,
                                                 color: selectedIndex === index ? '#10B981' : 'inherit',
+                                                fontSize: {
+                                                    xs: '0.875rem',
+                                                    sm: '1rem'
+                                                }
                                             }}
                                         >
                                             {highlightMatch(item.title, searchTerm)}
@@ -222,6 +265,10 @@ const SearchResults = ({ results, searchTerm, selectedIndex, onSelect, onItemHov
                                                 WebkitLineClamp: 2,
                                                 WebkitBoxOrient: 'vertical',
                                                 overflow: 'hidden',
+                                                fontSize: {
+                                                    xs: '0.75rem',
+                                                    sm: '0.85rem'
+                                                }
                                             }}
                                         >
                                             {highlightMatch(item.description, searchTerm)}
