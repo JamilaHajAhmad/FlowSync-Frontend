@@ -40,6 +40,9 @@ html {
     font-size: 1.2rem;
     margin-bottom: 20px;
     opacity: 0.9;
+    white-space: normal; /* Remove any white-space constraints */
+    word-wrap: break-word; /* Allow words to break and wrap */
+    line-height: 1.6;
 }
 
 .highlights {
@@ -52,8 +55,9 @@ html {
     font-size: 1.1rem;
     margin-bottom: 12px;
     display: flex;
-    align-items: center;
-    white-space: nowrap;
+    align-items: flex-start; /* Change from center to flex-start */
+    white-space: normal; /* Remove nowrap */
+    line-height: 1.4;
 }
 
 .highlights li strong {
@@ -105,5 +109,82 @@ html {
     .about-image {
         order: 1;
         margin-bottom: 30px;
+    }
+}
+
+@media screen and (max-width: 968px) {
+    .about-container {
+        flex-direction: column;
+        gap: 2rem;
+        text-align: center;
+        padding: 0 1rem;
+    }
+
+    .about-text h2 {
+        font-size: 2rem;
+    }
+
+    .highlights {
+        text-align: left;
+        max-width: 600px;
+        margin: 0 auto 2rem auto;
+    }
+
+    .about-image {
+        max-width: 80%;
+        margin: 0 auto;
+    }
+
+    .highlights li {
+        display: block; /* Change to block for better mobile layout */
+        margin-bottom: 1rem;
+        padding-left: 1.5rem;
+        position: relative;
+    }
+
+    .highlights li strong {
+        display: block;
+        margin: 0.5rem 0;
+    }
+
+    /* Add check mark position fix */
+    .highlights li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+}
+
+/* Mobile Devices */
+@media screen and (max-width: 780px) {
+    .about {
+        padding: 3rem 1rem;
+    }
+
+    .about-text p {
+        font-size: 1rem;
+        padding: 0 0.5rem;
+    }
+
+    .about-text h2 {
+        font-size: 1.75rem;
+        padding: 0 0.5rem;
+    }
+
+    .highlights {
+        padding: 0 0.5rem;
+    }
+
+    .highlights li {
+        font-size: 0.95rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .cta-button {
+        padding: 0.875rem 1.75rem;
+        font-size: 0.95rem;
+        display: inline-block;
+        margin: 1.5rem auto;
     }
 }

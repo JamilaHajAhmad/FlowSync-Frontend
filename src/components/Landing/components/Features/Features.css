@@ -62,3 +62,50 @@ p {
     opacity: 0.9;
     font-family: "Zilla Slab", serif;
 }
+
+@media screen and (max-width: 968px) {
+    .features {
+        padding: 4rem 1.5rem;
+    }
+
+    .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+
+    .feature {
+        padding: 1.5rem;
+    }
+
+    .icon {
+        font-size: 2.5rem;
+    }
+}
+
+/* Mobile Devices */
+@media screen and (max-width: 576px) {
+    .features {
+        padding: 3rem 1rem;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    .title {
+        margin-bottom: 2rem;
+    }
+
+    .feature {
+        padding: 1.25rem;
+    }
+
+    h3 {
+        font-size: 1.25rem;
+    }
+
+    p {
+        font-size: 0.95rem;
+    }
+}

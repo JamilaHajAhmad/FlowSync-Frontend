@@ -133,3 +133,44 @@
 .social-icons img:hover {
     transform: scale(1.1);
 }
+
+@media screen and (max-width: 968px) {
+    .footer {
+        padding: 3rem 1.5rem 2rem;
+    }
+
+    .footer-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+    }
+}
+
+/* Mobile Devices */
+@media screen and (max-width: 576px) {
+    .footer {
+        padding: 2rem 1rem 1.5rem;
+    }
+
+    .footer-container {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        text-align: center;
+    }
+
+    .footer h3::after {
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .footer ul li:hover {
+        transform: translateX(0) scale(1.05);
+    }
+
+    .social-icons {
+        gap: 1rem;
+    }
+
+    .social-icons img {
+        width: 35px;
+    }
+}

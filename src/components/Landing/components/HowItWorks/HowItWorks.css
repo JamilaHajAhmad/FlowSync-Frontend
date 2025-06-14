@@ -117,3 +117,48 @@ html {
         grid-template-columns: 1fr;
     }
 }
+
+/* Tablet Devices */
+@media screen and (max-width: 968px) {
+    .how-it-works {
+        padding: 4rem 1.5rem;
+    }
+
+    .steps {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+}
+
+/* Mobile Devices */
+@media screen and (max-width: 576px) {
+    .how-it-works {
+        padding: 3rem 1rem;
+    }
+
+    .steps {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    .step {
+        padding: 1.5rem;
+    }
+
+    .step i {
+        font-size: 2.5rem;
+    }
+
+    .step h3 {
+        font-size: 1.3rem;
+    }
+
+    .step p {
+        font-size: 1rem;
+    }
+
+    .cta-button {
+        padding: 0.875rem 2rem;
+        font-size: 1.1rem;
+    }
+}

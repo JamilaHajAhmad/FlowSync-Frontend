@@ -1,4 +1,3 @@
-import React from 'react';
 import Header from '../Header/Header';
 import Logo from '../../../../assets/images/logo.png';
 import './Home.css';
@@ -14,7 +13,7 @@ const Home = () => {
             animate="visible">
             <Header />
             <div className="hero">
-                <Motion.div 
+                <Motion.div
                     className="content"
                     variants={contentMotion}
                     initial="hidden"
@@ -22,12 +21,14 @@ const Home = () => {
                 >
                     <h1>100<small>%</small></h1>
                     <h2>
-                        <span>Streamline</span>
-                        <span>Sync</span>
-                        <span>Achieve</span>
+                        Streamline
+                        <br />
+                        Sync
+                        <br />
+                        Achieve
                     </h2>
                 </Motion.div>
-                <Motion.div 
+                <Motion.div
                     className="image"
                     variants={logoMotion}
                     initial="hidden"

@@ -1,4 +1,4 @@
-import React from 'react';
+import './Landing.css';
 import Home from './components/Home/Home';
 import Features from './components/Features/Features';
 import HowItWorks from './components/HowItWorks/HowItWorks';

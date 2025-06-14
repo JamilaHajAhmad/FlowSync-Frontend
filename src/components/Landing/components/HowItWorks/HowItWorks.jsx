@@ -1,4 +1,3 @@
-import React from 'react';
 import './HowItWorks.css';
 import { motion as Motion } from 'framer-motion';
 import { slideInFromRight } from '../../../../variants';
