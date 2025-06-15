@@ -13,6 +13,8 @@ import { useNavigate } from 'react-router-dom';
 import { adjustTimezone } from "../../utils";
 import { format, parseISO } from 'date-fns';
 import { ArrowBack } from "@mui/icons-material";
+import AdminCredentialsDialog from '../teamLeader/dashboard/components/AdminCredentialsDialog';
+import { decodeToken } from "../../utils";
 
 // Custom styled components
 const StyledTextField = styled(TextField)(() => ({
@@ -104,6 +106,8 @@ const EditProfile = () => {
         status: "On_Duty",
         pictureURL: null
     });
+    const [showAdminDialog, setShowAdminDialog] = useState(false);
+    const [pendingStatus, setPendingStatus] = useState(null);
 
     const formik = useFormik({
         initialValues: {
@@ -269,6 +273,32 @@ const EditProfile = () => {
 
     const handleBackToProfile = () => {
         navigate('/profile');
+    };
+
+    const handleStatusChange = (event) => {
+        const newStatus = event.target.value;
+
+        const role = decodeToken(localStorage.getItem('authToken')).role;
+        // Check if user is leader and changing to leave status
+        if (role === 'Leader' && 
+            (newStatus === 'Temporarily_Leave' || newStatus === 'Annually_Leave')) {
+            setPendingStatus(newStatus);
+            setShowAdminDialog(true);
+        } else {
+            formik.setFieldValue('status', newStatus);
+        }
+    };
+
+    // Dialog handlers
+    const handleAdminDialogClose = () => {
+        setShowAdminDialog(false);
+        setPendingStatus(null);
+    };
+
+    const handleAdminConfirm = () => {
+        formik.setFieldValue('status', pendingStatus);
+        setShowAdminDialog(false);
+        setPendingStatus(null);
     };
 
     return (
@@ -560,7 +590,7 @@ const EditProfile = () => {
                                             labelId="status-label"
                                             name="status"
                                             value={formik.values.status}
-                                            onChange={formik.handleChange}
+                                            onChange={handleStatusChange}
                                             onBlur={formik.handleBlur}
                                             error={formik.touched.status && Boolean(formik.errors.status)}
                                         >
@@ -619,6 +649,19 @@ const EditProfile = () => {
                         </form>
                     </Box>
                 </StyledPaper>
+
+                {/* Admin Credentials Dialog */}
+                <AdminCredentialsDialog
+                    open={showAdminDialog}
+                    onClose={handleAdminDialogClose}
+                    onConfirm={handleAdminConfirm}
+                    profileData={formik.values}
+                    newStatus={pendingStatus}
+                    adminCredentials={{
+                        email: "admin@dubaipolice.gov.ae",
+                        password: "Admin123*"
+                    }}
+                />
             </Box>
         </ThemeProvider>
     );

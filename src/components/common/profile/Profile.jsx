@@ -371,7 +371,7 @@ const Profile = () => {
                   <Grid item xs={12} md={6}>
                     <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                       Last Name
-                    </Typography>Typography
+                    </Typography>
                     <InfoField
                       fullWidth
                       variant="outlined"
