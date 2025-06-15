@@ -165,12 +165,12 @@ const handleSupportReset = () => {
       <Box 
         onClick={onClick}
         sx={{
-          width: 48,
-          height: 48,
+          width: { xs: 40, sm: 48 },
+          height: { xs: 40, sm: 48 },
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          marginRight: '15px',
+          marginRight: { xs: '8px', sm: '15px' },
           borderRadius: '50%',
           border: '2px solid',
           borderColor: selected ? 'primary.main' : '#e0e0e0',
@@ -182,7 +182,7 @@ const handleSupportReset = () => {
             transform: 'scale(1.05)',
           },
           '& svg': {
-            fontSize: 24,
+            fontSize: { xs: 20, sm: 24 },
             color: selected ? 'primary.main' : '#757575',
           }
         }}
@@ -193,13 +193,20 @@ const handleSupportReset = () => {
   };
 
   return (
-      <Container maxWidth="md" sx={{ mb: 4, mt: 6 }}>
+      <Container 
+        maxWidth="md" 
+        sx={{ 
+          mb: 4, 
+          mt: { xs: 3, sm: 4, md: 6 },
+          px: { xs: 2, sm: 3 }
+        }}
+      >
         <Paper 
           elevation={0} 
           sx={{ 
             borderRadius: 3, 
             overflow: 'hidden',
-            maxWidth: 600,
+            maxWidth: { xs: '100%', sm: 600 },
             mx: 'auto'
           }}
         >
@@ -211,9 +218,10 @@ const handleSupportReset = () => {
             variant="fullWidth"
             sx={{
               '& .MuiTab-root': {
-                py: 2,
-                fontSize: '16px',
+                py: { xs: 1.5, sm: 2 },
+                fontSize: { xs: '14px', sm: '16px' },
                 fontWeight: 500,
+                minHeight: { xs: 44, sm: 48 },
               },
               borderBottom: 1,
               borderColor: 'divider',
@@ -229,7 +237,7 @@ const handleSupportReset = () => {
               component="form" 
               onSubmit={handleFeedbackSubmit} 
               sx={{ 
-                p: 4,
+                p: { xs: 2, sm: 3, md: 4 },
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center'
@@ -241,7 +249,8 @@ const handleSupportReset = () => {
                 sx={{ 
                   fontWeight: 600, 
                   mb: 1,
-                  textAlign: 'center'
+                  textAlign: 'center',
+                  fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
                 }}
               >
                 Give feedback
@@ -250,9 +259,11 @@ const handleSupportReset = () => {
                 variant="body1" 
                 color="text.secondary" 
                 sx={{ 
-                  mb: 4,
+                  mb: { xs: 3, sm: 4 },
                   textAlign: 'center',
-                  maxWidth: '450px'
+                  maxWidth: '450px',
+                  fontSize: { xs: '0.9rem', sm: '1rem' },
+                  px: { xs: 1, sm: 0 }
                 }}
               >
                 What do you think of the editing tool?
@@ -261,10 +272,13 @@ const handleSupportReset = () => {
               {/* Rating Section */}
               <Box sx={{ 
                 display: 'flex', 
-                justifyContent: 'space-between', 
-                mb: 4,
-                maxWidth: 320,
-                mx: 'auto'
+                justifyContent: 'center',
+                alignItems: 'center',
+                mb: { xs: 3, sm: 4 },
+                maxWidth: { xs: 280, sm: 320 },
+                mx: 'auto',
+                flexWrap: { xs: 'nowrap', sm: 'nowrap' },
+                gap: { xs: 0, sm: 0 }
               }}>
                 {[1, 2, 3, 4, 5].map((rating) => (
                   <FeedbackEmoji
@@ -277,7 +291,16 @@ const handleSupportReset = () => {
               </Box>
 
               {/* Feedback Comment Section */}
-              <Typography variant="body1" sx={{ mb: 2, fontWeight: 500 }}>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  mb: 2, 
+                  fontWeight: 500,
+                  fontSize: { xs: '0.9rem', sm: '1rem' },
+                  textAlign: { xs: 'center', sm: 'left' },
+                  alignSelf: { xs: 'center', sm: 'flex-start' }
+                }}
+              >
                 Do you have any thoughts you'd like to share?
               </Typography>
               <TextField
@@ -289,22 +312,38 @@ const handleSupportReset = () => {
                 value={feedbackComment}
                 onChange={(e) => setFeedbackComment(e.target.value)}
                 sx={{ 
-                  mb: 4,
+                  mb: { xs: 3, sm: 4 },
                   '& .MuiOutlinedInput-root': {
                     backgroundColor: '#f8fafc',
+                    fontSize: { xs: '0.9rem', sm: '1rem' }
                   }
                 }}
               />
 
               {/* Follow-Up Section */}
-              <Typography variant="body1" sx={{ mb: 2, fontWeight: 500 }}>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  mb: 2, 
+                  fontWeight: 500,
+                  fontSize: { xs: '0.9rem', sm: '1rem' },
+                  textAlign: { xs: 'center', sm: 'left' },
+                  alignSelf: { xs: 'center', sm: 'flex-start' }
+                }}
+              >
                 May we follow you up on your feedback?
               </Typography>
               <RadioGroup
                 row
                 value={followUp}
                 onChange={(e) => setFollowUp(e.target.value)}
-                sx={{ mb: 4 }}
+                sx={{ 
+                  mb: { xs: 3, sm: 4 },
+                  justifyContent: { xs: 'center', sm: 'flex-start' },
+                  '& .MuiFormControlLabel-label': {
+                    fontSize: { xs: '0.9rem', sm: '1rem' }
+                  }
+                }}
               >
                 <FormControlLabel 
                   value="yes" 
@@ -313,7 +352,8 @@ const handleSupportReset = () => {
                       sx={{
                         '&.Mui-checked': {
                           color: 'primary.main',
-                        }
+                        },
+                        padding: { xs: '6px', sm: '9px' }
                       }}
                     />
                   } 
@@ -326,7 +366,8 @@ const handleSupportReset = () => {
                       sx={{
                         '&.Mui-checked': {
                           color: 'primary.main',
-                        }
+                        },
+                        padding: { xs: '6px', sm: '9px' }
                       }}
                     />
                   } 
@@ -336,7 +377,7 @@ const handleSupportReset = () => {
 
               {/* Submit and Cancel Buttons */}
               <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid item xs={12} sm={6}>
                   <Button
                     type="submit"
                     variant="contained"
@@ -344,8 +385,8 @@ const handleSupportReset = () => {
                     disabled={loading}
                     startIcon={loading ? <CircularProgress size={20} /> : <Send />}
                     sx={{
-                      py: 1.5,
-                      fontSize: '16px',
+                      py: { xs: 1.2, sm: 1.5 },
+                      fontSize: { xs: '14px', sm: '16px' },
                       bgcolor: '#064e3b',
                       '&:hover': {
                           bgcolor: '#053c2e',
@@ -355,14 +396,14 @@ const handleSupportReset = () => {
                     {loading ? 'Sending...' : 'Send'}
                   </Button>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={12} sm={6}>
                   <Button
                     variant="outlined"
                     fullWidth
                     onClick={handleFeedbackReset}
                     sx={{
-                      py: 1.5,
-                      fontSize: '16px',
+                      py: { xs: 1.2, sm: 1.5 },
+                      fontSize: { xs: '14px', sm: '16px' },
                       borderColor: '#e0e0e0',
                       color: 'text.secondary',
                       '&:hover': {
@@ -384,7 +425,7 @@ const handleSupportReset = () => {
               component="form" 
               onSubmit={handleSupportSubmit} 
               sx={{ 
-                p: 4,
+                p: { xs: 2, sm: 3, md: 4 },
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center'
@@ -395,8 +436,9 @@ const handleSupportReset = () => {
                 gutterBottom 
                 sx={{ 
                   fontWeight: 600, 
-                  mb: 3,
-                  textAlign: 'center'
+                  mb: { xs: 2, sm: 3 },
+                  textAlign: 'center',
+                  fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
                 }}
               >
                 Request Support
@@ -405,17 +447,26 @@ const handleSupportReset = () => {
                 variant="body1" 
                 color="text.secondary" 
                 sx={{ 
-                  mb: 4,
+                  mb: { xs: 3, sm: 4 },
                   textAlign: 'center',
-                  maxWidth: '450px'
+                  maxWidth: '450px',
+                  fontSize: { xs: '0.9rem', sm: '1rem' },
+                  px: { xs: 1, sm: 0 }
                 }}
               >
                 Need help? Submit a support request and we'll assist you
               </Typography>
 
-              <Grid container spacing={3}>
+              <Grid container spacing={{ xs: 2, sm: 3 }}>
                 <Grid item xs={12}>
-                  <Typography variant="body1" sx={{ mb: 1, fontWeight: 500 }}>
+                  <Typography 
+                    variant="body1" 
+                    sx={{ 
+                      mb: 1, 
+                      fontWeight: 500,
+                      fontSize: { xs: '0.9rem', sm: '1rem' }
+                    }}
+                  >
                     Request Type
                   </Typography>
                   <TextField
@@ -429,14 +480,19 @@ const handleSupportReset = () => {
                     sx={{ 
                       '& .MuiOutlinedInput-root': {
                         backgroundColor: '#f8fafc',
+                        fontSize: { xs: '0.9rem', sm: '1rem' }
                       }
                     }}
                   >
                     {requestTypes.map((option) => (
                       <MenuItem key={option.value} value={option.value}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {option.icon}
-                          <span>{option.label}</span>
+                          <Box sx={{ '& svg': { fontSize: { xs: '1.1rem', sm: '1.25rem' } } }}>
+                            {option.icon}
+                          </Box>
+                          <span style={{ fontSize: window.innerWidth < 600 ? '0.9rem' : '1rem' }}>
+                            {option.label}
+                          </span>
                         </Box>
                       </MenuItem>
                     ))}
@@ -444,7 +500,14 @@ const handleSupportReset = () => {
                 </Grid>
                 
                 <Grid item xs={12}>
-                  <Typography variant="body1" sx={{ mb: 1, fontWeight: 500 }}>
+                  <Typography 
+                    variant="body1" 
+                    sx={{ 
+                      mb: 1, 
+                      fontWeight: 500,
+                      fontSize: { xs: '0.9rem', sm: '1rem' }
+                    }}
+                  >
                     Subject
                   </Typography>
                   <TextField
@@ -457,20 +520,28 @@ const handleSupportReset = () => {
                     sx={{ 
                       '& .MuiOutlinedInput-root': {
                         backgroundColor: '#f8fafc',
+                        fontSize: { xs: '0.9rem', sm: '1rem' }
                       }
                     }}
                   />
                 </Grid>
                 
                 <Grid item xs={12}>
-                  <Typography variant="body1" sx={{ mb: 1, fontWeight: 500 }}>
+                  <Typography 
+                    variant="body1" 
+                    sx={{ 
+                      mb: 1, 
+                      fontWeight: 500,
+                      fontSize: { xs: '0.9rem', sm: '1rem' }
+                    }}
+                  >
                     Description
                   </Typography>
                   <TextField
                     required
                     fullWidth
                     multiline
-                    rows={4}
+                    rows={{ xs: 3, sm: 4 }}
                     name="description"
                     placeholder="Please provide details about your request"
                     value={formData.description}
@@ -478,13 +549,21 @@ const handleSupportReset = () => {
                     sx={{ 
                       '& .MuiOutlinedInput-root': {
                         backgroundColor: '#f8fafc',
+                        fontSize: { xs: '0.9rem', sm: '1rem' }
                       }
                     }}
                   />
                 </Grid>
                 
                 <Grid item xs={12}>
-                  <Typography variant="body1" sx={{ mb: 1, fontWeight: 500 }}>
+                  <Typography 
+                    variant="body1" 
+                    sx={{ 
+                      mb: 1, 
+                      fontWeight: 500,
+                      fontSize: { xs: '0.9rem', sm: '1rem' }
+                    }}
+                  >
                     Priority Level
                   </Typography>
                   <TextField
@@ -497,20 +576,23 @@ const handleSupportReset = () => {
                     sx={{ 
                       '& .MuiOutlinedInput-root': {
                         backgroundColor: '#f8fafc',
+                        fontSize: { xs: '0.9rem', sm: '1rem' }
                       }
                     }}
                   >
                     {priorityLevels.map((option) => (
                       <MenuItem key={option.value} value={option.value}>
-                        {option.label}
+                        <span style={{ fontSize: window.innerWidth < 600 ? '0.9rem' : '1rem' }}>
+                          {option.label}
+                        </span>
                       </MenuItem>
                     ))}
                   </TextField>
                 </Grid>
                 
-                <Grid item xs={12} sx={{ mt: 2 }}>
+                <Grid item xs={12} sx={{ mt: { xs: 1, sm: 2 } }}>
                   <Grid container spacing={2}>
-                    <Grid item xs={6}>
+                    <Grid item xs={12} sm={6}>
                         <Button
                             type="submit"
                             variant="contained"
@@ -518,8 +600,8 @@ const handleSupportReset = () => {
                             disabled={loading}
                             startIcon={loading ? <CircularProgress size={20} /> : <Send />}
                             sx={{
-                                py: 1.5,
-                                fontSize: '16px',
+                                py: { xs: 1.2, sm: 1.5 },
+                                fontSize: { xs: '14px', sm: '16px' },
                                 bgcolor: '#064e3b',
                                 '&:hover': {
                                     bgcolor: '#053c2e',
@@ -529,14 +611,14 @@ const handleSupportReset = () => {
                             {loading ? 'Submitting...' : 'Submit Request'}
                         </Button>
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid item xs={12} sm={6}>
                         <Button
                             variant="outlined"
                             fullWidth
                             onClick={handleSupportReset}
                             sx={{
-                                py: 1.5,
-                                fontSize: '16px',
+                                py: { xs: 1.2, sm: 1.5 },
+                                fontSize: { xs: '14px', sm: '16px' },
                                 borderColor: '#e0e0e0',
                                 color: 'text.secondary',
                                 '&:hover': {
@@ -567,7 +649,8 @@ const handleSupportReset = () => {
             sx={{ 
               width: '100%',
               borderRadius: 2,
-              boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)'
+              boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
+              fontSize: { xs: '0.85rem', sm: '0.875rem' }
             }}
           >
             {snackbar.message}

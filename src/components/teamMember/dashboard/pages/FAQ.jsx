@@ -160,35 +160,69 @@ const FAQ = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Box sx={{ textAlign: 'center', mb: 6 }}>
-        <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: '#064e3b' }}>
+    <Container 
+      maxWidth="md" 
+      sx={{ 
+        py: { xs: 2, sm: 3, md: 4 },
+        px: { xs: 2, sm: 3 }
+      }}
+    >
+      <Box sx={{ textAlign: 'center', mb: { xs: 4, sm: 5, md: 6 } }}>
+        <Typography 
+          variant="h3" 
+          component="h1" 
+          gutterBottom 
+          sx={{ 
+            fontWeight: 'bold', 
+            color: '#064e3b',
+            fontSize: { xs: '1.8rem', sm: '2.5rem', md: '3rem' },
+            mb: { xs: 2, sm: 3 }
+          }}
+        >
           How can we help you?
         </Typography>
         <Paper
           sx={{
-            p: '2px 4px',
+            p: { xs: '1px 2px', sm: '2px 4px' },
             display: 'flex',
             alignItems: 'center',
             width: '100%',
-            maxWidth: 600,
+            maxWidth: { xs: '100%', sm: 500, md: 600 },
             margin: '0 auto',
-            mb: 4,
+            mb: { xs: 3, sm: 4 },
+            minHeight: { xs: 40, sm: 48 }
           }}
           elevation={3}
         >
-          <IconButton sx={{ p: '10px' }} aria-label="search">
+          <IconButton 
+            sx={{ 
+              p: { xs: '8px', sm: '10px' },
+              '& .MuiSvgIcon-root': {
+                fontSize: { xs: '1.2rem', sm: '1.5rem' }
+              }
+            }} 
+            aria-label="search"
+          >
             <Search />
           </IconButton>
           <InputBase
-            sx={{ ml: 1, flex: 1 }}
+            sx={{ 
+              ml: 1, 
+              flex: 1,
+              fontSize: { xs: '0.9rem', sm: '1rem' }
+            }}
             placeholder="Search FAQs..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
             <IconButton 
-              sx={{ p: '10px' }} 
+              sx={{ 
+                p: { xs: '8px', sm: '10px' },
+                '& .MuiSvgIcon-root': {
+                  fontSize: { xs: '1.2rem', sm: '1.5rem' }
+                }
+              }} 
               aria-label="clear search"
               onClick={handleClearSearch}
             >
@@ -200,10 +234,28 @@ const FAQ = () => {
 
       <Box sx={{ mt: 2 }}>
         {filteredCategories.map((category, categoryIndex) => (
-          <Box key={categoryIndex} sx={{ mb: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              {category.icon}
-              <Typography variant="h5" sx={{ ml: 1, fontWeight: 500 }}>
+          <Box key={categoryIndex} sx={{ mb: { xs: 2, sm: 3 } }}>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              mb: { xs: 1.5, sm: 2 },
+              px: { xs: 0.5, sm: 0 }
+            }}>
+              <Box sx={{
+                '& .MuiSvgIcon-root': {
+                  fontSize: { xs: '1.2rem', sm: '1.5rem' }
+                }
+              }}>
+                {category.icon}
+              </Box>
+              <Typography 
+                variant="h5" 
+                sx={{ 
+                  ml: 1, 
+                  fontWeight: 500,
+                  fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.5rem' }
+                }}
+              >
                 {highlightText(category.category, searchQuery)}
               </Typography>
             </Box>
@@ -232,17 +284,39 @@ const FAQ = () => {
                 }}
               >
                 <AccordionSummary
-                  expandIcon={<ExpandMore />}
+                  expandIcon={<ExpandMore sx={{ 
+                    fontSize: { xs: '1.3rem', sm: '1.5rem' } 
+                  }} />}
                   sx={{
-                    '& .MuiAccordionSummary-content': { margin: '12px 0' }
+                    '& .MuiAccordionSummary-content': { 
+                      margin: { xs: '8px 0', sm: '12px 0' },
+                      pr: { xs: 1, sm: 2 }
+                    },
+                    minHeight: { xs: 48, sm: 56 }
                   }}
                 >
-                  <Typography sx={{ fontWeight: 500 }}>
+                  <Typography 
+                    sx={{ 
+                      fontWeight: 500,
+                      fontSize: { xs: '0.9rem', sm: '1rem' },
+                      lineHeight: { xs: 1.4, sm: 1.5 }
+                    }}
+                  >
                     {highlightText(item.question, searchQuery)}
                   </Typography>
                 </AccordionSummary>
-                <AccordionDetails>
-                  <Typography color="text.secondary">
+                <AccordionDetails sx={{
+                  pt: { xs: 0, sm: 1 },
+                  px: { xs: 2, sm: 2 },
+                  pb: { xs: 2, sm: 2 }
+                }}>
+                  <Typography 
+                    color="text.secondary"
+                    sx={{
+                      fontSize: { xs: '0.85rem', sm: '0.95rem' },
+                      lineHeight: { xs: 1.5, sm: 1.6 }
+                    }}
+                  >
                     {highlightText(item.answer, searchQuery)}
                   </Typography>
                 </AccordionDetails>
