@@ -151,7 +151,7 @@ const TaskCard = ({ task, isDragging }) => {
             <Box sx={{ 
               display: 'flex', 
               alignItems: 'center',
-              whiteSpace: 'nowrap' // Prevent line breaks
+              whiteSpace: 'nowrap'
             }}>
               <ErrorOutline sx={{ 
                 fontSize: 16, 
@@ -169,20 +169,11 @@ const TaskCard = ({ task, isDragging }) => {
                 }}
               >
                 Overdue By:
-                <span style={{ marginLeft: '4px' }}>
-                  <CountdownTimer 
-                    counter={task.counter} 
-                    isOverdue={true}
-                    format={(value, unit) => {
-                      switch(unit) {
-                        case 'days': return `${value}D`;
-                        case 'hours': return `${value}H`;
-                        case 'minutes': return `${value}M`;
-                        default: return value;
-                      }
-                    }}
-                  />
-                </span>
+                <CountdownTimer 
+                  counter={task.counter} 
+                  isOverdue={true}
+                  isDetail={false} // This ensures abbreviated format
+                />
               </Typography>
             </Box>
           )}
@@ -327,6 +318,7 @@ const TaskCard = ({ task, isDragging }) => {
               <CountdownTimer 
                 counter={task.counter} 
                 isOverdue={task.status === "Delayed"}
+                isDetail={true} // This ensures full format in dialog
               />
             </Typography>
           </Grid>
