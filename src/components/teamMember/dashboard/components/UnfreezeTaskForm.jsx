@@ -60,6 +60,16 @@ const UnfreezeTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
                     borderRadius: '12px',
                     boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.12)',
                     overflow: 'hidden',
+                    // Responsive margin for mobile
+                    margin: {
+                        xs: '16px',
+                        sm: '32px',
+                    },
+                    // Ensure dialog doesn't exceed viewport
+                    maxHeight: {
+                        xs: 'calc(100vh - 32px)',
+                        sm: 'calc(100vh - 64px)',
+                    },
                 },
             }}
         >
@@ -68,38 +78,123 @@ const UnfreezeTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 1,
-                    padding: '16px 24px',
-                    fontSize: '1.25rem',
+                    // Responsive padding
+                    padding: {
+                        xs: '12px 16px',
+                        sm: '16px 24px',
+                    },
+                    // Responsive font size
+                    fontSize: {
+                        xs: '1.1rem',
+                        sm: '1.25rem',
+                    },
                     fontWeight: 600,
+                    // Ensure title doesn't wrap awkwardly
+                    wordBreak: 'keep-all',
                 }}
             >
-                <PlayCircleOutline color="primary" />
+                <PlayCircleOutline 
+                    color="primary" 
+                    sx={{
+                        // Responsive icon size
+                        fontSize: {
+                            xs: '1.3rem',
+                            sm: '1.5rem',
+                        }
+                    }}
+                />
                 Unfreeze Task
             </DialogTitle>
 
             <DialogContent
                 sx={{
-                    padding: '24px',
+                    // Responsive padding
+                    padding: {
+                        xs: '16px',
+                        sm: '24px',
+                    },
                     '& .MuiTypography-root': {
                         color: 'rgba(0, 0, 0, 0.87)',
                         marginBottom: '8px',
                     },
                 }}
             >
-                <Typography variant="subtitle1" gutterBottom>
+                <Typography 
+                    variant="subtitle1" 
+                    gutterBottom
+                    sx={{
+                        // Responsive font size for main text
+                        fontSize: {
+                            xs: '0.95rem',
+                            sm: '1rem',
+                        },
+                        // Better line height for readability on small screens
+                        lineHeight: {
+                            xs: 1.4,
+                            sm: 1.5,
+                        },
+                        // Ensure text wraps properly
+                        wordBreak: 'break-word',
+                    }}
+                >
                     Are you sure you want to unfreeze task <strong>{task?.frnNumber}</strong>?
                 </Typography>
 
-                <Typography variant="body2" color="text.secondary">
+                <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{
+                        // Responsive font size for secondary text
+                        fontSize: {
+                            xs: '0.85rem',
+                            sm: '0.875rem',
+                        },
+                        lineHeight: {
+                            xs: 1.3,
+                            sm: 1.4,
+                        },
+                    }}
+                >
                     This action will move the task back to the "Ongoing" status.
                 </Typography>
             </DialogContent>
 
             <DialogActions
                 sx={{
-                    padding: '16px 24px',
+                    // Responsive padding
+                    padding: {
+                        xs: '12px 16px',
+                        sm: '16px 24px',
+                    },
                     borderTop: '1px solid rgba(0, 0, 0, 0.08)',
-                    gap: '12px',
+                    // Responsive gap and layout
+                    gap: {
+                        xs: '8px',
+                        sm: '12px',
+                    },
+                    // Stack buttons vertically on very small screens if needed
+                    flexDirection: {
+                        xs: 'column-reverse',
+                        sm: 'row',
+                    },
+                    // Align buttons properly
+                    '& .MuiButton-root': {
+                        // Full width on mobile for better touch targets
+                        width: {
+                            xs: '100%',
+                            sm: 'auto',
+                        },
+                        // Responsive button size
+                        minHeight: {
+                            xs: '44px',
+                            sm: '36px',
+                        },
+                        // Responsive font size
+                        fontSize: {
+                            xs: '0.9rem',
+                            sm: '0.875rem',
+                        },
+                    },
                 }}
             >
                 <Button

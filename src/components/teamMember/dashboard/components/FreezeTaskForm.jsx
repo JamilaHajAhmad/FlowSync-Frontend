@@ -6,7 +6,9 @@ import {
     Button,
     Typography,
     TextField,
-    CircularProgress
+    CircularProgress,
+    useTheme,
+    useMediaQuery
 } from "@mui/material";
 import { PauseCircleOutline } from "@mui/icons-material";
 import { useFormik } from 'formik';
@@ -22,6 +24,10 @@ const validationSchema = Yup.object({
 });
 
 const FreezeTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+
     const formik = useFormik({
         initialValues: { reason: '' },
         validationSchema,
@@ -68,13 +74,31 @@ const FreezeTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
         <Dialog
             open={open}
             onClose={formik.isSubmitting ? undefined : handleClose}
-            maxWidth="sm"
+            maxWidth={isMobile ? false : "sm"}
             fullWidth
+            fullScreen={isMobile}
             PaperProps={{
                 sx: {
-                    borderRadius: '12px',
+                    borderRadius: isMobile ? 0 : '12px',
                     boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.12)',
                     overflow: 'hidden',
+                    ...(isMobile && {
+                        width: '100vw',
+                        height: '100vh',
+                        margin: 0,
+                        maxHeight: '100vh',
+                        maxWidth: '100vw',
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }),
+                    ...(isTablet && !isMobile && {
+                        margin: '16px',
+                        width: 'calc(100% - 32px)',
+                        maxWidth: '600px'
+                    })
                 },
             }}
         >
@@ -83,30 +107,57 @@ const FreezeTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 1,
-                    padding: '16px 24px',
-                    fontSize: '1.25rem',
+                    padding: isMobile ? '16px 16px' : '16px 24px',
+                    fontSize: isMobile ? '1.1rem' : '1.25rem',
                     fontWeight: 600,
+                    ...(isMobile && {
+                        borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+                        backgroundColor: 'white',
+                        zIndex: 1,
+                        flexShrink: 0
+                    })
                 }}
             >
                 <PauseCircleOutline color="primary" />
                 Freeze Request
             </DialogTitle>
 
-            <form onSubmit={formik.handleSubmit}>
+            <form onSubmit={formik.handleSubmit} style={{ 
+                display: isMobile ? 'flex' : 'block', 
+                flexDirection: isMobile ? 'column' : 'initial',
+                flex: isMobile ? 1 : 'initial',
+                minHeight: isMobile ? 0 : 'initial'
+            }}>
                 <DialogContent
                     sx={{
-                        padding: '24px',
+                        padding: isMobile ? '16px 16px' : '24px',
                         '& .MuiTypography-root': {
                             color: 'rgba(0, 0, 0, 0.87)',
                             marginBottom: '8px',
                         },
+                        ...(isMobile && {
+                            flex: 1,
+                            overflowY: 'auto',
+                            display: 'flex',
+                            flexDirection: 'column'
+                        })
                     }}
                 >
-                    <Typography variant="subtitle1" gutterBottom>
+                    <Typography variant="subtitle1" gutterBottom
+                        sx={{
+                            fontSize: isMobile ? '0.95rem' : '1rem',
+                            lineHeight: isMobile ? 1.4 : 1.5
+                        }}
+                    >
                         Request leader approval to freeze task <strong>{task?.frnNumber}</strong>.
                     </Typography>
 
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                    <Typography variant="body2" color="text.secondary" gutterBottom
+                        sx={{
+                            fontSize: isMobile ? '0.85rem' : '0.875rem',
+                            lineHeight: isMobile ? 1.3 : 1.43
+                        }}
+                    >
                         This action requires confirmation from your team leader.
                     </Typography>
 
@@ -115,7 +166,8 @@ const FreezeTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
                         name="reason"
                         label="Reason for Freezing"
                         multiline
-                        rows={3}
+                        rows={isMobile ? 6 : 3}
+                        maxRows={isMobile ? 8 : 6}
                         value={formik.values.reason}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
@@ -127,7 +179,14 @@ const FreezeTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
                             mt: 2,
                             '& .MuiOutlinedInput-root': {
                                 '&:hover fieldset': { borderColor: '#4ade80' },
-                                '&.Mui-focused fieldset': { borderColor: '#22c55e' }
+                                '&.Mui-focused fieldset': { borderColor: '#22c55e' },
+                                fontSize: isMobile ? '0.9rem' : '1rem'
+                            },
+                            '& .MuiInputLabel-root': {
+                                fontSize: isMobile ? '0.9rem' : '1rem'
+                            },
+                            '& .MuiFormHelperText-root': {
+                                fontSize: isMobile ? '0.75rem' : '0.8125rem'
                             }
                         }}
                     />
@@ -135,9 +194,16 @@ const FreezeTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
 
                 <DialogActions
                     sx={{
-                        padding: '16px 24px',
+                        padding: isMobile ? '16px 16px 24px 16px' : '16px 24px',
                         borderTop: '1px solid rgba(0, 0, 0, 0.08)',
-                        gap: '12px',
+                        gap: isMobile ? '8px' : '12px',
+                        flexDirection: isMobile ? 'column-reverse' : 'row',
+                        ...(isMobile && {
+                            backgroundColor: 'white',
+                            zIndex: 1,
+                            flexShrink: 0,
+                            marginTop: 'auto'
+                        })
                     }}
                 >
                     <Button
@@ -145,6 +211,12 @@ const FreezeTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
                         variant="outlined"
                         color="inherit"
                         disabled={formik.isSubmitting}
+                        sx={{
+                            ...(isMobile && {
+                                width: '100%',
+                                minHeight: '44px'
+                            })
+                        }}
                     >
                         Cancel
                     </Button>
@@ -154,6 +226,12 @@ const FreezeTaskForm = ({ open, onClose, task, onSubmitSuccess }) => {
                         variant="contained"
                         color="primary"
                         disabled={formik.isSubmitting || !formik.isValid || !formik.dirty}
+                        sx={{
+                            ...(isMobile && {
+                                width: '100%',
+                                minHeight: '44px'
+                            })
+                        }}
                     >
                         {formik.isSubmitting ? (
                             <CircularProgress size={24} />
