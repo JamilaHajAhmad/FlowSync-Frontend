@@ -22,8 +22,8 @@ html {
     height: 100%;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 5%;
+    justify-content: center;
+    padding: 2rem 5%;
 }
 
 .hero .content {
@@ -53,9 +53,9 @@ html {
     font-family: 'Poppins', sans-serif;
     font-weight: 900;
     position: absolute;
-    top: -20%;
-    left: 50%;
-    transform: translate(-50%, -20%);
+    top: -30%;
+    left: 60%;
+    transform: translate(-60%, -30%);
     width: 100%;
     text-align: center;
 }
@@ -66,7 +66,113 @@ html {
     position: relative;
 }
 
+.hero-grid {
+    display: grid;
+    grid-template-columns: 45% 55%;
+    gap: 0;
+    width: 100%;
+    max-width: 1600px;
+    align-items: center;
+    margin: 0 auto;
+    padding-top: 2vh;
+}
+
+.content-card {
+    position: relative;
+    padding: 2rem;
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.content-card .percentage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    top: -10%;
+    left: 10%;
+    transform: translate(-10%, -10%);
+    -webkit-transform: translate(-10%, -10%);
+    -moz-transform: translate(-10%, -10%);
+    -ms-transform: translate(-10%, -10%);
+    -o-transform: translate(-10%, -10%);
+}
+
+.content-card h1 {
+    font-size: 20vw;
+    line-height: 1;
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 900;
+    opacity: 0.1;
+    margin: 0;
+    padding: 0;
+    position: relative;
+}
+
+.content-card h1 small {
+    font-size: 8vw;
+}
+
+.content-card h2 {
+    color: white;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 3.5rem;
+    letter-spacing: 4px;
+    line-height: 1.2;
+    text-transform: uppercase;
+    text-align: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    z-index: 2;
+}
+
+.logo-card {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 5vh;
+}
+
+.logo-card img {
+    width: 100%;
+    max-width: 500px;
+    filter: brightness(50%);
+    transition: filter 0.3s ease;
+    -webkit-filter: brightness(50%);
+    position: relative;
+    left: 15%;
+    transform: translateX(-15%);
+    -webkit-transform: translateX(-15%);
+    -moz-transform: translateX(-15%);
+    -ms-transform: translateX(-15%);
+    -o-transform: translateX(-15%);
+}
+
+.logo-card:hover img {
+    filter: brightness(70%);
+    -webkit-filter: brightness(70%);
+}
+
 /* Tablet Devices */
+@media screen and (max-width: 1200px) {
+    .content-card h1 {
+        font-size: 18vw;
+    }
+
+    .content-card h2 {
+        font-size: 3rem;
+    }
+}
+
 @media screen and (max-width: 968px) {
     .hero {
         flex-direction: column;
@@ -104,6 +210,31 @@ html {
         margin: 0 auto;
         left: -8%;
     }
+
+    .hero-grid {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+    }
+
+    .content-card {
+        min-height: 40vh;
+    }
+
+    .content-card h1 {
+        font-size: 25vw;
+    }
+
+    .content-card h2 {
+        font-size: 2.8rem;
+    }
+
+    .logo-card {
+        padding-top: 0;
+    }
+
+    .logo-card img {
+        max-width: 350px;
+    }
 }
 
 /* Mobile Devices */
@@ -140,5 +271,47 @@ html {
         width: 50%;
         margin: 0 auto;
         left: -8%;
+    }
+
+    .hero-grid {
+        gap: 1rem;
+    }
+
+    .content-card {
+        min-height: 30vh;
+        padding: 1rem;
+    }
+
+    .content-card h1 {
+        font-size: 30vw;
+    }
+
+    .content-card h1 small {
+        font-size: 12vw;
+    }
+
+    .content-card h2 {
+        font-size: 2rem;
+        letter-spacing: 3px;
+        width: 90%;
+    }
+
+    .logo-card img {
+        max-width: 250px;
+    }
+}
+
+/* Extra Large Screens */
+@media screen and (min-width: 1600px) {
+    .content-card h1 {
+        font-size: 18vw;
+    }
+
+    .content-card h2 {
+        font-size: 4rem;
+    }
+
+    .logo-card img {
+        max-width: 600px;
     }
 }
