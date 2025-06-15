@@ -15,49 +15,37 @@ import { decodeToken } from '../../../utils';
 
 const ResultPaper = styled(Paper)(({ theme }) => ({
     position: 'absolute',
-    top: 'calc(100% + 12px)',
-    left: { xs: -10, sm: -20 },  // Reduced left spacing on mobile
-    right: { xs: -10, sm: -20 }, // Reduced right spacing on mobile
-    width: { xs: 'calc(100% + 20px)', sm: 'calc(100% + 40px)' }, // Adjusted width
-    maxHeight: { xs: '85vh', sm: '75vh' }, // Increased height on mobile
+    top: 'calc(100% + 8px)',
+    right: 0,
+    width: '100%', // Match parent width
     minWidth: {
-        xs: '250px', // Reduced minimum width for mobile
+        xs: '300px',
         sm: '350px',
         md: '450px'
     },
     maxWidth: {
-        xs: 'calc(100vw - 32px)', // Adjusted max width for mobile
-        sm: '600px',
-        md: '800px'
+        xs: 'calc(100vw - 32px)',
+        sm: '450px',
+        md: '500px'
     },
+    maxHeight: '400px',
     overflowX: 'hidden',
     overflowY: 'auto',
     marginTop: theme.spacing(1),
-    borderRadius: {
-        xs: theme.spacing(1),
-        sm: theme.spacing(2)
-    },
+    borderRadius: theme.spacing(1),
     backgroundColor: theme.palette.mode === 'dark' 
         ? 'rgba(45, 45, 45, 0.98)' 
         : 'rgba(255, 255, 255, 0.99)',
     backdropFilter: 'blur(12px)',
     boxShadow: theme.palette.mode === 'dark' 
-        ? '0 12px 40px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3)'
-        : '0 12px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.05)',
+        ? '0 12px 40px rgba(0, 0, 0, 0.5)'
+        : '0 12px 40px rgba(0, 0, 0, 0.12)',
     border: `1px solid ${theme.palette.mode === 'dark' 
         ? 'rgba(255, 255, 255, 0.08)' 
         : 'rgba(0, 0, 0, 0.06)'}`,
     zIndex: theme.zIndex.modal + 1,
-    '&::-webkit-scrollbar': {
-        width: '6px'
-    },
-    '&::-webkit-scrollbar-track': {
-        background: 'transparent'
-    },
-    '&::-webkit-scrollbar-thumb': {
-        backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
-        borderRadius: '3px'
-    }
+    transform: 'translateX(0)', // Ensure proper alignment
+    left: 'auto' // Reset left position
 }));
 
 const HighlightedText = styled('span')(() => ({
@@ -187,25 +175,22 @@ const SearchResults = ({ results, searchTerm, selectedIndex, onSelect, onItemHov
                 </Box>
             ) : (
                 <List dense sx={{ 
-                    py: { xs: 0.5, sm: 2 }, // Reduced vertical padding on mobile
-                    px: { xs: 0.25, sm: 1 }, // Reduced horizontal padding on mobile
-                    mt: { xs: 0.5, sm: 2 },
+                    py: 0.5,
+                    px: 0,
                     '& .MuiListItemText-primary': {
                         fontSize: {
-                            xs: '0.813rem', // Slightly smaller font on mobile
-                            sm: '1rem'
+                            xs: '0.875rem',
+                            sm: '0.875rem'
                         },
                         fontWeight: 500,
-                        mb: { xs: 0.125, sm: 0.5 }
+                        mb: 0.25
                     },
                     '& .MuiListItemText-secondary': {
                         fontSize: {
-                            xs: '0.7rem', // Smaller secondary text on mobile
-                            sm: '0.85rem'
+                            xs: '0.75rem',
+                            sm: '0.75rem'
                         },
-                        lineHeight: { xs: 1.2, sm: 1.4 }, // Tighter line height on mobile
-                        maxWidth: '100%',
-                        wordWrap: 'break-word'
+                        lineHeight: 1.3
                     }
                 }}>
                     {filteredResults.map((item, index) => {
