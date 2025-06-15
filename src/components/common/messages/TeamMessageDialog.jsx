@@ -10,15 +10,28 @@ import {
     IconButton,
     Alert,
     useTheme,
-    useMediaQuery
+    useMediaQuery,
+    Box,
+    Popover
 } from '@mui/material';
-import { People as TeamIcon, Close as CloseIcon } from '@mui/icons-material';
+import { 
+    People as TeamIcon, 
+    Close as CloseIcon,
+    EmojiEmotions as EmojiIcon 
+} from '@mui/icons-material';
+import EmojiPicker from 'emoji-picker-react';
 
 export default function TeamMessageDialog({ open, onClose, onSend }) {
     const [message, setMessage] = useState('');
     const [sending, setSending] = useState(false);
+    const [anchorEl, setAnchorEl] = useState(null);
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+    const handleEmojiClick = (emojiData) => {
+        setMessage(prev => prev + emojiData.emoji);
+        setAnchorEl(null);
+    };
 
     const handleSend = async () => {
         if (!message.trim()) return;
@@ -100,22 +113,70 @@ export default function TeamMessageDialog({ open, onClose, onSend }) {
                     This message will be sent to all team members.
                 </Alert>
                 
-                <TextField
-                    autoFocus
-                    fullWidth
-                    multiline
-                    rows={isMobile ? 6 : 4}
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Type your message to the team..."
-                    variant="outlined"
-                    sx={{
-                        '& .MuiOutlinedInput-root': {
-                            bgcolor: 'grey.50',
-                            fontSize: { xs: '0.875rem', sm: '1rem' }
-                        }
-                    }}
-                />
+                <Box sx={{ 
+                    position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1 
+                }}>
+                    <TextField
+                        autoFocus
+                        fullWidth
+                        multiline
+                        rows={isMobile ? 6 : 4}
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        placeholder="Type your message to the team..."
+                        variant="outlined"
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                bgcolor: 'grey.50',
+                                fontSize: { xs: '0.875rem', sm: '1rem' }
+                            }
+                        }}
+                    />
+                    <IconButton
+                        onClick={(e) => setAnchorEl(e.currentTarget)}
+                        sx={{
+                            position: 'absolute',
+                            right: 8,
+                            bottom: 8,
+                            color: 'text.secondary'
+                        }}
+                    >
+                        <EmojiIcon />
+                    </IconButton>
+
+                    <Popover
+                        open={Boolean(anchorEl)}
+                        anchorEl={anchorEl}
+                        onClose={() => setAnchorEl(null)}
+                        anchorOrigin={{
+                            vertical: 'top',
+                            horizontal: 'right',
+                        }}
+                        transformOrigin={{
+                            vertical: 'bottom',
+                            horizontal: 'right',
+                        }}
+                        sx={{
+                            '& .EmojiPickerReact': {
+                                '--epr-bg-color': theme.palette.background.paper,
+                                '--epr-category-label-bg-color': theme.palette.background.paper,
+                                '--epr-hover-bg-color': theme.palette.action.hover,
+                                border: `1px solid ${theme.palette.divider}`,
+                                boxShadow: theme.shadows[3],
+                            }
+                        }}
+                    >
+                        <EmojiPicker
+                            onEmojiClick={handleEmojiClick}
+                            autoFocusSearch={false}
+                            width={isMobile ? 300 : 350}
+                            height={400}
+                        />
+                    </Popover>
+                </Box>
             </DialogContent>
 
             <DialogActions sx={{ 
