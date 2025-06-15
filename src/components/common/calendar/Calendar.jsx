@@ -23,6 +23,8 @@ export default function Calendar() {
     const [editEventTitle, setEditEventTitle] = useState('');
     const [editEventTime, setEditEventTime] = useState('');
     const [userId, setUserId] = useState(null);
+    // eslint-disable-next-line no-unused-vars
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
     useEffect(() => {
         const token = localStorage.getItem('authToken');
@@ -41,6 +43,15 @@ export default function Calendar() {
             setCurrentEvents([]);
             setUserId(null);
         };
+    }, []);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     const fetchAllEvents = async (token, currentUserId, role) => {
@@ -126,20 +137,45 @@ export default function Calendar() {
     };
 
     function handleDateSelect(selectInfo) {
-        const selectedDate = new Date(selectInfo.start);
-        const today = new Date();
+        // Add check for mobile view
+        if (window.innerWidth < 768 && selectInfo.view.type === 'dayGridMonth') {
+            // For mobile month view, manually handle date selection
+            const selectedDate = new Date(selectInfo.start);
+            const today = new Date();
+            
+            today.setHours(0, 0, 0, 0);
+            selectedDate.setHours(0, 0, 0, 0);
 
-        today.setHours(0, 0, 0, 0);
-        selectedDate.setHours(0, 0, 0, 0);
+            if (selectedDate < today) {
+                selectInfo.view.calendar.unselect();
+                toast.warning("Cannot create events in the past");
+                return;
+            }
 
-        if (selectedDate < today) {
-            selectInfo.view.calendar.unselect();
-            toast.warning("Cannot create events in the past");
-            return;
+            // Force trigger the add event dialog
+            setSelectedEvent({
+                ...selectInfo,
+                start: selectedDate,
+                view: selectInfo.view
+            });
+            setIsAddEventModalOpen(true);
+        } else {
+            // Original desktop behavior
+            const selectedDate = new Date(selectInfo.start);
+            const today = new Date();
+
+            today.setHours(0, 0, 0, 0);
+            selectedDate.setHours(0, 0, 0, 0);
+
+            if (selectedDate < today) {
+                selectInfo.view.calendar.unselect();
+                toast.warning("Cannot create events in the past");
+                return;
+            }
+
+            setSelectedEvent(selectInfo);
+            setIsAddEventModalOpen(true);
         }
-
-        setIsAddEventModalOpen(true);
-        setSelectedEvent(selectInfo);
     }
 
     function checkEventOverlap(newEventDate, existingEvents, excludeEventId = null) {
@@ -409,32 +445,55 @@ export default function Calendar() {
                 <FullCalendar
                     plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                     headerToolbar={{
-                        left: 'prev,next today',
+                        left: window.innerWidth < 768 ? 'prev,next' : 'prev,next today',
                         center: 'title',
-                        right: 'dayGridMonth,timeGridWeek,timeGridDay',
+                        right: window.innerWidth < 576 
+                            ? 'dayGridMonth,timeGridDay' 
+                            : 'dayGridMonth,timeGridWeek,timeGridDay',
                     }}
-                    initialView='dayGridMonth'
+                    initialView={window.innerWidth < 576 ? 'timeGridDay' : 'dayGridMonth'}
                     editable={true}
                     eventStartEditable={true}
                     eventDurationEditable={true}
                     selectable={true}
                     selectMirror={true}
-                    dayMaxEvents={true}
-                    weekends={true}
+                    dateClick={(info) => {
+                        // Handle date clicks on mobile
+                        if (window.innerWidth < 768) {
+                            handleDateSelect({
+                                start: info.date,
+                                view: info.view
+                            });
+                        }
+                    }}
                     select={handleDateSelect}
+                    selectLongPressDelay={0} // Remove delay for mobile selection
+                    dayMaxEvents={window.innerWidth < 768 ? 2 : true}
+                    weekends={true}
                     eventContent={renderEventContent}
                     eventClick={handleEventClick}
                     eventDrop={handleEventDrop}
                     eventClassNames={(eventInfo) => {
                         return eventInfo.event.extendedProps.isDeadline ? 'fc-event-deadline' : 'fc-event';
                     }}
+                    timeZone="local"
+                    events={currentEvents}
                     eventDisplay="block"
                     height="100%"
-                    events={currentEvents}
-                    selectConstraint={{
-                        start: new Date().toISOString().split('T')[0]
+                    handleWindowResize={true}
+                    stickyHeaderDates={true}
+                    contentHeight="auto"
+                    aspectRatio={window.innerWidth < 768 ? 0.8 : 1.35}
+                    views={{
+                        dayGrid: {
+                            titleFormat: { year: 'numeric', month: 'long' }
+                        },
+                        timeGrid: {
+                            titleFormat: { year: 'numeric', month: 'long' }
+                        }
                     }}
-                    timeZone='local'
+                    dayCellClassNames="calendar-day"
+                    dayHeaderClassNames="calendar-header"
                 />
             </div>
 
@@ -443,19 +502,24 @@ export default function Calendar() {
                 open={isAddEventModalOpen}
                 onClose={() => setIsAddEventModalOpen(false)}
                 aria-labelledby="add-event-dialog-title"
+                fullWidth
+                maxWidth="sm"
                 sx={{
                     '& .MuiDialog-paper': {
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        backgroundColor: 'white',
-                        padding: '1.5rem',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                        width: '500px',
-                        maxWidth: '90vw',
-                        height: 'auto',
+                        width: '95%',
+                        maxWidth: '500px',
+                        margin: { xs: '10px', sm: '32px' },
+                        padding: { xs: '16px', sm: '24px' },
+                        '& .MuiDialogTitle-root': {
+                            fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                            padding: { xs: '8px 16px', sm: '16px 24px' },
+                        },
+                        '& .MuiDialogContent-root': {
+                            padding: { xs: '16px', sm: '20px' },
+                        },
+                        '& .MuiDialogActions-root': {
+                            padding: { xs: '8px 16px', sm: '16px 24px' },
+                        },
                     },
                 }}
             >
@@ -526,19 +590,24 @@ export default function Calendar() {
                 open={isConfirmModalOpen}
                 onClose={() => setIsConfirmModalOpen(false)}
                 aria-labelledby="confirm-delete-dialog-title"
+                fullWidth
+                maxWidth="sm"
                 sx={{
                     '& .MuiDialog-paper': {
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        backgroundColor: 'white',
-                        padding: '1rem',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                        width: '500px',
-                        maxWidth: '90vw',
-                        height: 'auto',
+                        width: '95%',
+                        maxWidth: '500px',
+                        margin: { xs: '10px', sm: '32px' },
+                        padding: { xs: '16px', sm: '24px' },
+                        '& .MuiDialogTitle-root': {
+                            fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                            padding: { xs: '8px 16px', sm: '16px 24px' },
+                        },
+                        '& .MuiDialogContent-root': {
+                            padding: { xs: '16px', sm: '20px' },
+                        },
+                        '& .MuiDialogActions-root': {
+                            padding: { xs: '8px 16px', sm: '16px 24px' },
+                        },
                     },
                 }}
             >
@@ -583,19 +652,24 @@ export default function Calendar() {
                 open={isDeadlineInfoModalOpen}
                 onClose={() => setIsDeadlineInfoModalOpen(false)}
                 aria-labelledby="deadline-info-dialog-title"
+                fullWidth
+                maxWidth="sm"
                 sx={{
                     '& .MuiDialog-paper': {
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        backgroundColor: 'white',
-                        padding: '1rem',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                        width: '400px',
-                        maxWidth: '90vw',
-                        height: 'auto',
+                        width: '95%',
+                        maxWidth: '500px',
+                        margin: { xs: '10px', sm: '32px' },
+                        padding: { xs: '16px', sm: '24px' },
+                        '& .MuiDialogTitle-root': {
+                            fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                            padding: { xs: '8px 16px', sm: '16px 24px' },
+                        },
+                        '& .MuiDialogContent-root': {
+                            padding: { xs: '16px', sm: '20px' },
+                        },
+                        '& .MuiDialogActions-root': {
+                            padding: { xs: '8px 16px', sm: '16px 24px' },
+                        },
                     },
                 }}
             >
@@ -636,19 +710,24 @@ export default function Calendar() {
                 open={isEditEventModalOpen}
                 onClose={() => setIsEditEventModalOpen(false)}
                 aria-labelledby="edit-event-dialog-title"
+                fullWidth
+                maxWidth="sm"
                 sx={{
                     '& .MuiDialog-paper': {
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        backgroundColor: 'white',
-                        padding: '1.5rem',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                        width: '500px',
-                        maxWidth: '90vw',
-                        height: 'auto',
+                        width: '95%',
+                        maxWidth: '500px',
+                        margin: { xs: '10px', sm: '32px' },
+                        padding: { xs: '16px', sm: '24px' },
+                        '& .MuiDialogTitle-root': {
+                            fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                            padding: { xs: '8px 16px', sm: '16px 24px' },
+                        },
+                        '& .MuiDialogContent-root': {
+                            padding: { xs: '16px', sm: '20px' },
+                        },
+                        '& .MuiDialogActions-root': {
+                            padding: { xs: '8px 16px', sm: '16px 24px' },
+                        },
                     },
                 }}
             >
