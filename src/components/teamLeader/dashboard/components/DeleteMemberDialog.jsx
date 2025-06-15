@@ -12,7 +12,9 @@ import {
     CircularProgress,
     List,
     ListItem,
-    ListItemText
+    ListItemText,
+    useTheme,
+    useMediaQuery
 } from "@mui/material";
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { getMemberTasksToReassign } from '../../../../services/taskService';
@@ -20,25 +22,28 @@ import { deleteMember } from '../../../../services/memberService';
 import ReassignTasks from './ReassignTasks';
 import { toast } from 'react-toastify';
 
-const DeleteMemberDialog = ({ 
-    open, 
+const DeleteMemberDialog = ({
+    open,
     memberId,
-    memberName, 
+    memberName,
     onClose,
     onSuccess,
     type, // Remove default value to help debug
-    excludeMemberId, 
+    excludeMemberId,
 }) => {
     // Add debug logging at the start of component
     console.log('DeleteMemberDialog received type:', type);
     const token = localStorage.getItem('authToken');
-    const [loading, setLoading] = useState(true);
-    const [tasksToReassign, setTasksToReassign] = useState(null);
-    const [error, setError] = useState(null);
-    const [showReassign, setShowReassign] = useState(false);
-    const [deletionCompleted, setDeletionCompleted] = useState(false);
+    const [ loading, setLoading ] = useState(true);
+    const [ tasksToReassign, setTasksToReassign ] = useState(null);
+    const [ error, setError ] = useState(null);
+    const [ showReassign, setShowReassign ] = useState(false);
+    const [ deletionCompleted, setDeletionCompleted ] = useState(false);
     // Add loading state for buttons
-    const [buttonLoading, setButtonLoading] = useState(false);
+    const [ buttonLoading, setButtonLoading ] = useState(false);
+
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     useEffect(() => {
         const fetchTasksToReassign = async () => {
@@ -48,7 +53,7 @@ const DeleteMemberDialog = ({
                 setLoading(true);
                 const response = await getMemberTasksToReassign(memberId, token);
                 console.log('Fetched tasks:', response.data);
-                
+
 
                 // Group tasks by their type
                 const formattedTasks = {
@@ -59,12 +64,12 @@ const DeleteMemberDialog = ({
 
                 // Response.data is an object with task arrays
                 // eslint-disable-next-line no-unused-vars
-                Object.entries(response.data).forEach(([key,tasks]) => {
+                Object.entries(response.data).forEach(([ key, tasks ]) => {
                     // Make sure we handle both array and single task cases
-                    const taskArray = Array.isArray(tasks) ? tasks : [tasks];
+                    const taskArray = Array.isArray(tasks) ? tasks : [ tasks ];
                     taskArray.forEach(task => {
                         if (task && task.type && Object.prototype.hasOwnProperty.call(formattedTasks, task.type)) {
-                            formattedTasks[task.type].push(task);
+                            formattedTasks[ task.type ].push(task);
                         }
                     });
                 });
@@ -81,18 +86,18 @@ const DeleteMemberDialog = ({
         };
 
         fetchTasksToReassign();
-    }, [open, memberId, token]);
+    }, [ open, memberId, token ]);
 
     const renderTasksList = () => {
         if (!tasksToReassign) return null;
-        
+
         // Display tasks in this specific order
-        const taskTypes = ['Opened', 'Frozen', 'Delayed'];
-        
+        const taskTypes = [ 'Opened', 'Frozen', 'Delayed' ];
+
         return taskTypes.map(type => (
             <ListItem key={type} sx={{ py: 0 }}>
-                <ListItemText 
-                    primary={`${type}: ${tasksToReassign[type]?.length || 0} ${tasksToReassign[type]?.length !== 1 ? 'tasks' : 'task'}`}
+                <ListItemText
+                    primary={`${type}: ${tasksToReassign[ type ]?.length || 0} ${tasksToReassign[ type ]?.length !== 1 ? 'tasks' : 'task'}`}
                 />
             </ListItem>
         ));
@@ -112,20 +117,20 @@ const DeleteMemberDialog = ({
                 await deleteMember(memberId, token);
             }
             setDeletionCompleted(true);
-            
+
             if (tasksToReassign && Object.values(tasksToReassign).some(tasks => tasks.length > 0)) {
                 setShowReassign(true);
             } else {
-                toast.success(type === 'deleteAccount' ? 
-                    'Member deactivated successfully' : 
+                toast.success(type === 'deleteAccount' ?
+                    'Member deactivated successfully' :
                     'Member status changed successfully'
                 );
                 onClose();
                 onSuccess();
             }
         } catch (err) {
-            setError(type === 'deleteAccount' ? 
-                'Failed to deactivate member' : 
+            setError(type === 'deleteAccount' ?
+                'Failed to deactivate member' :
                 'Failed to change member status'
             );
             console.log('Error during action:', err);
@@ -148,7 +153,7 @@ const DeleteMemberDialog = ({
     // Update showReassign section to pass excludeMemberId based on type
     if (showReassign) {
         return (
-            <ReassignTasks 
+            <ReassignTasks
                 tasks={Object.values(tasksToReassign).flat()}
                 onComplete={handleReassignComplete}
                 excludeMemberId={type === 'delete' ? memberId : excludeMemberId}
@@ -156,51 +161,85 @@ const DeleteMemberDialog = ({
         );
     }
 
+    // Update the Dialog and its content
     return (
         <Dialog
             open={open}
             onClose={onClose}
             PaperProps={{
                 sx: {
-                    width: '450px',
-                    p: 1
+                    width: { xs: '95%', sm: '450px' },
+                    m: { xs: 1, sm: 2 },
+                    borderRadius: { xs: 1, sm: 2 },
+                    maxHeight: { xs: '95vh', sm: 'auto' }
                 }
             }}
         >
-            <DialogTitle 
-                sx={{ 
-                    color: '#111827', 
-                    fontWeight: 600,
+            <DialogTitle
+                sx={{
+                    p: { xs: 2, sm: 3 },
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 1
+                    gap: { xs: 1, sm: 1.5 },
+                    color: '#111827',
+                    fontWeight: 600,
+                    fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                    borderColor: 'divider'
                 }}
             >
-                <WarningAmberIcon color="warning" />
+                <WarningAmberIcon 
+                    color="warning" 
+                    sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem' } }} 
+                />
                 {type === 'deleteAccount' ? 'Confirm Member Deactivating' : 'Confirm Status Change'}
             </DialogTitle>
-            <DialogContent>
-                <DialogContentText sx={{ mb: 2 }}>
-                    {type === 'deleteAccount' ? 
+
+            <DialogContent sx={{ p: { xs: 2, sm: 3 } }}>
+                <DialogContentText sx={{ 
+                    mb: { xs: 2, sm: 3 },
+                    fontSize: { xs: '0.875rem', sm: '1rem' }
+                }}>
+                    {type === 'deleteAccount' ?
                         `Are you sure you want to deactivate ${memberName} from the team?` :
                         `Are you sure you want to change ${memberName}'s status?`
                     }
                 </DialogContentText>
 
                 {loading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-                        <CircularProgress size={24} />
+                    <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'center',
+                        my: { xs: 2, sm: 3 }
+                    }}>
+                        <CircularProgress size={isMobile ? 20 : 24} />
                     </Box>
                 ) : error ? (
-                    <Alert severity="error" sx={{ mb: 2 }}>
+                    <Alert 
+                        severity="error" 
+                        sx={{ 
+                            mb: { xs: 2, sm: 3 },
+                            '& .MuiAlert-message': {
+                                fontSize: { xs: '0.813rem', sm: '0.875rem' }
+                            }
+                        }}
+                    >
                         {error}
                     </Alert>
                 ) : hasTasksToReassign ? (
                     <Alert 
                         severity="warning" 
-                        sx={{ mb: 2 }}
+                        sx={{ 
+                            mb: { xs: 2, sm: 3 }
+                        }}
                     >
-                        <Typography variant="body2" sx={{ mb: 1 }}>
+                        <Typography 
+                            variant="body2" 
+                            sx={{ 
+                                mb: 1,
+                                fontSize: { xs: '0.813rem', sm: '0.875rem' },
+                                fontWeight: 500
+                            }}
+                        >
                             <strong>
                                 {type === 'deleteAccount' ?
                                     'This member has the following tasks that need reassignment:' :
@@ -208,44 +247,49 @@ const DeleteMemberDialog = ({
                                 }
                             </strong>
                         </Typography>
-                        <List dense sx={{ mt: 1, mb: 0 }}>
+                        <List dense sx={{ 
+                            mt: 1,
+                            mb: 0,
+                            '& .MuiListItem-root': {
+                                py: { xs: 0.25, sm: 0.5 }
+                            },
+                            '& .MuiListItemText-primary': {
+                                fontSize: { xs: '0.813rem', sm: '0.875rem' }
+                            }
+                        }}>
                             {renderTasksList()}
                         </List>
-                        <Typography variant="body2" sx={{ mt: 1, color: 'warning.dark' }}>
-                            {type === 'deleteAccount' ?
-                                'These tasks must be reassigned before deactivating the member.' :
-                                'These tasks must be reassigned before changing status.'
-                            }
-                        </Typography>
                     </Alert>
                 ) : (
-                    <Alert severity="info" sx={{ mb: 2 }}>
+                    <Alert 
+                        severity="info" 
+                        sx={{ 
+                            mb: { xs: 2, sm: 3 },
+                            '& .MuiAlert-message': {
+                                fontSize: { xs: '0.813rem', sm: '0.875rem' }
+                            }
+                        }}
+                    >
                         This member has no active tasks that need reassignment.
                     </Alert>
                 )}
-
-                {type === 'delete' && (
-                    <Typography 
-                        variant="body2" 
-                        color="error" 
-                        sx={{ mt: 2, fontWeight: 500 }}
-                    >
-                        This action cannot be undone.
-                    </Typography>
-                )}
             </DialogContent>
-            <DialogActions sx={{ p: 2, pt: 0 }}>
+
+            <DialogActions sx={{ 
+                p: { xs: 2, sm: 3 },
+                pt: { xs: 0, sm: 1 },
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: { xs: 1, sm: 1.5 }
+            }}>
                 <Button
                     onClick={onClose}
                     variant="outlined"
                     disabled={buttonLoading}
+                    fullWidth={isMobile}
                     sx={{
-                        color: '#64748b',
-                        borderColor: '#64748b',
-                        '&:hover': {
-                            borderColor: '#475569',
-                            backgroundColor: 'rgba(100, 116, 139, 0.04)'
-                        }
+                        order: { xs: 2, sm: 1 },
+                        fontSize: { xs: '0.813rem', sm: '0.875rem' },
+                        py: { xs: 0.75, sm: 1 }
                     }}
                 >
                     Cancel
@@ -253,18 +297,18 @@ const DeleteMemberDialog = ({
                 <Button
                     onClick={handleConfirmAction}
                     variant="contained"
+                    color="error"
                     disabled={buttonLoading}
-                    color={type === 'deleteAccount' ? 'error' : 'primary'}
-                    startIcon={buttonLoading ? <CircularProgress size={20} /> : null}
+                    fullWidth={isMobile}
+                    startIcon={buttonLoading ? <CircularProgress size={16} /> : null}
                     sx={{
-                        bgcolor: type === 'deleteAccount' ? undefined : '#059669',
-                        '&:hover': {
-                            bgcolor: type === 'deleteAccount' ? '#dc2626' : '#047857'
-                        }
+                        order: { xs: 1, sm: 2 },
+                        fontSize: { xs: '0.813rem', sm: '0.875rem' },
+                        py: { xs: 0.75, sm: 1 }
                     }}
                 >
                     {buttonLoading 
-                        ? (type === 'deleteAccount' ? 'Deactivating...' : 'Changing Status...') 
+                        ? (type === 'deleteAccount' ? 'Deactivating...' : 'Changing Status...')
                         : (type === 'deleteAccount' ? 'Deactivate Member' : 'Change Status')
                     }
                 </Button>

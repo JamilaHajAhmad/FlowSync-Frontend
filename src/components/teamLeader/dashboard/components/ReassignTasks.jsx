@@ -121,45 +121,95 @@ const ReassignTasks = ({ tasks, onComplete, excludeMemberId }) => {
             open={!isCompleted}
             fullWidth
             maxWidth="sm"
+            PaperProps={{
+                elevation: 0,
+                sx: {
+                    borderRadius: { xs: 1, sm: 2 },
+                    m: { xs: 1, sm: 2 },
+                    width: { xs: '95%', sm: '100%' },
+                    maxHeight: { xs: '95vh', sm: '80vh' }
+                }
+            }}
         >
-            <DialogTitle>
-                Reassign Tasks ({currentTaskIndex + 1}/{tasks.length})
+            <DialogTitle sx={{ 
+                p: { xs: 2, sm: 3 },
+                borderColor: 'divider',
+                bgcolor: '#f8fafc'
+            }}>
+                <Typography sx={{ 
+                    fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                    fontWeight: 600,
+                    color: '#0f172a'
+                }}>
+                    Reassign Tasks ({currentTaskIndex + 1}/{tasks.length})
+                </Typography>
             </DialogTitle>
-            <DialogContent>
-                <Box sx={{ mb: 2 }}>
+
+            <DialogContent sx={{ p: { xs: 2, sm: 3 } }}>
+                <Box sx={{ mb: { xs: 2, sm: 3 } }}>
                     <LinearProgress
                         variant="determinate"
                         value={progress}
-                        sx={{ height: 8, borderRadius: 4 }}
+                        sx={{ 
+                            height: { xs: 6, sm: 8 },
+                            borderRadius: 4,
+                            bgcolor: '#e2e8f0',
+                            '& .MuiLinearProgress-bar': {
+                                bgcolor: '#059669'
+                            }
+                        }}
                     />
                 </Box>
 
                 {error && (
-                    <Alert severity="error" sx={{ mb: 2 }}>
+                    <Alert 
+                        severity="error" 
+                        sx={{ 
+                            mb: { xs: 2, sm: 3 },
+                            fontSize: { xs: '0.813rem', sm: '0.875rem' }
+                        }}
+                    >
                         {error}
                     </Alert>
                 )}
 
-                <Box sx={{ mb: 3 }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                <Box sx={{ mb: { xs: 2, sm: 3 } }}>
+                    <Typography 
+                        variant="subtitle2" 
+                        color="text.secondary"
+                        sx={{ 
+                            mb: 1,
+                            fontSize: { xs: '0.813rem', sm: '0.875rem' },
+                            fontWeight: 500
+                        }}
+                    >
                         Current Task Details
                     </Typography>
                     <Box sx={{
-                        p: 2
+                        p: { xs: 1.5, sm: 2 },
+                        borderRadius: { xs: 1, sm: 2 },
                     }}>
-                        <Typography variant="body1" gutterBottom>
+                        <Typography 
+                            variant="body1" 
+                            gutterBottom
+                            sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                        >
                             <strong>Title:</strong> {currentTask.title}
                         </Typography>
-                        <Typography variant="body1" gutterBottom>
+                        <Typography 
+                            variant="body1" 
+                            gutterBottom
+                            sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                        >
                             <strong>FRN Number:</strong> {currentTask.frnNumber}
                         </Typography>
                         <Typography
                             variant="body1"
-                            gutterBottom
                             sx={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: 1
+                                gap: 1,
+                                fontSize: { xs: '0.875rem', sm: '1rem' }
                             }}
                         >
                             <strong>Type:</strong>
@@ -169,113 +219,170 @@ const ReassignTasks = ({ tasks, onComplete, excludeMemberId }) => {
                                 sx={{
                                     backgroundColor: getStatusColor(currentTask.type).background,
                                     color: getStatusColor(currentTask.type).color,
-                                    fontWeight: 500
-                                }}
-                            />
-                        </Typography>
-                    </Box>
-
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                        Select member to reassign to:
+                                    fontWeight: 500,
+                                    fontSize: { xs: '0.75rem', sm: '0.813rem' }
+                            }}
+                        />
                     </Typography>
-                    <Select
-                        fullWidth
-                        value={selectedMember}
-                        onChange={(e) => setSelectedMember(e.target.value)}
-                        sx={{ mt: 1 }}
-                        renderValue={(selected) => {
-                            const selectedMemberData = members.find(member => member.id === selected);
-                            if (!selectedMemberData) return '';
+                </Box>
 
-                            return (
+                <Typography 
+                    variant="body2" 
+                    sx={{ 
+                        mt: { xs: 2, sm: 3 },
+                        mb: 1,
+                        color: '#475569',
+                        fontSize: { xs: '0.813rem', sm: '0.875rem' },
+                        fontWeight: 500
+                    }}
+                >
+                    Select member to reassign to:
+                </Typography>
+                <Select
+                    fullWidth
+                    value={selectedMember}
+                    onChange={(e) => setSelectedMember(e.target.value)}
+                    sx={{ 
+                        mt: 1,
+                        '& .MuiSelect-select': {
+                            py: { xs: 1.5, sm: 2 }
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#e2e8f0'
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#cbd5e1'
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#059669'
+                        }
+                    }}
+                    renderValue={(selected) => {
+                        const selectedMemberData = members.find(member => member.id === selected);
+                        if (!selectedMemberData) return '';
+
+                        return (
+                            <Box sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1.5
+                            }}>
+                                <Avatar
+                                    src={selectedMemberData.pictureURL}
+                                    alt={selectedMemberData.fullName}
+                                    sx={{ width: 24, height: 24 }}
+                                />
+                                <Typography>{selectedMemberData.fullName}</Typography>
+                            </Box>
+                        );
+                    }}
+                >
+                    {members.map((member) => {
+                        // Calculate total tasks including updates
+                        const totalTasks = (member.ongoingTasks || 0) + (updatedTaskCounts[member.id] || 0);
+                        // Get colors based on total tasks
+                        const colors = getTaskLoadColor(totalTasks);
+
+                        return (
+                            <MenuItem
+                                key={member.id}
+                                value={member.id}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    p: { xs: 1.5, sm: 2 },
+                                    minHeight: { xs: 40, sm: 48 },
+                                    gap: { xs: 1, sm: 1.5 },
+                                    '&:hover': {
+                                        bgcolor: '#f8fafc'
+                                    },
+                                    '&.Mui-selected': {
+                                        bgcolor: '#f1f5f9',
+                                        '&:hover': {
+                                            bgcolor: '#e2e8f0'
+                                        }
+                                    }
+                                }}
+                            >
                                 <Box sx={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: 1.5
+                                    gap: 1.5,
+                                    flex: 1,
+                                    minWidth: 0
                                 }}>
                                     <Avatar
-                                        src={selectedMemberData.pictureURL}
-                                        alt={selectedMemberData.fullName}
-                                        sx={{ width: 24, height: 24 }}
-                                    />
-                                    <Typography>{selectedMemberData.fullName}</Typography>
-                                </Box>
-                            );
-                        }}
-                    >
-                        {members.map((member) => {
-                            // Calculate total tasks including updates
-                            const totalTasks = (member.ongoingTasks || 0) + (updatedTaskCounts[member.id] || 0);
-                            // Get colors based on total tasks
-                            const colors = getTaskLoadColor(totalTasks);
-
-                            return (
-                                <MenuItem
-                                    key={member.id}
-                                    value={member.id}
-                                    sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        padding: '8px 16px',
-                                        minHeight: '48px',
-                                        '&.Mui-selected': {
-                                            '& .MuiChip-root': {
-                                                position: 'absolute',
-                                                bottom: 20,
-                                                right: 40,
-                                            }
-                                        }
-                                    }}
-                                >
-                                    <Box sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 1.5,
-                                        flex: 1,
-                                        minWidth: 0
-                                    }}>
-                                        <Avatar
-                                            src={member.pictureURL}
-                                            alt={member.fullName}
-                                            sx={{ width: 32, height: 32 }}
-                                        />
-                                        <Typography>
-                                            {member.fullName}
-                                        </Typography>
-                                    </Box>
-                                    <Typography
-                                        variant="caption"
-                                        sx={{
-                                            px: 1,
-                                            py: 0.5,
-                                            borderRadius: 1,
-                                            backgroundColor: colors.background,
-                                            color: colors.color,
-                                            fontWeight: 'medium',
-                                            minWidth: '60px',
-                                            textAlign: 'center'
+                                        src={member.pictureURL}
+                                        alt={member.fullName}
+                                        sx={{ 
+                                            width: { xs: 32, sm: 36 }, 
+                                            height: { xs: 32, sm: 36 },
+                                            bgcolor: '#059669'
                                         }}
                                     >
-                                        {totalTasks} tasks
+                                        {member.fullName.charAt(0)}
+                                    </Avatar>
+                                    <Typography sx={{ 
+                                        fontSize: { xs: '0.875rem', sm: '1rem' },
+                                        fontWeight: 500
+                                    }}>
+                                        {member.fullName}
                                     </Typography>
-                                </MenuItem>
-                            );
-                        })}
-                    </Select>
-                </Box>
+                                </Box>
+                                <Typography
+                                    variant="caption"
+                                    sx={{
+                                        px: { xs: 1, sm: 1.5 },
+                                        py: { xs: 0.5, sm: 0.75 },
+                                        borderRadius: 1,
+                                        backgroundColor: colors.background,
+                                        color: colors.color,
+                                        fontWeight: 500,
+                                        minWidth: '60px',
+                                        textAlign: 'center',
+                                        fontSize: { xs: '0.75rem', sm: '0.813rem' }
+                                    }}
+                                >
+                                    {totalTasks} tasks
+                                </Typography>
+                            </MenuItem>
+                        );
+                    })}
+                </Select>
+            </Box>
 
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <Button
-                        variant="contained"
-                        onClick={handleReassign}
-                        disabled={!selectedMember || loading}
-                    >
-                        {loading ? 'Reassigning...' : 'Reassign Task'}
-                    </Button>
-                </Box>
-            </DialogContent>
-        </Dialog>
+            <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'flex-end',
+                mt: { xs: 2, sm: 3 }
+            }}>
+                <Button
+                    variant="contained"
+                    onClick={handleReassign}
+                    disabled={!selectedMember || loading}
+                    sx={{
+                        width: { xs: '100%', sm: 'auto' },
+                        py: { xs: 1, sm: 1.5 },
+                        px: { xs: 2, sm: 3 },
+                        bgcolor: '#059669',
+                        '&:hover': {
+                            bgcolor: '#047857'
+                        },
+                        '&:disabled': {
+                            bgcolor: '#059669',
+                            opacity: 0.6
+                        },
+                        fontSize: { xs: '0.875rem', sm: '1rem' },
+                        fontWeight: 500,
+                        textTransform: 'none'
+                    }}
+                >
+                    {loading ? 'Reassigning...' : 'Reassign Task'}
+                </Button>
+            </Box>
+        </DialogContent>
+    </Dialog>
     );
 };
 

@@ -8,7 +8,6 @@ import {
     Typography, 
     Grid, 
     Chip,
-    Divider,
     Stack,
     Paper,
     useTheme
@@ -49,9 +48,11 @@ const MemberDetailsDialog = ({ open, onClose, member }) => {
             fullWidth
             PaperProps={{
                 sx: {
-                    borderRadius: 2,
+                    borderRadius: { xs: 1, sm: 2 },
                     boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                    minHeight: '80vh'
+                    minHeight: { xs: '100vh', sm: '80vh' },
+                    m: { xs: 0, sm: 2 },
+                    maxHeight: { xs: '100vh', sm: '90vh' }
                 }
             }}
         >
@@ -59,10 +60,10 @@ const MemberDetailsDialog = ({ open, onClose, member }) => {
                 <Box 
                     sx={{ 
                         background: 'linear-gradient(135deg, #064E3B 0%, #059669 100%)',
-                        p: 3,
-                        height: '180px', // Increased height
+                        p: { xs: 2, sm: 3 },
+                        height: { xs: '140px', sm: '180px' },
                         position: 'relative',
-                        mb: 8,
+                        mb: { xs: 6, sm: 8 },
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
@@ -73,8 +74,8 @@ const MemberDetailsDialog = ({ open, onClose, member }) => {
                         onClick={onClose}
                         sx={{
                             position: 'absolute',
-                            right: 16,
-                            top: 16,
+                            right: { xs: 8, sm: 16 },
+                            top: { xs: 8, sm: 16 },
                             color: 'white',
                             bgcolor: 'rgba(255,255,255,0.1)',
                             '&:hover': {
@@ -82,21 +83,21 @@ const MemberDetailsDialog = ({ open, onClose, member }) => {
                             }
                         }}
                     >
-                        <CloseIcon />
+                        <CloseIcon sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }} />
                     </IconButton>
                     
                     <Avatar
                         src={member.pictureURL}
                         alt={member.fullName}
                         sx={{
-                            width: 140,
-                            height: 140,
+                            width: { xs: 100, sm: 140 },
+                            height: { xs: 100, sm: 140 },
                             border: '5px solid white',
                             boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
                             position: 'absolute',
-                            bottom: -70,
+                            bottom: { xs: -50, sm: -70 },
                             backgroundColor: '#059669',
-                            fontSize: '3rem'
+                            fontSize: { xs: '2rem', sm: '3rem' }
                         }}
                     >
                         {member.fullName?.charAt(0).toUpperCase()}
@@ -104,12 +105,31 @@ const MemberDetailsDialog = ({ open, onClose, member }) => {
                 </Box>
             </DialogTitle>
             
-            <DialogContent sx={{ mt: 6, pb: 4 }}>
-                <Box textAlign="center" mb={4}>
-                    <Typography variant="h5" fontWeight="bold" color="primary.dark" gutterBottom>
+            <DialogContent sx={{ 
+                mt: { xs: 4, sm: 6 }, 
+                pb: { xs: 2, sm: 4 },
+                px: { xs: 2, sm: 3 }
+            }}>
+                <Box textAlign="center" mb={{ xs: 3, sm: 4 }}>
+                    <Typography 
+                        variant="h5" 
+                        fontWeight="bold" 
+                        color="primary.dark" 
+                        sx={{ 
+                            fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                            mb: 1 
+                        }}
+                    >
                         {member.fullName}
                     </Typography>
-                    <Typography variant="body1" color="text.secondary" mb={2}>
+                    <Typography 
+                        variant="body1" 
+                        color="text.secondary"
+                        sx={{ 
+                            mb: 2,
+                            fontSize: { xs: '0.875rem', sm: '1rem' }
+                        }}
+                    >
                         {member.email}
                     </Typography>
                     <Chip
@@ -148,13 +168,13 @@ const MemberDetailsDialog = ({ open, onClose, member }) => {
                 <Paper 
                     elevation={0} 
                     sx={{ 
-                        p: 3, 
+                        p: { xs: 2, sm: 3 }, 
                         bgcolor: '#f8fafc',
-                        borderRadius: 2,
-                        mb: 4
+                        borderRadius: { xs: 1, sm: 2 },
+                        mb: { xs: 3, sm: 4 }
                     }}
                 >
-                    <Grid container spacing={3}>
+                    <Grid container spacing={{ xs: 2, sm: 3 }}>
                         <Grid item xs={12} md={6}>
                             <DetailItem 
                                 label="Phone" 
@@ -193,10 +213,11 @@ const MemberDetailsDialog = ({ open, onClose, member }) => {
                 <Typography 
                     variant="h6" 
                     sx={{ 
-                        mb: 4,
+                        mb: { xs: 3, sm: 4 },
                         textAlign: 'center',
                         color: theme.palette.text.primary,
                         fontWeight: 600,
+                        fontSize: { xs: '1.1rem', sm: '1.25rem' },
                         position: 'relative',
                         '&::after': {
                             content: '""',
@@ -204,7 +225,7 @@ const MemberDetailsDialog = ({ open, onClose, member }) => {
                             bottom: -8,
                             left: '50%',
                             transform: 'translateX(-50%)',
-                            width: 40,
+                            width: { xs: 30, sm: 40 },
                             height: 3,
                             bgcolor: '#059669',
                             borderRadius: 1
@@ -216,9 +237,9 @@ const MemberDetailsDialog = ({ open, onClose, member }) => {
 
                 <Stack 
                     direction={{ xs: 'column', sm: 'row' }} 
-                    spacing={3} 
+                    spacing={{ xs: 2, sm: 3 }} 
                     justifyContent="center"
-                    sx={{ px: 2 }}
+                    sx={{ px: { xs: 1, sm: 2 } }}
                 >
                     <StatCard
                         icon={<DelayedIcon />}
@@ -255,12 +276,13 @@ const MemberDetailsDialog = ({ open, onClose, member }) => {
 };
 
 const DetailItem = ({ label, value, multiline }) => (
-    <Box mb={multiline ? 3 : 2}>
+    <Box mb={multiline ? { xs: 2, sm: 3 } : { xs: 1.5, sm: 2 }}>
         <Typography
             variant="caption"
             color="text.secondary"
             textTransform="uppercase"
             fontWeight={500}
+            sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
         >
             {label}
         </Typography>
@@ -270,7 +292,8 @@ const DetailItem = ({ label, value, multiline }) => (
             sx={{
                 mt: 0.5,
                 lineHeight: multiline ? 1.6 : 1.4,
-                whiteSpace: multiline ? 'pre-wrap' : 'normal'
+                whiteSpace: multiline ? 'pre-wrap' : 'normal',
+                fontSize: { xs: '0.875rem', sm: '1rem' }
             }}
         >
             {value}
@@ -283,12 +306,12 @@ const StatCard = ({ icon, title, value, color, lightColor }) => (
     <Paper
         elevation={0}
         sx={{
-            p: 3,
-            width: { xs: '100%', sm: 200 },
+            p: { xs: 2, sm: 3 },
+            width: { xs: '100%', sm: '180px', md: '200px' },
             bgcolor: lightColor,
             border: '1px solid',
             borderColor: 'divider',
-            borderRadius: 3,
+            borderRadius: { xs: 2, sm: 3 },
             transition: 'all 0.3s ease',
             '&:hover': {
                 transform: 'translateY(-4px)',
@@ -297,18 +320,27 @@ const StatCard = ({ icon, title, value, color, lightColor }) => (
             }
         }}
     >
-        <Stack spacing={2} alignItems="center">
+        <Stack spacing={{ xs: 1.5, sm: 2 }} alignItems="center">
             <Box 
                 sx={{ 
                     color: color,
                     bgcolor: `${color}15`,
-                    p: 1,
-                    borderRadius: 2
+                    p: { xs: 0.75, sm: 1 },
+                    borderRadius: { xs: 1.5, sm: 2 }
                 }}
             >
-                {React.cloneElement(icon, { sx: { fontSize: 28 } })}
+                {React.cloneElement(icon, { 
+                    sx: { fontSize: { xs: 24, sm: 28 } } 
+                })}
             </Box>
-            <Typography variant="h3" sx={{ color: color, fontWeight: 700 }}>
+            <Typography 
+                variant="h3" 
+                sx={{ 
+                    color: color, 
+                    fontWeight: 700,
+                    fontSize: { xs: '1.75rem', sm: '2rem' }
+                }}
+            >
                 {value}
             </Typography>
             <Typography 
@@ -317,7 +349,8 @@ const StatCard = ({ icon, title, value, color, lightColor }) => (
                     color: 'text.secondary',
                     fontWeight: 500,
                     textTransform: 'uppercase',
-                    letterSpacing: '0.5px'
+                    letterSpacing: '0.5px',
+                    fontSize: { xs: '0.75rem', sm: '0.813rem' }
                 }}
             >
                 {title}

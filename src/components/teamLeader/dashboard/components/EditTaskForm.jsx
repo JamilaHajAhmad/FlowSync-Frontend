@@ -15,7 +15,9 @@ import {
     Autocomplete,
     Typography,
     FormHelperText,
-    Avatar
+    Avatar,
+    useTheme,
+    useMediaQuery
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import { editTask } from '../../../../services/taskService';
@@ -75,6 +77,9 @@ const validationSchema = Yup.object({
 const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
     const [ members, setMembers ] = useState([]);
     const [ loading, setLoading ] = useState(false);
+
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const formik = useFormik({
         initialValues: {
@@ -155,6 +160,7 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
         }
     }, [ onClose ]);
 
+    // Update the Dialog and its contents with responsive styles
     return (
         <Dialog
             open={open}
@@ -163,20 +169,29 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
             fullWidth
             PaperProps={{
                 sx: {
-                    borderRadius: 2,
+                    borderRadius: { xs: 1, sm: 2 },
                     boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+                    margin: { xs: 1, sm: 2 },
+                    width: { xs: '95%', sm: '100%' },
+                    maxHeight: { xs: '95vh', sm: 'auto' }
                 }
             }}
         >
             <DialogTitle sx={{
                 m: 0,
-                p: 2,
+                p: { xs: 1.5, sm: 2 },
                 backgroundColor: '#F9FAFB',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center'
             }}>
-                <Typography variant="h6">
+                <Typography 
+                    variant="h6"
+                    sx={{ 
+                        fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                        fontWeight: 600
+                    }}
+                >
                     Edit Task
                 </Typography>
                 <IconButton
@@ -187,18 +202,23 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
                         '&:hover': { color: 'grey.700' }
                     }}
                 >
-                    <CloseIcon fontSize="small" />
+                    <CloseIcon sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }} />
                 </IconButton>
             </DialogTitle>
 
             <form onSubmit={formik.handleSubmit}>
-                <DialogContent sx={{ p: 3, pt: 1 }}>
+                <DialogContent 
+                    sx={{ 
+                        p: { xs: 2, sm: 3 }, 
+                        pt: { xs: 1, sm: 1 }
+                    }}
+                >
                     <Box
                         component="form"
                         onSubmit={formik.handleSubmit}
                         sx={{
-                            '& .MuiFormControl-root': { mt: 3 },
-                            '& .MuiTextField-root': { mt: 3 },
+                            '& .MuiFormControl-root': { mt: { xs: 2, sm: 3 } },
+                            '& .MuiTextField-root': { mt: { xs: 2, sm: 3 } },
                         }}
                     >
                         <TextField
@@ -210,6 +230,15 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
                             error={formik.touched.taskTitle && Boolean(formik.errors.taskTitle)}
                             helperText={formik.touched.taskTitle && formik.errors.taskTitle}
                             fullWidth
+                            sx={{
+                                '& .MuiInputLabel-root': {
+                                    fontSize: { xs: '0.875rem', sm: '1rem' }
+                                },
+                                '& .MuiInputBase-input': {
+                                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                                    padding: { xs: '12px', sm: '16.5px 14px' }
+                                }
+                            }}
                         />
 
                         <TextField
@@ -221,6 +250,15 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
                             error={formik.touched.frnNumber && Boolean(formik.errors.frnNumber)}
                             helperText={formik.touched.frnNumber && formik.errors.frnNumber}
                             fullWidth
+                            sx={{
+                                '& .MuiInputLabel-root': {
+                                    fontSize: { xs: '0.875rem', sm: '1rem' }
+                                },
+                                '& .MuiInputBase-input': {
+                                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                                    padding: { xs: '12px', sm: '16.5px 14px' }
+                                }
+                            }}
                         />
 
                         <TextField
@@ -232,23 +270,40 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
                             error={formik.touched.ossNumber && Boolean(formik.errors.ossNumber)}
                             helperText={formik.touched.ossNumber && formik.errors.ossNumber}
                             fullWidth
+                            sx={{
+                                '& .MuiInputLabel-root': {
+                                    fontSize: { xs: '0.875rem', sm: '1rem' }
+                                },
+                                '& .MuiInputBase-input': {
+                                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                                    padding: { xs: '12px', sm: '16.5px 14px' }
+                                }
+                            }}
                         />
                         <FormControl
                             component="fieldset"
-                            sx={{ mt: 3, width: '100%' }}
+                            sx={{ 
+                                mt: { xs: 2, sm: 3 }, 
+                                width: '100%' 
+                            }}
                         >
                             <Box sx={{ mt: 1, mb: 1 }}>
-                                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1a3d37' }}>
+                                <Typography 
+                                    variant="subtitle1" 
+                                    sx={{ 
+                                        fontWeight: 600, 
+                                        color: '#1a3d37',
+                                        fontSize: { xs: '0.875rem', sm: '1rem' }
+                                    }}
+                                >
                                     Task Priority
                                 </Typography>
                             </Box>
-                            <Box
-                                sx={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: 1
-                                }}
-                            >
+                            <Box sx={{
+                                display: 'flex',
+                                flexDirection: { xs: 'column', sm: 'row' },
+                                gap: { xs: 0.5, sm: 1 }
+                            }}>
                                 <Tooltip
                                     title="Priority cannot be changed after task creation"
                                     placement="top"
@@ -258,7 +313,7 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
                                         <RadioGroup
                                             row
                                             sx={{
-                                                gap: 2,
+                                                gap: { xs: 1, sm: 2 },
                                                 pointerEvents: 'none',
                                                 opacity: 0.7
                                             }}
@@ -303,7 +358,11 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
                             fullWidth
                             error={formik.touched.assignedMemberId && Boolean(formik.errors.assignedMemberId)}
                         >
-                            <InputLabel>Selected Member</InputLabel>
+                            <InputLabel sx={{ 
+                                fontSize: { xs: '0.875rem', sm: '1rem' } 
+                            }}>
+                                Selected Member
+                            </InputLabel>
                             <Select
                                 name="assignedMemberId"
                                 value={formik.values.assignedMemberId}
@@ -323,6 +382,12 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
                                         </Box>
                                     );
                                 }}
+                                sx={{
+                                    '& .MuiSelect-select': {
+                                        padding: { xs: '12px', sm: '16.5px 14px' },
+                                        fontSize: { xs: '0.875rem', sm: '1rem' }
+                                    }
+                                }}
                             >
                                 {members.map((member) => (
                                     <MenuItem
@@ -331,27 +396,41 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
                                         sx={{
                                             display: 'flex',
                                             justifyContent: 'space-between',
-                                            width: '100%'
+                                            width: '100%',
+                                            padding: { xs: '8px 12px', sm: '12px 16px' },
+                                            gap: { xs: 1, sm: 2 }
                                         }}
                                     >
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Box sx={{ 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            gap: { xs: 1, sm: 1.5 } 
+                                        }}>
                                             <Avatar
                                                 src={member.pictureURL || '/default-avatar.png'}
                                                 alt={member.fullName}
-                                                sx={{ width: 24, height: 24 }}
+                                                sx={{ 
+                                                    width: { xs: 24, sm: 28 }, 
+                                                    height: { xs: 24, sm: 28 } 
+                                                }}
                                             />
-                                            <Typography>{member.fullName}</Typography>
+                                            <Typography sx={{ 
+                                                fontSize: { xs: '0.875rem', sm: '1rem' } 
+                                            }}>
+                                                {member.fullName}
+                                            </Typography>
                                         </Box>
                                         <Typography
                                             variant="caption"
                                             sx={{
-                                                ml: 2,
-                                                px: 1,
-                                                py: 0.5,
+                                                ml: { xs: 1, sm: 2 },
+                                                px: { xs: 0.75, sm: 1 },
+                                                py: { xs: 0.25, sm: 0.5 },
                                                 borderRadius: 1,
                                                 backgroundColor: 'rgba(5, 150, 105, 0.1)',
                                                 color: '#059669',
-                                                fontWeight: 'medium'
+                                                fontWeight: 'medium',
+                                                fontSize: { xs: '0.75rem', sm: '0.813rem' }
                                             }}
                                         >
                                             {member.ongoingTasks || 0} tasks
@@ -378,6 +457,11 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
                                     name="caseSource"
                                     error={formik.touched.caseSource && Boolean(formik.errors.caseSource)}
                                     helperText={formik.touched.caseSource && formik.errors.caseSource}
+                                    sx={{
+                                        '& .MuiInputBase-root': {
+                                            fontSize: { xs: '0.875rem', sm: '1rem' }
+                                        }
+                                    }}
                                 />
                             )}
                             fullWidth
@@ -396,12 +480,21 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
                     </Box>
                 </DialogContent>
 
-                <DialogActions sx={{ p: 2, backgroundColor: '#F9FAFB' }}>
+                <DialogActions sx={{ 
+                    p: { xs: 1.5, sm: 2 }, 
+                    backgroundColor: '#F9FAFB',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    gap: { xs: 1, sm: 1.5 }
+                }}>
                     <Button
                         onClick={onClose}
                         variant="outlined"
                         color="inherit"
-                        sx={{ borderRadius: 2 }}
+                        fullWidth={isMobile}
+                        sx={{ 
+                            borderRadius: 2,
+                            order: { xs: 2, sm: 1 }
+                        }}
                     >
                         Cancel
                     </Button>
@@ -409,12 +502,14 @@ const EditTaskForm = ({ open, onClose, task, onTaskUpdated }) => {
                         type="submit"
                         variant="contained"
                         disabled={loading || !formik.isValid}
+                        fullWidth={isMobile}
                         sx={{
                             backgroundColor: '#059669',
                             '&:hover': {
                                 backgroundColor: '#047857'
                             },
-                            borderRadius: 2
+                            borderRadius: 2,
+                            order: { xs: 1, sm: 2 }
                         }}
                     >
                         {loading ? 'Updating...' : 'Update Task'}

@@ -19,7 +19,9 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-  Avatar
+  Avatar,
+  useTheme,
+  useMediaQuery
 } from "@mui/material";
 import { Close as CloseIcon } from '@mui/icons-material';
 import "react-toastify/dist/ReactToastify.css";
@@ -87,6 +89,8 @@ const CreateTaskForm = ({ open, onClose }) => {
   const [ employeesError, setEmployeesError ] = useState(null);
   const [ showConfirmation, setShowConfirmation ] = useState(false);
   const [ confirmationData, setConfirmationData ] = useState(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // Add useEffect to fetch employees
   useEffect(() => {
@@ -199,42 +203,62 @@ const CreateTaskForm = ({ open, onClose }) => {
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: 2,
+            borderRadius: { xs: 1, sm: 2 },
             boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+            m: { xs: 1, sm: 2 },
+            width: { xs: '95%', sm: '100%' },
+            maxHeight: { xs: '95vh', sm: 'auto' }
           }
         }}
       >
         <DialogTitle
           sx={{
-            p: 3,
-            pb: 2,
+            p: { xs: 2, sm: 3 },
+            pb: { xs: 1.5, sm: 2 },
             bgcolor: '#f8fafc',
             borderBottom: '1px solid #e2e8f0'
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a3d37' }}>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              fontWeight: 600, 
+              color: '#1a3d37',
+              fontSize: { xs: '1.1rem', sm: '1.25rem' }
+            }}
+          >
             Create New Task
           </Typography>
           <IconButton
             onClick={onClose}
             sx={{
               position: 'absolute',
-              right: 16,
-              top: 16,
+              right: { xs: 8, sm: 16 },
+              top: { xs: 8, sm: 16 },
               color: 'grey.500',
             }}
           >
-            <CloseIcon />
+            <CloseIcon sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }} />
           </IconButton>
         </DialogTitle>
 
-        <DialogContent sx={{ p: 3, pt: 3 }}>
+        <DialogContent sx={{ 
+          p: { xs: 2, sm: 3 }, 
+          pt: { xs: 2, sm: 3 }
+        }}>
           <Box
             component="form"
             onSubmit={formik.handleSubmit}
             sx={{
-              '& .MuiFormControl-root': { mt: 3 },
-              '& .MuiTextField-root': { mt: 3 },
+              '& .MuiFormControl-root': { mt: { xs: 2, sm: 3 } },
+              '& .MuiTextField-root': { mt: { xs: 2, sm: 3 } },
+              '& .MuiInputLabel-root': {
+                fontSize: { xs: '0.875rem', sm: '1rem' }
+              },
+              '& .MuiInputBase-input': {
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                padding: { xs: '12px', sm: '16.5px 14px' }
+              }
             }}
           >
             <TextField
@@ -273,8 +297,18 @@ const CreateTaskForm = ({ open, onClose }) => {
               helperText={formik.touched.ossNumber && formik.errors.ossNumber}
             />
 
-            <Box sx={{ mt: 4, mb: 1 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1a3d37' }}>
+            <Box sx={{ 
+              mt: { xs: 3, sm: 4 }, 
+              mb: { xs: 1, sm: 1 }
+            }}>
+              <Typography 
+                variant="subtitle1" 
+                sx={{ 
+                  fontWeight: 600, 
+                  color: '#1a3d37',
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+              }}
+              >
                 Task Priority
               </Typography>
             </Box>
@@ -282,11 +316,14 @@ const CreateTaskForm = ({ open, onClose }) => {
 
 
             <RadioGroup
-              row
+              row={!isMobile}
               name="priority"
               value={formik.values.priority}
               onChange={formik.handleChange}
-              sx={{ gap: 2 }}
+              sx={{ 
+                gap: { xs: 1, sm: 2 },
+                flexDirection: { xs: 'column', sm: 'row' }
+              }}
             >
               <FormControlLabel value="Regular" control={<Radio color="success" />} label="Regular" />
               <FormControlLabel value="Important" control={<Radio color="warning" />} label="Important" />
@@ -322,6 +359,14 @@ const CreateTaskForm = ({ open, onClose }) => {
                     </Box>
                   );
                 }}
+                sx={{
+                  '& .MuiSelect-select': {
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: { xs: 1, sm: 1.5 },
+                    py: { xs: 1.5, sm: 2 }
+                }
+                }}
               >
                 {employeesLoading ? (
                   <MenuItem disabled>Loading employees...</MenuItem>
@@ -336,7 +381,15 @@ const CreateTaskForm = ({ open, onClose }) => {
                         display: 'flex',
                         justifyContent: 'space-between', // This ensures proper spacing
                         width: '100%',
-                        py: 1 // Add consistent padding
+                        py: { xs: 1, sm: 1.5 },
+                        px: { xs: 1.5, sm: 2 },
+                        '& .MuiAvatar-root': {
+                          width: { xs: 24, sm: 28 },
+                          height: { xs: 24, sm: 28 }
+                        },
+                        '& .MuiTypography-root': {
+                          fontSize: { xs: '0.875rem', sm: '1rem' }
+                        }
                       }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -394,7 +447,12 @@ const CreateTaskForm = ({ open, onClose }) => {
                   helperText={formik.touched.caseSource && formik.errors.caseSource}
                 />
               )}
-
+              sx={{
+                '& .MuiAutocomplete-input': {
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  padding: { xs: '12px', sm: '16.5px 14px' }
+              }
+              }}
               fullWidth
             />
             <TextField
@@ -417,15 +475,23 @@ const CreateTaskForm = ({ open, onClose }) => {
           </Box>
         </DialogContent>
 
-        <DialogActions>
+        <DialogActions sx={{ 
+          p: { xs: 2, sm: 3 }, 
+          pt: { xs: 1, sm: 1.5 },
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: { xs: 1, sm: 1.5 }
+        }}>
           <Button
             onClick={onClose}
             variant="outlined"
             disabled={loading}
+            fullWidth={isMobile}
             sx={{
               color: '#64748b',
               borderColor: '#64748b',
-              px: 3,
+              order: { xs: 2, sm: 1 },
+              py: { xs: 0.75, sm: 1 },
+              fontSize: { xs: '0.875rem', sm: '1rem' },
               '&:hover': {
                 borderColor: '#475569',
                 backgroundColor: 'rgba(100, 116, 139, 0.04)'
@@ -439,9 +505,12 @@ const CreateTaskForm = ({ open, onClose }) => {
             variant="contained"
             disabled={loading}
             onClick={formik.handleSubmit}
+            fullWidth={isMobile}
             sx={{
               bgcolor: '#059669',
-              px: 3,
+              order: { xs: 1, sm: 2 },
+              py: { xs: 0.75, sm: 1 },
+              fontSize: { xs: '0.875rem', sm: '1rem' },
               '&:hover': {
                 bgcolor: '#047857'
               }

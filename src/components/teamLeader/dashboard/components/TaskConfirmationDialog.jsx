@@ -6,7 +6,6 @@ import {
     Button,
     Typography,
     Box,
-    Divider,
     Chip,
     Grid,
     IconButton,
@@ -44,15 +43,17 @@ const TaskConfirmationDialog = ({ open, onClose, taskData, onConfirm, loading })
             PaperProps={{
                 elevation: 0,
                 sx: {
-                    borderRadius: 3,
+                    borderRadius: { xs: 1, sm: 3 },
                     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    m: { xs: 1, sm: 2 },
+                    width: { xs: '95%', sm: '100%' }
                 }
             }}
         >
             <DialogTitle
                 sx={{
-                    p: 3,
+                    p: { xs: 2, sm: 3 },
                     background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
                     borderBottom: '1px solid',
                     borderColor: 'divider'
@@ -60,7 +61,15 @@ const TaskConfirmationDialog = ({ open, onClose, taskData, onConfirm, loading })
             >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <Box>
-                        <Typography variant="h5" sx={{ fontWeight: 700, color: '#1e293b', mb: 0.5 }}>
+                        <Typography 
+                            variant="h5" 
+                            sx={{ 
+                                fontWeight: 700, 
+                                color: '#1e293b', 
+                                mb: 0.5,
+                                fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                            }}
+                        >
                             Confirm Task Creation
                         </Typography>
                     </Box>
@@ -73,40 +82,53 @@ const TaskConfirmationDialog = ({ open, onClose, taskData, onConfirm, loading })
                             '&:hover': { bgcolor: '#f1f5f9' }
                         }}
                     >
-                        <CloseIcon />
+                        <CloseIcon sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }} />
                     </IconButton>
                 </Box>
             </DialogTitle>
 
-            <DialogContent sx={{ p: 3, mt: 2 }}>
+            <DialogContent sx={{ p: { xs: 2, sm: 3 }, mt: { xs: 1, sm: 2 } }}>
+                {/* Warning Paper */}
                 <Paper
                     elevation={0}
                     sx={{
-                        p: 2,
-                        mb: 3,
+                        p: { xs: 1.5, sm: 2 },
+                        mb: { xs: 2, sm: 3 },
                         bgcolor: alpha('#f59e0b', 0.08),
                         border: '1px solid',
                         borderColor: alpha('#f59e0b', 0.2),
-                        borderRadius: 2
+                        borderRadius: { xs: 1, sm: 2 }
                     }}
                 >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <WarningIcon sx={{ color: '#f59e0b', fontSize: 32 }} />
-                        <Typography variant="body1" color="warning.dark">
+                    <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: { xs: 1, sm: 2 }
+                    }}>
+                        <WarningIcon sx={{ 
+                            color: '#f59e0b', 
+                            fontSize: { xs: 24, sm: 32 }
+                        }} />
+                        <Typography 
+                            variant="body1" 
+                            color="warning.dark"
+                            sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                        >
                             Please ensure all details are correct before proceeding.<br/>
                             All fields can be edited later, except the priority.
                         </Typography>
                     </Box>
                 </Paper>
 
-                <Box sx={{ mb: 3 }}>
+                {/* Task Details Paper */}
+                <Box sx={{ mb: { xs: 2, sm: 3 } }}>
                     <Paper
                         elevation={0}
                         sx={{
-                            p: 2.5,
+                            p: { xs: 2, sm: 2.5 },
                             border: '1px solid',
                             borderColor: 'divider',
-                            borderRadius: 2,
+                            borderRadius: { xs: 1, sm: 2 },
                             bgcolor: '#fff'
                         }}
                     >
@@ -129,36 +151,65 @@ const TaskConfirmationDialog = ({ open, onClose, taskData, onConfirm, loading })
                             </Box>
                         </Box>
 
-                        <Divider sx={{ my: 2.5 }} />
+                        <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 1.5, 
+                            mt: 2,
+                            p: { xs: 1.5, sm: 2 },
+                            bgcolor: '#f8fafc',
+                            borderRadius: { xs: 1, sm: 2 },
+                            border: '1px solid',
+                            borderColor: 'divider'
+                        }}>
+                            <Avatar
+                                src={taskData?.pictureURL}
+                                alt={taskData?.selectedMemberName}
+                                sx={{
+                                    width: { xs: 32, sm: 40 },
+                                    height: { xs: 32, sm: 40 },
+                                    bgcolor: '#059669'
+                                }}
+                            >
+                                {taskData?.memberName?.charAt(0)}
+                            </Avatar>
+                            <Box>
+                                <Typography 
+                                    variant="subtitle2" 
+                                    sx={{ 
+                                        color: 'text.primary',
+                                        fontWeight: 600,
+                                        fontSize: { xs: '0.875rem', sm: '1rem' }
+                                    }}
+                                >
+                                    {taskData?.selectedMemberName}
+                                </Typography>
+                                <Typography 
+                                    variant="caption" 
+                                    sx={{ 
+                                        color: 'text.secondary',
+                                        fontSize: { xs: '0.75rem', sm: '0.813rem' }
+                                    }}
+                                >
+                                    Assigned Member
+                                </Typography>
+                            </Box>
+                        </Box>
 
-                        <Grid container spacing={3}>
+                        <Grid container spacing={{ xs: 2, sm: 3 }}>
                             <Grid item xs={12}>
                                 <Box sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 1.5,
-                                    p: 2,
-                                    bgcolor: alpha(priorityColors.color, 0.08),
-                                    borderRadius: 2
+                                    p: { xs: 1.5, sm: 2 },
+                                    borderRadius: { xs: 1, sm: 2 }
                                 }}>
-                                    <Avatar
-                                        src={taskData?.pictureURL}
-                                        alt={taskData?.selectedMemberName}
+                                    <Typography 
+                                        variant="body2" 
                                         sx={{ 
-                                            width: 32, 
-                                            height: 32,
-                                            border: `2px solid ${priorityColors.color}`,
-                                            bgcolor: alpha(priorityColors.color, 0.1)
+                                            fontSize: { xs: '0.813rem', sm: '0.875rem' }
                                         }}
-                                    />
-                                    <Box>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Assigned To
-                                        </Typography>
-                                        <Typography variant="subtitle2" fontWeight={600}>
-                                            {taskData?.selectedMemberName}
-                                        </Typography>
-                                    </Box>
+                                    >
+                                        
+                                    </Typography>
                                 </Box>
                             </Grid>
 
@@ -236,20 +287,24 @@ const TaskConfirmationDialog = ({ open, onClose, taskData, onConfirm, loading })
 
             <DialogActions
                 sx={{
-                    p: 3,
+                    p: { xs: 2, sm: 3 },
                     bgcolor: '#f8fafc',
                     borderTop: '1px solid',
-                    borderColor: 'divider'
+                    borderColor: 'divider',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    gap: { xs: 1, sm: 2 }
                 }}
             >
                 <Button
                     onClick={onClose}
                     variant="outlined"
                     disabled={loading}
+                    fullWidth={true}
                     sx={{
                         color: '#64748b',
                         borderColor: '#cbd5e1',
-                        px: 3,
+                        px: { xs: 2, sm: 3 },
+                        order: { xs: 2, sm: 1 },
                         '&:hover': {
                             borderColor: '#94a3b8',
                             bgcolor: '#f1f5f9'
@@ -262,9 +317,11 @@ const TaskConfirmationDialog = ({ open, onClose, taskData, onConfirm, loading })
                     onClick={onConfirm}
                     variant="contained"
                     disabled={loading}
+                    fullWidth={true}
                     sx={{
                         bgcolor: '#059669',
-                        px: 3,
+                        px: { xs: 2, sm: 3 },
+                        order: { xs: 1, sm: 2 },
                         '&:hover': {
                             bgcolor: '#047857'
                         },
@@ -274,7 +331,11 @@ const TaskConfirmationDialog = ({ open, onClose, taskData, onConfirm, loading })
                     }}
                 >
                     {loading ? (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: { xs: 0.5, sm: 1 }
+                        }}>
                             <span>Creating...</span>
                         </Box>
                     ) : (
