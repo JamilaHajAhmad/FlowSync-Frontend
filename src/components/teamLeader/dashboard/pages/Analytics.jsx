@@ -384,9 +384,22 @@ const Analytics = () => {
         navigate(path);
     };
 
+    // Update the Container and Grid layout
     return (
-        <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <Container 
+            maxWidth="xl" 
+            sx={{ 
+                mt: { xs: 2, sm: 4 }, 
+                mb: { xs: 2, sm: 4 },
+                px: { xs: 1, sm: 2, md: 3 }
+            }}
+        >
+            {/* Help Button */}
+            <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'flex-end', 
+                mb: { xs: 1, sm: 2 }
+            }}>
                 <Tooltip 
                     title="View Analytics Guide"
                     placement="left"
@@ -399,26 +412,24 @@ const Analytics = () => {
                             color: 'white',
                             '&:hover': {
                                 background: 'linear-gradient(135deg, #059669 0%, #064E3B 100%)',
-                            }
+                            },
+                            width: { xs: 36, sm: 40 },
+                            height: { xs: 36, sm: 40 }
                         }}
                     >
-                        <HelpIcon />
+                        <HelpIcon sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }} />
                     </IconButton>
                 </Tooltip>
             </Box>
 
-            <HelpDialog 
-                open={helpOpen}
-                onClose={() => setHelpOpen(false)}
-            />
-
-            <Grid container spacing={3}>
+            {/* Charts Grid */}
+            <Grid container spacing={{ xs: 2, sm: 3 }}>
                 {charts.map((chart, index) => (
                     <Grid item {...chart.gridSize} key={index}>
                         <Card
                             sx={{
                                 height: '100%',
-                                borderRadius: 2,
+                                borderRadius: { xs: 1, sm: 2 },
                                 boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
                                 '&:hover': {
                                     boxShadow: '0 6px 30px rgba(0,0,0,0.1)',
@@ -431,32 +442,63 @@ const Analytics = () => {
                                 onClick={() => handleCardClick(chart.path)}
                                 sx={{ height: '100%' }}
                             >
-                                <CardContent sx={{ height: '100%', p: 3 }}>
-                                    <Box sx={{ mb: 2 }}>
-                                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a3d37' }}>
+                                <CardContent sx={{ 
+                                    height: '100%', 
+                                    p: { xs: 2, sm: 3 }
+                            }}>
+                                    <Box sx={{ mb: { xs: 1, sm: 2 } }}>
+                                        <Typography 
+                                            variant="h6" 
+                                            sx={{ 
+                                                fontWeight: 600, 
+                                                color: '#1a3d37',
+                                                fontSize: { xs: '1rem', sm: '1.25rem' }
+                                            }}
+                                        >
                                             {chart.title}
                                         </Typography>
-                                        <Typography variant="body2" color="text.secondary">
+                                        <Typography 
+                                            variant="body2" 
+                                            color="text.secondary"
+                                            sx={{
+                                                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                            }}
+                                        >
                                             {chart.subtitle}
                                         </Typography>
                                     </Box>
 
-                                    <Box sx={{ display: 'flex', alignItems: 'baseline', mb: 3 }}>
-                                        <Typography variant="h4" sx={{ fontWeight: 600, color: '#059669' }}>
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        alignItems: 'baseline', 
+                                        mb: { xs: 2, sm: 3 }
+                                    }}>
+                                        <Typography 
+                                            variant="h4" 
+                                            sx={{ 
+                                                fontWeight: 600, 
+                                                color: '#059669',
+                                                fontSize: { xs: '1.5rem', sm: '2rem' }
+                                            }}
+                                        >
                                             {chart.value}
                                         </Typography>
                                         <Typography
                                             variant="body2"
                                             sx={{
                                                 ml: 1,
-                                                color: chart.trend.startsWith('+') ? '#059669' : '#dc2626'
+                                                color: chart.trend.startsWith('+') ? '#059669' : '#dc2626',
+                                                fontSize: { xs: '0.75rem', sm: '0.875rem' }
                                             }}
                                         >
                                             {chart.trend}
                                         </Typography>
                                     </Box>
 
-                                    <Box sx={{ height: 240, mt: 2 }}>
+                                    <Box sx={{ 
+                                        height: { xs: 200, sm: 240 }, 
+                                        mt: { xs: 1, sm: 2 }
+                                    }}>
                                         {chart.component}
                                     </Box>
                                 </CardContent>
@@ -465,6 +507,20 @@ const Analytics = () => {
                     </Grid>
                 ))}
             </Grid>
+
+            {/* Update HelpDialog for mobile */}
+            <HelpDialog 
+                open={helpOpen}
+                onClose={() => setHelpOpen(false)}
+                sx={{
+                    '& .MuiDialog-paper': {
+                        width: { xs: '95%', sm: '80%', md: '70%' },
+                        maxWidth: 800,
+                        m: { xs: 1, sm: 2 },
+                        p: { xs: 1, sm: 2 }
+                    }
+                }}
+            />
         </Container>
     );
 }
