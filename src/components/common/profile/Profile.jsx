@@ -407,7 +407,7 @@ const Profile = () => {
                         to="/settings/edit-profile"
                         style={{ textDecoration: 'none' }}
                       >
-                        <ActionButton startIcon={<Edit />}>
+                        <ActionButton startIcon={<Edit />} sx={{fontSize:'1.1rem', padding:'10px 10px'}}>
                           Edit
                         </ActionButton>
                       </Link>
