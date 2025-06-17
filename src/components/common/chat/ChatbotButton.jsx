@@ -41,7 +41,7 @@ const ChatbotButton = () => {
                     onClick={handleToggle}
                     sx={{
                         position: 'fixed',
-                        bottom: 10,
+                        bottom: -1,
                         ...(isOnChatPage ? {
                             left: 10
                         } : {
