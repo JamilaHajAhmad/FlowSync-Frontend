@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MaterialReactTable, useMaterialReactTable } from 'material-react-table';
 import { getAllReports } from '../../../../services/reportsService';
-import { Box, CircularProgress, Typography, Button, Menu, MenuItem } from '@mui/material';
+import { Box, CircularProgress, Typography, Button, Menu, MenuItem, useMediaQuery } from '@mui/material';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
@@ -9,18 +9,21 @@ import autoTable from 'jspdf-autotable';
 import 'jspdf-autotable';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
+import { useTheme } from '@mui/material/styles';
 
 const Reports = () => {
-    const [ data, setData ] = useState([]);
-    const [ loading, setLoading ] = useState(true);
-    const [ error, setError ] = useState(null);
-    const [ anchorEl, setAnchorEl ] = useState(null);
+    const [data, setData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [anchorEl, setAnchorEl] = useState(null);
+
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     useEffect(() => {
         const fetchReports = async () => {
             try {
                 const response = await getAllReports();
-                console.log('Fetched reports:', response.data);
                 setData(response.data);
             } catch (err) {
                 setError('Failed to fetch reports');
@@ -125,10 +128,10 @@ const Reports = () => {
                 const filters = cell.getValue();
                 const filterValue = Array.isArray(filters)
                     ? filters.map(filter => {
-                        const [ , value ] = filter.split(':');
+                        const [, value] = filter.split(':');
                         return value ? value.trim().replace(/['"{}]/g, '') : '';
                     }).join(', ')
-                    : filters.split(':')[ 1 ]?.trim().replace(/['"{}]/g, '') || filters;
+                    : filters.split(':')[1]?.trim().replace(/['"{}]/g, '') || filters;
 
                 return (
                     <Typography variant="body2" noWrap>
@@ -147,22 +150,19 @@ const Reports = () => {
             Cell: ({ row }) => {
                 const handleFileDownload = () => {
                     try {
-                        // Get the file data from the row
                         const fileData = row.original.fileData;
                         const fileName = row.original.fileName;
 
-                        // Convert base64 to blob
                         const byteCharacters = atob(fileData);
                         const byteNumbers = new Array(byteCharacters.length);
-                        
+
                         for (let i = 0; i < byteCharacters.length; i++) {
                             byteNumbers[i] = byteCharacters.charCodeAt(i);
                         }
-                        
+
                         const byteArray = new Uint8Array(byteNumbers);
                         const blob = new Blob([byteArray]);
 
-                        // Create download link
                         const url = URL.createObjectURL(blob);
                         const link = document.createElement('a');
                         link.href = url;
@@ -199,7 +199,7 @@ const Reports = () => {
         {
             accessorKey: 'createdAt',
             header: 'Created At',
-            size: 160, // Slightly smaller
+            size: 160,
             muiTableHeadCellProps: {
                 align: 'center',
             },
@@ -221,8 +221,7 @@ const Reports = () => {
 
     const exportToExcel = () => {
         try {
-            // Split data into chunks if needed
-            const chunkSize = 100; // Adjust based on your needs
+            const chunkSize = 100;
             const chunks = [];
             for (let i = 0; i < data.length; i += chunkSize) {
                 chunks.push(data.slice(i, i + chunkSize));
@@ -253,14 +252,14 @@ const Reports = () => {
 
                 const worksheet = XLSX.utils.json_to_sheet(exportData);
                 worksheet['!cols'] = [
-                    { wch: 10 },  // Report ID
-                    { wch: 20 },  // Report Title
-                    { wch: 15 },  // From Date
-                    { wch: 15 },  // To Date
-                    { wch: 30 },  // Description
-                    { wch: 20 },  // Filters Applied
-                    { wch: 15 },  // File Name
-                    { wch: 20 }   // Created At
+                    { wch: 10 },
+                    { wch: 20 },
+                    { wch: 15 },
+                    { wch: 15 },
+                    { wch: 30 },
+                    { wch: 20 },
+                    { wch: 15 },
+                    { wch: 20 }
                 ];
 
                 XLSX.utils.book_append_sheet(workbook, worksheet, `Reports${index + 1}`);
@@ -270,6 +269,7 @@ const Reports = () => {
             handleExportClose();
             toast.success('Excel file exported successfully');
         } catch (error) {
+            toast.error('Failed to export Excel file');
             console.error('Error exporting to Excel:', error);
         }
     };
@@ -282,12 +282,10 @@ const Reports = () => {
                 format: 'a4'
             });
 
-            // Add title
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(16);
             doc.text('Reports', 15, 15);
 
-            // Update table headers and data
             const tableData = {
                 head: [['Report ID', 'Report Title', 'From Date', 'To Date', 'Description', 'Filters Applied', 'File Name', 'Created At']],
                 body: data.map(item => [
@@ -310,8 +308,7 @@ const Reports = () => {
                 ])
             };
 
-            // Generate table
-            autoTable(doc,{
+            autoTable(doc, {
                 ...tableData,
                 startY: 25,
                 theme: 'grid',
@@ -322,21 +319,21 @@ const Reports = () => {
                     halign: 'left'
                 },
                 headStyles: {
-                    fillColor: [5, 150, 105], // FlowSync green color
+                    fillColor: [5, 150, 105],
                     textColor: 255,
                     fontSize: 9,
                     fontStyle: 'bold',
                     halign: 'left'
                 },
                 columnStyles: {
-                    0: { cellWidth: 30 },  // Report ID
-                    1: { cellWidth: 40 },  // Report Title
-                    2: { cellWidth: 25 },  // From Date
-                    3: { cellWidth: 25 },  // To Date
-                    4: { cellWidth: 50 },  // Description
-                    5: { cellWidth: 40 },  // Filters Applied
-                    6: { cellWidth: 30 },  // File Name
-                    7: { cellWidth: 30 }   // Created At
+                    0: { cellWidth: 30 },
+                    1: { cellWidth: 40 },
+                    2: { cellWidth: 25 },
+                    3: { cellWidth: 25 },
+                    4: { cellWidth: 50 },
+                    5: { cellWidth: 40 },
+                    6: { cellWidth: 30 },
+                    7: { cellWidth: 30 }
                 },
                 margin: { top: 25 }
             });
@@ -345,18 +342,17 @@ const Reports = () => {
             handleExportClose();
             toast.success('PDF file exported successfully');
         } catch (error) {
-            console.error('Error generating PDF:', error);
+            toast.error('Failed to export PDF file');
+            console.error('Error exporting to PDF:', error);
         }
     };
 
     const exportToCSV = () => {
         try {
             const csvRows = [];
-            // Add headers
             const headers = ['Report ID', 'Report Title', 'From Date', 'To Date', 'Description', 'Filters Applied', 'File Name', 'Created At'];
             csvRows.push(headers.join(','));
 
-            // Add data rows
             data.forEach(item => {
                 const rowData = [
                     item.reportID,
@@ -390,8 +386,8 @@ const Reports = () => {
             handleExportClose();
             toast.success('CSV file exported successfully');
         } catch (error) {
-            console.error('Error exporting to CSV:', error);
             toast.error('Failed to export CSV file');
+            console.error('Error exporting to CSV:', error);
         }
     };
 
@@ -405,7 +401,7 @@ const Reports = () => {
         enableSorting: true,
         initialState: {
             pagination: { pageSize: 5, pageIndex: 0 },
-            sorting: [ { id: 'createdAt', desc: true } ],
+            sorting: [{ id: 'createdAt', desc: true }],
             density: 'compact'
         },
         state: { isLoading: loading },
@@ -418,17 +414,29 @@ const Reports = () => {
         },
         muiTableContainerProps: {
             sx: {
-                maxHeight: 600,
+                maxHeight: isMobile ? undefined : 600,
                 width: '100%',
+                overflowX: isMobile ? 'auto' : 'unset',
+                WebkitOverflowScrolling: isMobile ? 'touch' : undefined,
+                border: '1px solid #e0e0e0',          // Thin gray border
+                borderRadius: 2,                       // Subtle rounding as in the photo
+                backgroundColor: '#fff',               // White background for paper-like look
+                boxShadow: '0 1px 4px rgba(0,0,0,0.06)', // Very light shadow (optional)
+
             }
         },
         muiTablePaperProps: {
             sx: {
                 width: '100%',
+                boxShadow: 'none', // Remove double shadow
+                borderRadius: isMobile ? 0 : 2,
+                backgroundColor: 'transparent', // Remove extra background
+                            border: '1px solid #e0e0e0', // Add border to paper
+
             },
         },
         layoutMode: 'grid',
-        enableColumnResizing: true, // Disable column resizing
+        enableColumnResizing: true,
         displayColumnDefOptions: {
             'mrt-row-expand': {
                 size: 50,
@@ -472,7 +480,21 @@ const Reports = () => {
         );
     }
 
-    return <MaterialReactTable table={table} />;
+    // Responsive wrapper for table with horizontal scroll on mobile
+    return (
+        <Box
+            sx={{
+                width: '100%',
+                overflowX: isMobile ? 'auto' : 'unset',
+                maxWidth: '100vw',
+                padding: isMobile ? 0.5 : 2,
+                boxSizing: 'border-box',
+                backgroundColor: 'transparent',
+            }}
+        >
+            <MaterialReactTable table={table} />
+        </Box>
+    );
 };
 
 export default Reports;

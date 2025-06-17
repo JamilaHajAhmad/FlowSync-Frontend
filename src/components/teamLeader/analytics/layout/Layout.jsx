@@ -1,4 +1,4 @@
-import { Box, IconButton, Tooltip } from '@mui/material';
+import { Box, IconButton, Tooltip, useTheme, useMediaQuery } from '@mui/material';
 import { Download, ArrowBack } from '@mui/icons-material';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -18,6 +18,8 @@ const Layout = ({ children }) => {
     const [ mode, setMode ] = useState('light');
     const [downloadOpen, setDownloadOpen] = useState(false);
     const { chartData, getCurrentReportType } = useChartData();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const handleDrawerOpen = () => {
         setOpen(!open);
@@ -320,23 +322,75 @@ const Layout = ({ children }) => {
                     throw new Error('No data to export');
                 }
 
-                // Render the chart container to canvas
                 const chartContainer = document.querySelector('.chart-container');
                 if (!chartContainer) {
                     toast.error('Chart container not found');
                     return null;
                 }
 
-                const canvas = await html2canvas(chartContainer);
-                const imageData = canvas.toDataURL('image/png');
+                // Clone the chart container to create a fixed-size version for capture
+                const clonedContainer = chartContainer.cloneNode(true);
+                clonedContainer.style.position = 'absolute';
+                clonedContainer.style.left = '-9999px';
+                clonedContainer.style.width = '1200px'; // Fixed width for consistent capture
+                clonedContainer.style.height = 'auto';
+                clonedContainer.style.overflow = 'visible';
+                document.body.appendChild(clonedContainer);
+
+                // Use a fixed scale regardless of device
+                const captureScale = 2;
+
+                const canvas = await html2canvas(clonedContainer, {
+                    scale: captureScale,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff',
+                    width: 1200, // Fixed width for capture
+                    windowWidth: 1200, // Fixed window width
+                    allowTaint: true,
+                    removeContainer: true // Clean up cloned element after capture
+                });
+
+                // Remove the cloned container
+                document.body.removeChild(clonedContainer);
 
                 // Create PDF in landscape orientation
                 const doc = new jsPDF('landscape');
                 
-                // Add chart image on first page
-                const imgWidth = 270;
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                doc.addImage(imageData, 'PNG', 10, 10, imgWidth, imgHeight);
+                // Get page dimensions
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                
+                // Fixed margins
+                const margin = 10;
+                const maxWidth = pageWidth - (margin * 2);
+                const maxHeight = pageHeight - (margin * 2);
+                
+                // Calculate proportional dimensions
+                let imgWidth = maxWidth;
+                let imgHeight = (canvas.height * maxWidth) / canvas.width;
+
+                // Adjust dimensions if height exceeds page
+                if (imgHeight > maxHeight) {
+                    imgHeight = maxHeight;
+                    imgWidth = (canvas.width * maxHeight) / canvas.height;
+                }
+
+                // Center the image
+                const xPos = (pageWidth - imgWidth) / 2;
+                const yPos = (pageHeight - imgHeight) / 2;
+
+                // Add chart image with high quality
+                doc.addImage(
+                    canvas.toDataURL('image/png', 1.0),
+                    'PNG',
+                    xPos,
+                    yPos,
+                    imgWidth,
+                    imgHeight,
+                    undefined,
+                    'FAST'
+                );
 
                 // Add a new page for the table
                 doc.addPage();
@@ -350,7 +404,7 @@ const Layout = ({ children }) => {
                 autoTable(doc, {
                     head: [Object.keys(exportData[0])],
                     body: exportData.map(row => Object.values(row)),
-                    startY: 25, // Start below the title
+                    startY: 25,
                     theme: 'grid',
                     styles: {
                         fontSize: 8,
@@ -368,7 +422,6 @@ const Layout = ({ children }) => {
                     margin: { top: 25, right: 10, bottom: 10, left: 10 }
                 });
 
-                
                 // Create blob for API
                 const pdfBlob = doc.output('blob');
                 const fileName = `chart-report-${new Date().toISOString().slice(0,10)}.pdf`;
@@ -398,60 +451,73 @@ const Layout = ({ children }) => {
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    p: 3,
-                    mt: 8,
-                    width: { sm: `calc(100% - ${open ? 240 : 64}px)` }
+                    p: { xs: 1, sm: 2, md: 3 }, // Responsive padding
+                    mt: { xs: 7, sm: 8 }, // Adjusted top margin
+                    width: {
+                        xs: '100%',
+                        sm: `calc(100% - ${open ? 240 : 64}px)`
+                    }
                 }}
             >
                 <Box sx={{ 
                     backgroundColor: mode === 'light' ? '#f4f6f8' : '#1b1c1d', 
-                    height: '100vh', 
+                    height: '100vh',
                     width: '100%',
-                    position: 'relative'
+                    position: 'relative',
+                    borderRadius: { xs: 0, sm: 1, md: 2 }, // Responsive border radius
+                    overflow: 'hidden'
                 }}>
-                    <Tooltip title="Return to Analytics" placement="right">
-                        <IconButton 
-                            onClick={() => navigate('/analytics')}  
-                            sx={{ 
-                                position: 'absolute',
-                                top: 16,
-                                left: 16,
-                                backgroundColor: mode === 'light' ? 'white' : 'rgba(255,255,255,0.1)',
-                                '&:hover': {
-                                    backgroundColor: mode === 'light' ? '#f5f5f5' : 'rgba(255,255,255,0.2)'
-                                },
-                                zIndex: 100
-                            }}
-                        >
-                            <ArrowBack />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Download Report" placement="left">
-                        <IconButton 
-                            onClick={() => setDownloadOpen(true)}
-                            sx={{ 
-                                position: 'absolute',
-                                top: 16,
-                                right: 16,
-                                backgroundColor: mode === 'light' ? 'white' : 'rgba(255,255,255,0.1)',
-                                '&:hover': {
-                                    backgroundColor: mode === 'light' ? '#f5f5f5' : 'rgba(255,255,255,0.2)'
-                                },
-                                zIndex: 100
-                            }}
-                        >
-                            <Download />
-                        </IconButton>
-                    </Tooltip>
+                    <Box sx={{
+                        position: 'absolute',
+                        top: { xs: 8, sm: 16 },
+                        left: { xs: 8, sm: 16 },
+                        right: { xs: 8, sm: 16 },
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        zIndex: 100
+                    }}>
+                        <Tooltip title="Return to Analytics" placement="right">
+                            <IconButton 
+                                onClick={() => navigate('/analytics')}  
+                                sx={{ 
+                                    backgroundColor: mode === 'light' ? 'white' : 'rgba(255,255,255,0.1)',
+                                    '&:hover': {
+                                        backgroundColor: mode === 'light' ? '#f5f5f5' : 'rgba(255,255,255,0.2)'
+                                    },
+                                    padding: { xs: 1, sm: 1.5 }, // Responsive padding
+                                }}
+                            >
+                                <ArrowBack sx={{ 
+                                    fontSize: { xs: '1.25rem', sm: '1.5rem' } 
+                                }} />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Download Report" placement="left">
+                            <IconButton 
+                                onClick={() => setDownloadOpen(true)}
+                                sx={{ 
+                                    backgroundColor: mode === 'light' ? 'white' : 'rgba(255,255,255,0.1)',
+                                    '&:hover': {
+                                        backgroundColor: mode === 'light' ? '#f5f5f5' : 'rgba(255,255,255,0.2)'
+                                    },
+                                    padding: { xs: 1, sm: 1.5 }, // Responsive padding
+                                }}
+                            >
+                                <Download sx={{ 
+                                    fontSize: { xs: '1.25rem', sm: '1.5rem' } 
+                                }} />
+                            </IconButton>
+                        </Tooltip>
+                    </Box>
                     <div 
                         className="chart-container" 
                         style={{ 
-                            height: '100%', // Changed from 100%
+                            height: '100%',
                             width: '100%',
-                            minHeight: '400px',
+                            minHeight: isMobile ? '300px' : '400px',
                             position: 'relative',
-                            overflow: 'visible', // Changed from hidden
-                            padding: '20px'
+                            overflow: 'visible',
+                            padding: isMobile ? '40px 10px 10px' : '60px 20px 20px'
                         }}
                     >
                         {children}
@@ -463,6 +529,7 @@ const Layout = ({ children }) => {
                 handleClose={() => setDownloadOpen(false)}
                 handleDownload={handleDownload}
                 reportType={getCurrentReportType()}
+                fullScreen={isMobile} // Make dialog fullscreen on mobile
             />
         </Box>
     );

@@ -3,9 +3,7 @@ import {
     MaterialReactTable,
     useMaterialReactTable,
 } from 'material-react-table';
-import { Box, Stack, Chip, Button, Menu, MenuItem, Typography, 
-    Avatar
-} from "@mui/material";
+import { Box, Stack, Chip, Button, Menu, MenuItem, Typography, Avatar } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { jsPDF } from 'jspdf';
@@ -21,25 +19,25 @@ import MemberDetailsDialog from '../components/MemberDetailsDialog';
 import { Visibility as VisibilityIcon } from '@mui/icons-material';
 
 export default function Members({ showActions = true }) {
-    const [rows, setRows] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [deleteDialog, setDeleteDialog] = useState({
+    const [ rows, setRows ] = useState([]);
+    const [ loading, setLoading ] = useState(true);
+    const [ deleteDialog, setDeleteDialog ] = useState({
         open: false,
         memberId: null,
         memberName: ''
     });
-    const [memberDetailsDialog, setMemberDetailsDialog] = useState({
+    const [ memberDetailsDialog, setMemberDetailsDialog ] = useState({
         open: false,
         member: null,
         loading: false
     });
+
 
     useEffect(() => {
         const fetchMembers = async () => {
             try {
                 const token = localStorage.getItem('authToken');
                 const response = await getAllMembers(token);
-                console.log('Fetched members:', response.data);
                 const formattedMembers = response.data.map(member => ({
                     id: member.id,
                     name: member.fullName,
@@ -51,8 +49,8 @@ export default function Members({ showActions = true }) {
                 }));
                 setRows(formattedMembers);
             } catch (error) {
-                console.error('Error fetching members:', error);
                 toast.error('Failed to load members');
+                console.error('Error fetching members:', error);
             } finally {
                 setLoading(false);
             }
@@ -148,7 +146,7 @@ export default function Members({ showActions = true }) {
                                 size="small"
                                 disabled
                                 sx={{
-                                    backgroundColor: '#10b981', // Light green when not disabled
+                                    backgroundColor: '#10b981',
                                     minWidth: 'unset',
                                     padding: '4px 8px',
                                     '&.Mui-disabled': {
@@ -185,11 +183,11 @@ export default function Members({ showActions = true }) {
                             size="small"
                             onClick={() => handleViewClick(row.original)}
                             sx={{
-                                backgroundColor: '#10b981', // Light green
+                                backgroundColor: '#10b981',
                                 minWidth: 'unset',
                                 padding: '4px 8px',
                                 '&:hover': {
-                                    backgroundColor: '#059669' // Darker green on hover
+                                    backgroundColor: '#059669'
                                 }
                             }}
                             startIcon={<VisibilityIcon fontSize="small" />}
@@ -218,7 +216,7 @@ export default function Members({ showActions = true }) {
         },
     ].filter(col => showActions || col.accessorKey !== "actions");
 
-    const [anchorEl, setAnchorEl] = React.useState(null);
+    const [ anchorEl, setAnchorEl ] = React.useState(null);
     const open = Boolean(anchorEl);
 
     const handleExportClick = (event) => {
@@ -231,13 +229,12 @@ export default function Members({ showActions = true }) {
 
     const exportToCSV = (data, filename) => {
         const csvRows = [];
-        const headers = Object.keys(data[0]);
+        const headers = Object.keys(data[ 0 ]);
         csvRows.push(headers.join(','));
 
         for (const row of data) {
             const values = headers.map(header => {
-                const value = row[header];
-                // Handle values that contain commas or quotes
+                const value = row[ header ];
                 const escaped = String(value).replace(/"/g, '""');
                 return `"${escaped}"`;
             });
@@ -245,7 +242,7 @@ export default function Members({ showActions = true }) {
         }
 
         const csvString = csvRows.join('\n');
-        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([ csvString ], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -257,7 +254,6 @@ export default function Members({ showActions = true }) {
     };
 
     const handleDownload = (fileType) => {
-        // Filter out removed members and prepare export data
         const exportData = rows
             .filter(row => !row.isDeactivated)
             .map(row => ({
@@ -269,63 +265,57 @@ export default function Members({ showActions = true }) {
 
         switch (fileType) {
             case 'pdf':
-                { const doc = new jsPDF('landscape');
-                
-                // Add title
-                doc.setFontSize(16);
-                doc.setTextColor(5, 150, 105);
-                doc.text('Team Members List', 14, 15);
-
-                autoTable(doc, {
-                    head: [Object.keys(exportData[0])],
-                    body: exportData.map(item => Object.values(item)),
-                    startY: 25,
-                    theme: 'grid',
-                    styles: {
-                        fontSize: 8,
-                        cellPadding: 3,
-                        overflow: 'linebreak',
-                        halign: 'left'
-                    },
-                    headStyles: {
-                        fillColor: [5, 150, 105], // FlowSync green color
-                        textColor: 255,
-                        fontSize: 9,
-                        fontStyle: 'bold',
-                        halign: 'left'
-                    },
-                    columnStyles: {
-                        0: { cellWidth: 50 }, // Name
-                        1: { cellWidth: 30 }, // Status
-                        2: { cellWidth: 70 }, // Email
-                        3: { cellWidth: 30 }  // Ongoing Tasks
-                    },
-                    margin: { top: 25 }
-                });
-
-                doc.save('team-members.pdf');
-                toast.success('PDF file exported successfully');
-                break; }
+                {
+                    const doc = new jsPDF('landscape');
+                    doc.setFontSize(16);
+                    doc.setTextColor(5, 150, 105);
+                    doc.text('Team Members List', 14, 15);
+                    autoTable(doc, {
+                        head: [ Object.keys(exportData[ 0 ]) ],
+                        body: exportData.map(item => Object.values(item)),
+                        startY: 25,
+                        theme: 'grid',
+                        styles: {
+                            fontSize: 8,
+                            cellPadding: 3,
+                            overflow: 'linebreak',
+                            halign: 'left'
+                        },
+                        headStyles: {
+                            fillColor: [ 5, 150, 105 ],
+                            textColor: 255,
+                            fontSize: 9,
+                            fontStyle: 'bold',
+                            halign: 'left'
+                        },
+                        columnStyles: {
+                            0: { cellWidth: 50 },
+                            1: { cellWidth: 30 },
+                            2: { cellWidth: 70 },
+                            3: { cellWidth: 30 }
+                        },
+                        margin: { top: 25 }
+                    });
+                    doc.save('team-members.pdf');
+                    toast.success('PDF file exported successfully');
+                    break;
+                }
             case 'excel':
                 try {
-                    // Create worksheet with custom column widths
                     const ws = XLSX.utils.json_to_sheet(exportData);
                     const wb = XLSX.utils.book_new();
-
-                    // Set column widths
-                    ws['!cols'] = [
-                        { wch: 30 }, // Name
-                        { wch: 20 }, // Status
-                        { wch: 40 }, // Email
-                        { wch: 15 }  // Ongoing Tasks
+                    ws[ '!cols' ] = [
+                        { wch: 30 },
+                        { wch: 20 },
+                        { wch: 40 },
+                        { wch: 15 }
                     ];
-
                     XLSX.utils.book_append_sheet(wb, ws, "Team Members");
                     XLSX.writeFile(wb, "team-members.xlsx");
                     toast.success('Excel file exported successfully');
                 } catch (error) {
-                    console.error("Error creating Excel file:", error);
                     toast.error("Failed to create Excel file");
+                    console.error('Error exporting to Excel:', error);
                 }
                 break;
             case 'csv':
@@ -333,17 +323,16 @@ export default function Members({ showActions = true }) {
                     exportToCSV(exportData, 'team-members');
                     toast.success('CSV file exported successfully');
                 } catch (error) {
-                    console.error('Error creating CSV file:', error);
                     toast.error('Failed to create CSV file');
+                    console.error('Error exporting to CSV:', error);
                 }
                 break;
             default:
-                console.error('Unsupported file type');
+                break;
         }
         handleExportClose();
     };
 
-    // Update table configuration
     const table = useMaterialReactTable({
         columns,
         data: rows,
@@ -376,6 +365,25 @@ export default function Members({ showActions = true }) {
                 color: row.original.isDeactivated ? '#94a3b8' : 'inherit',
             }
         }),
+        muiTableContainerProps: {
+            sx: {
+                maxHeight: 520,
+                width: '100%',
+                overflowX: { xs: 'auto', sm: 'auto', md: 'unset' }, // Enable horizontal scroll on mobile/tablet
+                borderRadius: 2,
+                backgroundColor: '#fff',
+            }
+        },
+        muiTablePaperProps: {
+            sx: {
+                width: '100%',
+                boxShadow: 'none',
+                borderRadius: 2,
+                backgroundColor: 'transparent',
+                border: '1px solid #e0e0e0', // Add border to paper
+
+            },
+        },
         renderTopToolbarCustomActions: () => (
             <Box sx={{ p: 2 }}>
                 <Button
@@ -420,9 +428,9 @@ export default function Members({ showActions = true }) {
     };
 
     const handleMemberRemoveSuccess = (memberId) => {
-        setRows(prevRows => 
-            prevRows.map(row => 
-                row.id === memberId 
+        setRows(prevRows =>
+            prevRows.map(row =>
+                row.id === memberId
                     ? { ...row, isDeactivated: true, status: 'Removed', tasks: 0 }
                     : row
             )
@@ -437,19 +445,18 @@ export default function Members({ showActions = true }) {
                 loading: true,
                 open: true
             }));
-            
+
             const token = localStorage.getItem('authToken');
             const response = await getMemberDetails(member.id, token);
-            console.log('Fetched member details:', response.data);
-            
+
             setMemberDetailsDialog({
                 open: true,
                 member: response.data,
                 loading: false
             });
         } catch (error) {
-            console.error('Error fetching member details:', error);
             toast.error('Failed to load member details');
+            console.error('Error fetching member details:', error);
             setMemberDetailsDialog(prev => ({
                 ...prev,
                 loading: false
@@ -465,9 +472,33 @@ export default function Members({ showActions = true }) {
         });
     };
 
+    // Responsive outer Box for horizontal scroll (does not affect border)
     return (
-        <Box sx={{ height: 520, width: "100%" }}>
-            <MaterialReactTable table={table} />
+        <Box
+            sx={{
+                width: '100%',
+                overflowX: { xs: 'auto', sm: 'auto', md: 'auto' }, // horizontal scroll on mobile/tablet
+                maxWidth: '100vw',
+                padding: { xs: 0.5, sm: 1, md: 2 },
+                boxSizing: 'border-box',
+                backgroundColor: 'transparent',
+            }}
+        >
+            {/* Remove the fixed height here so horizontal scroll can show all columns */}
+            <MaterialReactTable
+                table={table}
+                // Make the table body scrollable only vertically on desktop, not on mobile
+                muiTableContainerProps={{
+                    sx: {
+                        maxHeight: { xs: 'unset', md: 520 }, // Only set maxHeight on desktop for compact view
+                        width: '100%',
+                        overflowX: { xs: 'auto', sm: 'auto', md: 'unset' },
+                        border: '1px solid #e0e0e0',
+                        borderRadius: 2,
+                        backgroundColor: '#fff'
+                    }
+                }}
+            />
             <DeleteMemberDialog
                 open={deleteDialog.open}
                 memberName={deleteDialog.memberName}

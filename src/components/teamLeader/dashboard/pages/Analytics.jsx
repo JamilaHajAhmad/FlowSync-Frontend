@@ -1,4 +1,15 @@
-import { Card, CardContent, CardActionArea, Typography, Grid, Container, Box, CircularProgress, IconButton, Tooltip } from '@mui/material';
+import {
+    Card,
+    CardContent,
+    CardActionArea,
+    Typography,
+    Grid,
+    Container,
+    Box,
+    CircularProgress,
+    IconButton,
+    Tooltip
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -12,12 +23,12 @@ import { Help as HelpIcon } from '@mui/icons-material';
 import HelpDialog from '../../analytics/help/HelpDialog';
 
 const Analytics = () => {
-    const [ barChartStats, setBarChartStats ] = useState({ value: '0', trend: '0%' });
-    const [ pieChartStats, setPieChartStats ] = useState({ value: '0', trend: '0%' });
-    const [ lineChartStats, setLineChartStats ] = useState({ value: '0', trend: '0%' });
-    const [ heatmapStats, setHeatmapStats ] = useState({ value: '0', trend: '0%' });
-    const [ stackedStats, setStackedStats ] = useState({ value: '0', trend: '0%' });
-    const [ funnelStats, setFunnelStats ] = useState({ value: '0', trend: '0%' });
+    const [barChartStats, setBarChartStats] = useState({ value: '0', trend: '0%' });
+    const [pieChartStats, setPieChartStats] = useState({ value: '0', trend: '0%' });
+    const [lineChartStats, setLineChartStats] = useState({ value: '0', trend: '0%' });
+    const [heatmapStats, setHeatmapStats] = useState({ value: '0', trend: '0%' });
+    const [stackedStats, setStackedStats] = useState({ value: '0', trend: '0%' });
+    const [funnelStats, setFunnelStats] = useState({ value: '0', trend: '0%' });
     const [helpOpen, setHelpOpen] = useState(false);
     const navigate = useNavigate();
 
@@ -38,29 +49,21 @@ const Analytics = () => {
                     });
                     return;
                 }
-
-                // Calculate total tasks from the new response format
                 const totalTasks = response.data.date.reduce((sum, item) => sum + item.count, 0);
-
-                // Get highest and lowest task counts per member
                 const memberCounts = {};
                 response.data.date.forEach(item => {
-                    if (!memberCounts[ item.member ]) {
-                        memberCounts[ item.member ] = 0;
+                    if (!memberCounts[item.member]) {
+                        memberCounts[item.member] = 0;
                     }
-                    memberCounts[ item.member ] += item.count;
+                    memberCounts[item.member] += item.count;
                 });
-
                 const counts = Object.values(memberCounts);
                 const maxTasks = Math.max(...counts);
                 const minTasks = Math.min(...counts);
-
-                // Calculate distribution trend
                 const distributionRange = maxTasks - minTasks;
                 const avgTasks = totalTasks / Object.keys(memberCounts).length;
                 const distributionIndex = (distributionRange / avgTasks) * 100;
                 const trend = `${distributionIndex > 50 ? '+' : '-'}${Math.abs(distributionIndex - 50).toFixed(1)}%`;
-
                 setBarChartStats({
                     value: totalTasks.toString(),
                     trend: trend
@@ -86,27 +89,18 @@ const Analytics = () => {
                     });
                     return;
                 }
-
-                // Calculate total tasks from the new response format
                 const totalTasks = response.data.date.reduce((sum, item) => sum + item.count, 0);
-
-                // Calculate status distribution using the new format
                 const statusCounts = response.data.date.reduce((acc, item) => {
-                    acc[ item.status.type ] = item.count;
+                    acc[item.status.type] = item.count;
                     return acc;
                 }, {});
-
-                // Calculate completion rate and trend
-                const completedTasks = statusCounts[ 'Completed' ] || 0;
-                const openedTasks = statusCounts[ 'Opened' ] || 0;
-
+                const completedTasks = statusCounts['Completed'] || 0;
+                const openedTasks = statusCounts['Opened'] || 0;
                 let trend = "0%";
-
                 if (totalTasks > 0) {
                     const taskEfficiencyRate = ((completedTasks - openedTasks) / totalTasks) * 100;
                     trend = `${taskEfficiencyRate >= 0 ? '+' : ''}${taskEfficiencyRate.toFixed(1)}%`;
                 }
-
                 setPieChartStats({
                     value: totalTasks.toString(),
                     trend: trend
@@ -129,7 +123,6 @@ const Analytics = () => {
                         headers: { Authorization: `Bearer ${token}` }
                     }
                 );
-                // Handle empty response
                 if (!response.data?.date || response.data.date.length === 0) {
                     setLineChartStats({
                         value: 'No Data',
@@ -137,25 +130,17 @@ const Analytics = () => {
                     });
                     return;
                 }
-
-                // Calculate totals from all months
                 const totalCreated = response.data.date.reduce((sum, month) => sum + month.created, 0);
-
-                // Calculate trend based on current month vs previous month
                 let trend = "0%";
                 const months = response.data.date;
                 if (months.length >= 2) {
                     const currentMonth = months[months.length - 1];
                     const previousMonth = months[months.length - 2];
-                    
                     const currentRate = currentMonth.completed / currentMonth.created * 100;
                     const previousRate = previousMonth.completed / previousMonth.created * 100;
-                    
                     const trendValue = currentRate - previousRate;
                     trend = `${trendValue >= 0 ? '+' : ''}${trendValue.toFixed(1)}%`;
                 }
-
-                // Set the stats
                 setLineChartStats({
                     value: totalCreated.toString(),
                     trend: trend
@@ -178,7 +163,6 @@ const Analytics = () => {
                         headers: { Authorization: `Bearer ${token}` }
                     }
                 );
-                // Handle empty response
                 if (!response.data?.date || response.data.date.length === 0) {
                     setHeatmapStats({
                         value: 'No Data',
@@ -186,20 +170,11 @@ const Analytics = () => {
                     });
                     return;
                 }
-
-                // Calculate total tasks across all departments
                 const totalTasks = response.data.date.reduce((sum, item) => sum + item.count, 0);
-
-                // Calculate department coverage
                 const uniqueDepartments = new Set(response.data.date.map(item => item.department));
                 const departmentCount = uniqueDepartments.size;
-
-                // Calculate average tasks per department
                 const avgTasksPerDepartment = totalTasks / departmentCount;
-
-                // Calculate distribution trend
                 const trend = `${avgTasksPerDepartment >= 5 ? '+' : '-'}${Math.abs(avgTasksPerDepartment - 5).toFixed(1)}%`;
-
                 setHeatmapStats({
                     value: `${departmentCount} Departments`,
                     trend: trend
@@ -222,7 +197,6 @@ const Analytics = () => {
                         headers: { Authorization: `Bearer ${token}` }
                     }
                 );
-                // Handle empty response
                 if (!response.data?.date || response.data.date.length === 0) {
                     setStackedStats({
                         value: 'No Activities',
@@ -230,20 +204,12 @@ const Analytics = () => {
                     });
                     return;
                 }
-
-                // Calculate total activities
                 const totalActivities = response.data.date.reduce((sum, item) => sum + item.count, 0);
-                
-                // Calculate daily average
-                const uniqueDays = new Set(response.data.date.map(item => 
+                const uniqueDays = new Set(response.data.date.map(item =>
                     new Date(item.date).toISOString().split('T')[0]
                 )).size;
-                
                 const averagePerDay = totalActivities / uniqueDays;
-                
-                // Calculate trend based on daily average
                 const trend = `${averagePerDay >= 3 ? '+' : '-'}${Math.abs(averagePerDay - 3).toFixed(1)}%`;
-
                 setStackedStats({
                     value: totalActivities.toString(),
                     trend: trend
@@ -266,8 +232,6 @@ const Analytics = () => {
                         headers: { Authorization: `Bearer ${token}` }
                     }
                 );
-
-                // Handle empty response
                 if (!response.data?.date || response.data.date.length === 0) {
                     setFunnelStats({
                         value: 'No Activities',
@@ -275,15 +239,9 @@ const Analytics = () => {
                     });
                     return;
                 }
-
-                // Calculate total activities
                 const totalActivities = response.data.date.reduce((sum, item) => sum + item.count, 0);
-                
-                // Calculate activity types
                 const activityTypes = new Set(response.data.date.map(item => item.type));
                 const uniqueActivitiesCount = activityTypes.size;
-                
-                // Calculate month-over-month growth with safety checks
                 const monthlyTotals = response.data.date.reduce((acc, item) => {
                     if (item.year && item.month) {
                         const key = `${item.year}-${item.month.toString().padStart(2, '0')}`;
@@ -291,17 +249,13 @@ const Analytics = () => {
                     }
                     return acc;
                 }, {});
-                
                 const months = Object.keys(monthlyTotals).sort();
                 const currentMonth = monthlyTotals[months[months.length - 1]] || 0;
                 const previousMonth = monthlyTotals[months[months.length - 2]] || 0;
-                
-                const growthRate = previousMonth > 0 
-                    ? ((currentMonth - previousMonth) / previousMonth) * 100 
+                const growthRate = previousMonth > 0
+                    ? ((currentMonth - previousMonth) / previousMonth) * 100
                     : 100;
-                
                 const trend = `${growthRate >= 0 ? '+' : ''}${growthRate.toFixed(1)}%`;
-
                 setFunnelStats({
                     value: `${uniqueActivitiesCount} Types (${totalActivities} Total)`,
                     trend: trend
@@ -384,23 +338,31 @@ const Analytics = () => {
         navigate(path);
     };
 
-    // Update the Container and Grid layout
+    // Main fix: Remove scroll, but ensure no content cut-off
+    // Use boxSizing: 'border-box' everywhere, set width: 100% on Container and Grid
+    // and ensure no extra negative margin or padding causing cut-off.
+    // Also, add maxWidth: '100%' on key blocks.
+
     return (
-        <Container 
-            maxWidth="xl" 
-            sx={{ 
-                mt: { xs: 2, sm: 4 }, 
+        <Container
+            maxWidth="xl"
+            sx={{
+                mt: { xs: 2, sm: 4 },
                 mb: { xs: 2, sm: 4 },
-                px: { xs: 1, sm: 2, md: 3 }
+                px: { xs: 1, sm: 2, md: 3 },
+                boxSizing: 'border-box',
+                width: '100%',
+                maxWidth: '100% !important', // override any accidental overflows
+                overflowX: 'hidden'
             }}
         >
             {/* Help Button */}
-            <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'flex-end', 
+            <Box sx={{
+                display: 'flex',
+                justifyContent: 'flex-end',
                 mb: { xs: 1, sm: 2 }
             }}>
-                <Tooltip 
+                <Tooltip
                     title="View Analytics Guide"
                     placement="left"
                     arrow
@@ -423,9 +385,27 @@ const Analytics = () => {
             </Box>
 
             {/* Charts Grid */}
-            <Grid container spacing={{ xs: 2, sm: 3 }}>
+            <Grid
+                container
+                spacing={{ xs: 2, sm: 3 }}
+                sx={{
+                    boxSizing: 'border-box',
+                    width: '100%',
+                    maxWidth: '100%',
+                    margin: 0,
+                    // No wrap override, default MUI stack is column on mobile
+                }}
+            >
                 {charts.map((chart, index) => (
-                    <Grid item {...chart.gridSize} key={index}>
+                    <Grid
+                        item
+                        {...chart.gridSize}
+                        key={index}
+                        sx={{
+                            width: '100%',
+                            maxWidth: '100%',
+                        }}
+                    >
                         <Card
                             sx={{
                                 height: '100%',
@@ -435,30 +415,36 @@ const Analytics = () => {
                                     boxShadow: '0 6px 30px rgba(0,0,0,0.1)',
                                     transform: 'translateY(-2px)',
                                 },
-                                transition: 'all 0.3s ease'
+                                transition: 'all 0.3s ease',
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'visible'
                             }}
                         >
                             <CardActionArea
                                 onClick={() => handleCardClick(chart.path)}
-                                sx={{ height: '100%' }}
+                                sx={{ height: '100%', width: '100%' }}
                             >
-                                <CardContent sx={{ 
-                                    height: '100%', 
-                                    p: { xs: 2, sm: 3 }
-                            }}>
+                                <CardContent sx={{
+                                    height: '100%',
+                                    p: { xs: 2, sm: 3 },
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    boxSizing: 'border-box'
+                                }}>
                                     <Box sx={{ mb: { xs: 1, sm: 2 } }}>
-                                        <Typography 
-                                            variant="h6" 
-                                            sx={{ 
-                                                fontWeight: 600, 
+                                        <Typography
+                                            variant="h6"
+                                            sx={{
+                                                fontWeight: 600,
                                                 color: '#1a3d37',
                                                 fontSize: { xs: '1rem', sm: '1.25rem' }
                                             }}
                                         >
                                             {chart.title}
                                         </Typography>
-                                        <Typography 
-                                            variant="body2" 
+                                        <Typography
+                                            variant="body2"
                                             color="text.secondary"
                                             sx={{
                                                 fontSize: { xs: '0.75rem', sm: '0.875rem' }
@@ -468,15 +454,15 @@ const Analytics = () => {
                                         </Typography>
                                     </Box>
 
-                                    <Box sx={{ 
-                                        display: 'flex', 
-                                        alignItems: 'baseline', 
+                                    <Box sx={{
+                                        display: 'flex',
+                                        alignItems: 'baseline',
                                         mb: { xs: 2, sm: 3 }
                                     }}>
-                                        <Typography 
-                                            variant="h4" 
-                                            sx={{ 
-                                                fontWeight: 600, 
+                                        <Typography
+                                            variant="h4"
+                                            sx={{
+                                                fontWeight: 600,
                                                 color: '#059669',
                                                 fontSize: { xs: '1.5rem', sm: '2rem' }
                                             }}
@@ -495,9 +481,12 @@ const Analytics = () => {
                                         </Typography>
                                     </Box>
 
-                                    <Box sx={{ 
-                                        height: { xs: 200, sm: 240 }, 
-                                        mt: { xs: 1, sm: 2 }
+                                    <Box sx={{
+                                        height: { xs: 200, sm: 240 },
+                                        mt: { xs: 1, sm: 2 },
+                                        width: '100%',
+                                        maxWidth: '100%',
+                                        overflow: 'visible'
                                     }}>
                                         {chart.component}
                                     </Box>
@@ -509,7 +498,7 @@ const Analytics = () => {
             </Grid>
 
             {/* Update HelpDialog for mobile */}
-            <HelpDialog 
+            <HelpDialog
                 open={helpOpen}
                 onClose={() => setHelpOpen(false)}
                 sx={{

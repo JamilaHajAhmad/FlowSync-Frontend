@@ -10,7 +10,9 @@ import {
     StepLabel,
     StepContent,
     Button,
-    Paper
+    Paper,
+    useTheme,
+    useMediaQuery
 } from '@mui/material';
 import {
     Close as CloseIcon,
@@ -29,6 +31,8 @@ import { useState } from 'react';
 
 const HelpDialog = ({ open, onClose }) => {
     const [activeStep, setActiveStep] = useState(0);
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const steps = [
         {
@@ -319,60 +323,122 @@ const HelpDialog = ({ open, onClose }) => {
             onClose={onClose}
             maxWidth="md"
             fullWidth
+            fullScreen={isMobile} // Make full screen on mobile
             PaperProps={{
                 sx: {
-                    borderRadius: 2,
-                    bgcolor: 'background.default'
+                    borderRadius: { xs: 0, sm: 2 }, // Remove border radius on mobile
+                    bgcolor: 'background.default',
+                    height: { xs: '100%', sm: 'auto' }
                 }
             }}
         >
             <DialogTitle sx={{ 
                 m: 0, 
-                p: 2, 
+                p: { xs: 1.5, sm: 2 }, // Adjust padding for mobile
                 background: 'linear-gradient(135deg, #064E3B 0%, #059669 100%)', 
                 color: 'primary.contrastText',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between'
             }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <HelpIcon />
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: { xs: 0.5, sm: 1 }
+                }}>
+                    <HelpIcon sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }} />
+                    <Typography 
+                        variant={isMobile ? "subtitle1" : "h6"} 
+                        sx={{ 
+                            fontWeight: 600,
+                            fontSize: { xs: '1rem', sm: '1.25rem' }
+                        }}
+                    >
                         Analytics Dashboard Help Guide
                     </Typography>
                 </Box>
                 <IconButton
                     onClick={onClose}
-                    sx={{ color: 'inherit' }}
+                    sx={{ 
+                        color: 'inherit',
+                        padding: { xs: 0.5, sm: 1 }
+                    }}
                 >
-                    <CloseIcon />
+                    <CloseIcon sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }} />
                 </IconButton>
             </DialogTitle>
-            <DialogContent sx={{ mt: 2 }}>
-                <Stepper activeStep={activeStep} orientation="vertical">
+            <DialogContent sx={{ 
+                mt: { xs: 1, sm: 2 },
+                p: { xs: 1.5, sm: 2 },
+                overflow: 'auto'
+            }}>
+                <Stepper 
+                    activeStep={activeStep} 
+                    orientation="vertical"
+                    sx={{
+                        '& .MuiStepLabel-root': {
+                            p: { xs: 0.5, sm: 1 }
+                        },
+                        '& .MuiStepContent-root': {
+                            ml: { xs: 1, sm: 2 },
+                            py: { xs: 1, sm: 2 }
+                        }
+                    }}
+                >
                     {steps.map((step, index) => (
                         <Step key={step.label}>
-                            <StepLabel StepIconComponent={() => step.icon}>
-                                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                            <StepLabel 
+                                StepIconComponent={() => (
+                                    <Box sx={{ 
+                                        mr: { xs: 1, sm: 2 },
+                                        '& svg': {
+                                            fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                                        }
+                                    }}>
+                                        {step.icon}
+                                    </Box>
+                                )}
+                            >
+                                <Typography 
+                                    variant={isMobile ? "body1" : "subtitle1"}
+                                    sx={{ 
+                                        fontWeight: 600,
+                                        fontSize: { xs: '0.9rem', sm: '1rem' }
+                                    }}
+                                >
                                     {step.label}
                                 </Typography>
                             </StepLabel>
                             <StepContent>
-                                <Box sx={{ mb: 2 }}>
+                                <Box sx={{ 
+                                    mb: { xs: 1, sm: 2 },
+                                    '& .MuiTypography-body1': {
+                                        fontSize: { xs: '0.875rem', sm: '1rem' }
+                                    },
+                                    '& .MuiTypography-body2': {
+                                        fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                                    }
+                                }}>
                                     {step.content}
                                 </Box>
-                                <Box sx={{ mb: 2 }}>
+                                <Box sx={{ mb: { xs: 1, sm: 2 } }}>
                                     <div>
                                         <Button
                                             variant="contained"
                                             onClick={handleNext}
-                                            sx={{ mt: 1, mr: 1, background: 'linear-gradient(135deg, #064E3B 0%, #059669 100%)' }}
+                                            size={isMobile ? "small" : "medium"}
+                                            sx={{ 
+                                                mt: 1, 
+                                                mr: 1, 
+                                                background: 'linear-gradient(135deg, #064E3B 0%, #059669 100%)'
+                                            }}
                                         >
                                             {index === steps.length - 1 ? 'Finish' : 'Continue'}
                                         </Button>
                                         <Button
                                             disabled={index === 0}
                                             onClick={handleBack}
+                                            size={isMobile ? "small" : "medium"}
                                             sx={{ mt: 1, mr: 1 }}
                                         >
                                             Back
@@ -384,11 +450,24 @@ const HelpDialog = ({ open, onClose }) => {
                     ))}
                 </Stepper>
                 {activeStep === steps.length && (
-                    <Paper square elevation={0} sx={{ p: 3 }}>
+                    <Paper 
+                        square 
+                        elevation={0} 
+                        sx={{ 
+                            p: { xs: 2, sm: 3 },
+                            '& .MuiTypography-body1': {
+                                fontSize: { xs: '0.875rem', sm: '1rem' }
+                            }
+                        }}
+                    >
                         <Typography paragraph>
                             All steps completed! You're now ready to use the Analytics dashboard effectively.
                         </Typography>
-                        <Button onClick={handleReset} sx={{ mt: 1, mr: 1,  }}>
+                        <Button 
+                            onClick={handleReset}
+                            size={isMobile ? "small" : "medium"}
+                            sx={{ mt: 1, mr: 1 }}
+                        >
                             Review Again
                         </Button>
                     </Paper>

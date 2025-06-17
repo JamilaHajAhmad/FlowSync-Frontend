@@ -17,8 +17,9 @@ import {
 import { PictureAsPdf, TableView, InsertDriveFile } from '@mui/icons-material';
 import { saveReport } from '../../../../services/reportsService';
 import { useChartData } from '../../../../context/ChartDataContext';
+import PropTypes from 'prop-types';
 
-const DownloadDialog = ({ open, handleClose, handleDownload, reportType }) => {
+const DownloadDialog = ({ open, handleClose, handleDownload, reportType, fullScreen }) => {
     const [ fileType, setFileType ] = useState('');
     const { getCurrentDescription } = useChartData();
     const [ snackbar, setSnackbar ] = useState({ open: false, message: '', severity: 'success' });
@@ -74,7 +75,13 @@ const DownloadDialog = ({ open, handleClose, handleDownload, reportType }) => {
 
     return (
         <>
-            <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
+            <Dialog 
+                open={open} 
+                onClose={handleClose} 
+                maxWidth="xs" 
+                fullWidth
+                fullScreen={fullScreen} // Add this prop
+            >
                 <DialogTitle sx={{
                     borderBottom: '1px solid #e0e0e0',
                     backgroundColor: '#f5f5f5'
@@ -157,6 +164,15 @@ const DownloadDialog = ({ open, handleClose, handleDownload, reportType }) => {
             </Snackbar>
         </>
     );
+};
+
+// Add PropTypes for better prop validation
+DownloadDialog.propTypes = {
+    open: PropTypes.bool.isRequired,
+    handleClose: PropTypes.func.isRequired,
+    handleDownload: PropTypes.func.isRequired,
+    reportType: PropTypes.string.isRequired,
+    fullScreen: PropTypes.bool
 };
 
 export default DownloadDialog;

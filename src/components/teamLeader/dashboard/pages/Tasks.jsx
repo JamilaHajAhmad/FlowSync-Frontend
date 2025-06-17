@@ -14,7 +14,8 @@ import {
     InputLabel,
     OutlinedInput,
     Tooltip,
-    IconButton 
+    IconButton,
+    useMediaQuery
 } from "@mui/material";
 import { Add as AddIcon, FileDownload as FileDownloadIcon, Edit as EditIcon } from '@mui/icons-material';
 import Box from "@mui/material/Box";
@@ -118,9 +119,9 @@ const getColumns = (tab, handleEditTask) => {
                                 border: '1px dashed #ef4444',
                                 '& .MuiChip-label': {
                                     padding: '0 6px',
-                            }
-                        }}
-                    />
+                                }
+                            }}
+                        />
                     </Tooltip>
                 )}
             </Box>
@@ -161,7 +162,7 @@ const getColumns = (tab, handleEditTask) => {
                                 } 
                                 placement="left"
                             >
-                                <span> {/* Wrapper to handle disabled state */}
+                                <span>
                                     <IconButton
                                         size="small"
                                         color="primary"
@@ -244,9 +245,11 @@ export default function Tasks({
     containerWidth = "100%",
     hideFilterToolbar = false
 }) {
+    const isMobile = useMediaQuery('(max-width:600px)');
+
     const [activeTab, setActiveTab] = useState('All');
-    const [rawTasks, setRawTasks] = useState([]); // Store raw data
-    const [filteredTasks, setFilteredTasks] = useState([]); // Store filtered data
+    const [rawTasks, setRawTasks] = useState([]);
+    const [filteredTasks, setFilteredTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [openDialog, setOpenDialog] = useState(false);
     const [anchorEl, setAnchorEl] = React.useState(null);
@@ -254,7 +257,7 @@ export default function Tasks({
     const [endDate, setEndDate] = useState(null);
     const [selectedEmployee, setSelectedEmployee] = useState('');
     const [selectedTaskType, setSelectedTaskType] = useState('');
-    const [members, setMembers] = useState([]); // New state for member names
+    const [members, setMembers] = useState([]);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -264,7 +267,6 @@ export default function Tasks({
     const handleOpenDialog = () => setOpenDialog(true);
     const handleCloseDialog = () => setOpenDialog(false);
 
-    // Define handleEditTask with useCallback to prevent unnecessary re-renders
     const handleEditTask = useCallback((task) => {
         setSelectedTask(task);
         setEditDialogOpen(true);
@@ -283,7 +285,7 @@ export default function Tasks({
         setAnchorEl(null);
     };
 
-    const exportToCSV = (data, filename) => {
+        const exportToCSV = (data, filename) => {
         const csvRows = [];
         const headers = Object.keys(data[0]);
         csvRows.push(headers.join(','));
@@ -513,8 +515,6 @@ export default function Tasks({
             const type = activeTab === 'All' ? '' : activeTab.toLowerCase();
 
             const response = await getAllTasks(token, type);
-            console.log('Fetched tasks:', response.data);
-            
             const formattedTasks = response.data.map(task => ({
                 taskId: task.taskId,
                 name: task.assignedMember.fullName,
@@ -535,7 +535,6 @@ export default function Tasks({
                 caseSource: task.caseSource,
                 taskType: task.taskType
             }));
-
             setRawTasks(formattedTasks);
         } catch (error) {
             console.error('Error fetching tasks:', error);
@@ -547,10 +546,9 @@ export default function Tasks({
 
     useEffect(() => {
         fetchTasks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeTab, refreshTrigger]); // Add refreshTrigger to dependencies
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab, refreshTrigger]);
 
-    // Fetch member names for the dropdown
     useEffect(() => {
         const fetchMembers = async () => {
             try {
@@ -562,42 +560,24 @@ export default function Tasks({
                 toast.error('Failed to load team members');
             }
         };
-
         fetchMembers();
     }, []);
 
-    // Get unique task types for the dropdown
     const uniqueTaskTypes = useMemo(() => {
-        const taskTypes = [...new Set(rawTasks.map(task => {
-            // Use task status as task types
-            return task.status;
-        }))].filter(Boolean);
-        
+        const taskTypes = [...new Set(rawTasks.map(task => task.status))].filter(Boolean);
         return taskTypes.sort();
     }, [rawTasks]);
 
-    // Apply filters whenever filter values change
     useEffect(() => {
         let filtered = [...rawTasks];
-
-        // Apply all filters concurrently
         filtered = filtered.filter(task => {
-            // Date range filtering (based on openDate)
             const taskDate = task.openDate;
             const isAfterStart = !startDate || taskDate >= startDate;
             const isBeforeEnd = !endDate || taskDate <= endDate;
-            
-            // Employee filtering - Changed this part
             const matchesEmployee = !selectedEmployee || task.assignedMember?.id === selectedEmployee;
-            
-            // Task type filtering
             const matchesTaskType = !selectedTaskType || task.status === selectedTaskType;
-
-            // All conditions must be true for the task to be included
             return isAfterStart && isBeforeEnd && matchesEmployee && matchesTaskType;
         });
-
-        // Format dates for display after filtering
         const displayTasks = filtered.map(task => ({
             ...task,
             openDate: task.openDate.toLocaleDateString('en-US', {
@@ -608,14 +588,11 @@ export default function Tasks({
             completedAt: task.completedAt ? task.completedAt.toLocaleDateString('en-US') : '',
             frozenAt: task.frozenAt ? task.frozenAt.toLocaleDateString('en-US') : ''
         }));
-
         setFilteredTasks(displayTasks);
     }, [rawTasks, startDate, endDate, selectedEmployee, selectedTaskType]);
 
-    // Memoize columns to prevent unnecessary recalculations
     const columns = useMemo(() => getColumns(activeTab, handleEditTask), [activeTab, handleEditTask]);
 
-    // Update table configuration
     const table = useMaterialReactTable({
         columns,
         data: filteredTasks,
@@ -632,10 +609,9 @@ export default function Tasks({
         getRowId: (row) => row.id,
         sortingFns: {
             openDate: (rowA, rowB, columnId) => {
-                // Convert date strings to timestamps for proper sorting
                 const dateA = new Date(rowA.getValue(columnId)).getTime();
                 const dateB = new Date(rowB.getValue(columnId)).getTime();
-                return dateB - dateA; // Descending order
+                return dateB - dateA;
             },
         },
         state: { isLoading: loading },
@@ -650,17 +626,18 @@ export default function Tasks({
             <Box sx={{ 
                 display: 'flex', 
                 width: '100%',
-                flexDirection: 'column', // Change to column layout
-                gap: 2, // Add gap between tabs and filters
-                p: 2,
+                flexDirection: 'column',
+                gap: 2,
+                p: isMobile ? 1 : 2,
             }}>
-                {/* Tabs and Export Section */}
                 <Box sx={{
                     display: 'flex',
                     width: '100%',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    mt: -1.5,
+                    mt: isMobile ? 0 : -1.5,
+                    flexDirection: isMobile ? 'column' : 'row',
+                    gap: isMobile ? 1 : 0
                 }}>
                     {showTabs && (
                         <Stack direction="row" spacing={1}>
@@ -710,16 +687,15 @@ export default function Tasks({
                         </Menu>
                     </Box>
                 </Box>
-
-                {/* Filter Toolbar */}
                 {!hideFilterToolbar && (
                     <Box sx={{ 
                         display: 'flex', 
                         gap: 2, 
                         borderRadius: 1,
                         py: 2,
-                        alignItems: 'center',
-                        flexWrap: 'wrap'
+                        alignItems: isMobile ? 'stretch' : 'center',
+                        flexWrap: isMobile ? 'wrap' : 'nowrap',
+                        flexDirection: isMobile ? 'column' : 'row'
                     }}>
                         <LocalizationProvider dateAdapter={AdapterDateFns}>
                             <DatePicker
@@ -729,7 +705,7 @@ export default function Tasks({
                                 slotProps={{ 
                                     textField: { 
                                         size: "small",
-                                        sx: { width: 200 } // Match width with other fields
+                                        sx: { width: isMobile ? '100%' : 200 }
                                     } 
                                 }}
                             />
@@ -740,13 +716,12 @@ export default function Tasks({
                                 slotProps={{ 
                                     textField: { 
                                         size: "small",
-                                        sx: { width: 200 } // Match width with other fields
+                                        sx: { width: isMobile ? '100%' : 200 }
                                     } 
                                 }}
                             />
                         </LocalizationProvider>
-
-                        <FormControl size="small" sx={{ width: 200 }}>
+                        <FormControl size="small" sx={{ width: isMobile ? '100%' : 200 }}>
                             <InputLabel>Member</InputLabel>
                             <Select
                                 value={selectedEmployee}
@@ -763,8 +738,7 @@ export default function Tasks({
                                 ))}
                             </Select>
                         </FormControl>
-
-                        <FormControl size="small" sx={{ width: 200 }}>
+                        <FormControl size="small" sx={{ width: isMobile ? '100%' : 200 }}>
                             <InputLabel>Status</InputLabel>
                             <Select
                                 value={selectedTaskType}
@@ -781,7 +755,6 @@ export default function Tasks({
                                 ))}
                             </Select>
                         </FormControl>
-
                         <Button
                             variant="outlined"
                             size="small"
@@ -794,7 +767,8 @@ export default function Tasks({
                             sx={{ 
                                 height: 40,
                                 minWidth: 120,
-                                borderColor: 'divider'
+                                borderColor: 'divider',
+                                width: isMobile ? '100%' : 'auto'
                             }}
                         >
                             Clear Filters
@@ -806,9 +780,20 @@ export default function Tasks({
     });
 
     return (
-        <Box sx={{ height: 520, width: containerWidth, flexGrow: 1 }}>
+        <Box
+            sx={{
+                width: containerWidth,
+                maxWidth: '100vw',
+                minHeight: 520,
+                flexGrow: 1,
+                px: isMobile ? 0 : 2,
+                py: isMobile ? 0 : 2,
+                margin: '0 auto',
+                bgcolor: 'background.default',
+                overflowX: 'hidden'
+            }}
+        >
             <CreateTaskForm open={openDialog} onClose={handleCloseDialog} />
-            {/* Add EditTaskForm component */}
             {selectedTask && (
                 <EditTaskForm
                     open={editDialogOpen}
@@ -820,7 +805,6 @@ export default function Tasks({
                     }}
                 />
             )}
-            
             {!hideCreateButton && (
                 <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
                     <Button
@@ -829,11 +813,9 @@ export default function Tasks({
                         onClick={handleOpenDialog}
                         sx={{
                             backgroundColor: '#059669',
-                            '&:hover': {
-                                backgroundColor: '#047857'
-                            },
+                            '&:hover': { backgroundColor: '#047857' },
                             borderRadius: '50px',
-                            padding: '8px 16px',
+                            padding: { xs: '6px 12px', sm: '8px 16px' },
                             textTransform: 'none',
                             fontWeight: 'bold'
                         }}
@@ -842,17 +824,36 @@ export default function Tasks({
                     </Button>
                 </Box>
             )}
-
-            <MaterialReactTable 
-                table={table}
-                muiTablePaperProps={{
-                    sx: {
-                        '& .MuiToolbar-root': {
-                            background: '#fff',
-                        },
-                    },
+            <Box
+                sx={{
+                    width: '100%',
+                    overflowX: 'auto',
+                    // Only horizontal scroll here!
+                    background: 'white',
+                    borderRadius: 2,
+                    border: '1px solid #e0e0e0',
+                    boxShadow: 'none',
+                    margin: '0 auto'
                 }}
-            />
+            >
+                <MaterialReactTable
+                    table={table}
+                    muiTablePaperProps={{
+                        sx: {
+                            boxShadow: 'none',
+                            border: 'none',
+                            background: 'transparent',
+                        },
+                    }}
+                    muiTableContainerProps={{
+                        sx: {
+                            overflowX: 'auto',
+                            overflowY: 'visible', // No vertical scroll in table area
+                            maxWidth: '100vw',
+                        }
+                    }}
+                />
+            </Box>
         </Box>
     );
 }
