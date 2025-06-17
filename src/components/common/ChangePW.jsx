@@ -148,7 +148,7 @@ const ChangePW = () => {
                     toast.success('Password updated successfully!');
                     formik.resetForm();
                     // Use role from decoded token for navigation
-                    const redirectPath = decodedToken.role === 'Leader' ? '/leader-dashboard' : '/member-dashboard';
+                    const redirectPath = decodedToken.role.includes('Leader') ? '/leader-dashboard' : '/member-dashboard';
                     navigate(redirectPath);
                 }
             } catch (error) {

@@ -51,7 +51,7 @@ const TwoFactorAuth = () => {
             const decodedToken = decodeToken(token);
             const role = decodedToken.role;
             const user = JSON.parse(localStorage.getItem('user'));
-            if (role === 'Leader') {
+            if (role.includes('Leader')) {
                 toast.success(`Welcome, ${user.displayName}!`);
                 navigate('/leader-dashboard');
             } else {

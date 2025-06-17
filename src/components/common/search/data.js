@@ -83,7 +83,7 @@ const teamLeaderItems = [
 export const getSearchItems = (role) => {
     console.log('Getting items for role:', role); // Debug log
     
-    switch (role) {
+    switch (role.includes('Leader') ? 'Leader' : role.includes('Member') ? 'Member' : 'Common') {
         case 'Leader':
             return [...commonItems, ...teamLeaderItems];
         case 'Member':

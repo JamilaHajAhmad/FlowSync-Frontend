@@ -123,7 +123,7 @@ const DeleteAccountModal = ({ open, onClose }) => {
 
     return (
         <>
-            {role === 'Leader' && showCredentials && (
+            {role.includes('Leader') && showCredentials && (
                 <AdminCredentialsDialog
                     open={open}
                     onClose={onClose}

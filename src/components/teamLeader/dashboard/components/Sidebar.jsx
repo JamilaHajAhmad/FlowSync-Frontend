@@ -188,7 +188,7 @@ export default function Sidebar({ open }) {
                                     opacity: 0.8
                                 }}
                             >
-                                Team {userRole}
+                                Team {userRole.includes('Admin') ? 'Admin' : 'Leader'}
                             </Typography>
                         </Box>
                     )}

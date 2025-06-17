@@ -280,7 +280,7 @@ const EditProfile = () => {
 
         const role = decodeToken(localStorage.getItem('authToken')).role;
         // Check if user is leader and changing to leave status
-        if (role === 'Leader' && 
+        if (role.includes('Leader') && 
             (newStatus === 'Temporarily_Leave' || newStatus === 'Annually_Leave')) {
             setPendingStatus(newStatus);
             setShowAdminDialog(true);

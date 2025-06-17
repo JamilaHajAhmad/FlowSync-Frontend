@@ -45,9 +45,12 @@ export default function MiniDrawer() {
     const theme = React.useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
 
     const renderSidebar = () => {
-        if (userRole === 'Leader') { // Leader role
+            if (!userRole) return null; // انتظر حتى يتم تحديد الدور
+
+        console.log('Rendering sidebar for role:', userRole); // Debug log
+        if (userRole.includes('Leader')) { // Leader role
             return <Sidebar open={open} />;
-        } else if (userRole === 'Member') { // Member role
+        } else if (userRole.includes('Member')) { // Member role
             return <MSidebar open={open} />;
         }
         return null;

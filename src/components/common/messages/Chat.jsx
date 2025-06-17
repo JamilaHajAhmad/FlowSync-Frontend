@@ -88,7 +88,7 @@ const Chat = () => {
         try {
             // Decode the JWT token to get user role
             const role = decodeToken(token).role;
-            return role === 'Leader';
+            return role.includes('Leader') ? 'Leader' : role.includes('Member') ? 'Member' : false;
         } catch (error) {
             console.log('Error decoding token:', error);
             return false;
@@ -769,7 +769,7 @@ const Chat = () => {
                         <IconButton
                             onClick={() => {
                                 const role = decodeToken(tokenRef.current).role;
-                                if (role === 'Leader') {
+                                if (role.includes('Leader')) {
                                     window.location.href = '/leader-dashboard';
                                 }
                                 else {

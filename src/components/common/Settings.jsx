@@ -36,7 +36,7 @@ const Settings = () => {
         const token = localStorage.getItem('authToken');
         const decodedToken = decodeToken(token);
         const role = decodedToken.role;
-        if (role === 'Leader') {
+        if (role.includes('Leader')) {
             navigate('/leader-dashboard');
         } else {
             navigate('/member-dashboard');
