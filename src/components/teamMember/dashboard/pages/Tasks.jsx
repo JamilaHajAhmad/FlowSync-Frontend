@@ -1,4 +1,4 @@
-import { Box, Typography, Card, Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, CircularProgress } from "@mui/material";
+import { Box, Typography, Card, Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, CircularProgress, useTheme, useMediaQuery } from "@mui/material";
 import { CalendarToday, ErrorOutline, CheckCircleOutline, PauseCircleOutline } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import FreezeTaskForm from "../components/FreezeTaskForm";
@@ -346,11 +346,11 @@ const TaskCard = ({ task, isDragging }) => {
     <div ref={setNodeRef} style={style}>
       <Card
         sx={{
-          p: 2,
-          mb: 2,
+          p: { xs: 1, sm: 2 },
+          mb: { xs: 1, sm: 2 },
           position: 'relative',
           borderLeft: `4px solid ${getStatusColor(task.status).color}`,
-          '&:hover': { boxShadow: 3 }
+          '&:hover': { boxShadow: 3 },
         }}
       >
         <Box
@@ -430,12 +430,19 @@ const DroppableColumn = ({ status, children }) => {
       ref={setNodeRef}
       sx={{
         flex: 1,
-        minWidth: '280px',
+        minWidth: {
+          xs: '100%',
+          sm: '300px',
+          md: '320px'
+        },
         backgroundColor: '#f5f5f5',
         borderRadius: 2,
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
+        height: {
+          xs: 'auto',
+          sm: '100%'
+        },
         overflow: 'hidden',
         borderTop: `3px solid ${getStatusColor(status).color}`,
       }}
@@ -443,11 +450,11 @@ const DroppableColumn = ({ status, children }) => {
       <Typography
         variant="h6"
         sx={{
-          p: 2,
+          p: { xs: 1, sm: 1.5, md: 2 },
+          fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' },
           color: getStatusColor(status).color,
           textAlign: 'center',
           fontWeight: 600,
-          borderRadius: '4px',
           whiteSpace: 'nowrap',
         }}
       >
@@ -459,25 +466,21 @@ const DroppableColumn = ({ status, children }) => {
           flex: 1,
           overflowY: 'auto',
           overflowX: 'hidden',
-          px: 2,
-          pb: 2,
+          px: { xs: 1, sm: 1.5, md: 2 },
+          py: { xs: 1, sm: 1.5, md: 2 },
+          minHeight: { xs: '200px', sm: 'auto' }, // Minimum height on mobile
           '&::-webkit-scrollbar': {
-            width: '8px',
+            width: '6px',
+            height: '6px'
           },
           '&::-webkit-scrollbar-track': {
             backgroundColor: 'rgba(0,0,0,0.05)',
-            borderRadius: '4px',
           },
           '&::-webkit-scrollbar-thumb': {
             backgroundColor: 'rgba(0,0,0,0.15)',
             borderRadius: '4px',
             '&:hover': {
               backgroundColor: 'rgba(0,0,0,0.25)',
-            },
-          },
-          '@media (hover: none)': {
-            '&::-webkit-scrollbar': {
-              display: 'none',
             },
           },
         }}
@@ -489,6 +492,9 @@ const DroppableColumn = ({ status, children }) => {
 };
 
 const Tasks = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
   const [ tasksList, setTasksList ] = useState([]);
   const [ loading, setLoading ] = useState(true);
   const [ activeId, setActiveId ] = useState(null);
@@ -704,26 +710,35 @@ const Tasks = () => {
   const renderHelpLink = () => (
     <Box
       sx={{
-        position: 'absolute',
-        bottom: -230,
-        paddingBottom: 2,
-        left: '50%',
-        transform: 'translateX(-50%)',
+        position: 'fixed',
+        bottom: { xs: 16, sm: 24 },
+        left: '50%', // Center horizontally
+        transform: 'translateX(-50%)', // Center horizontally
+        zIndex: 1200,
         display: 'flex',
         alignItems: 'center',
         gap: 1,
         cursor: 'pointer',
         color: 'text.secondary',
+        bgcolor: 'background.paper',
+        p: { xs: 1, sm: 1.5 },
+        borderRadius: 2,
+        boxShadow: 3,
         '&:hover': {
           color: 'primary.main',
-          textDecoration: 'underline'
+          bgcolor: 'rgba(0,0,0,0.04)'
         }
       }}
       onClick={() => setHelpDialogOpen(true)}
     >
-      <HelpOutlineIcon fontSize="small" />
-      <Typography variant="body2">
-        If you got stuck, click here
+      <HelpOutlineIcon fontSize={isMobile ? "small" : "medium"} />
+      <Typography 
+        variant={isMobile ? "caption" : "body2"}
+        sx={{ 
+          display: { xs: 'block', sm: 'block' } // Show text on all screen sizes
+        }}
+      >
+        Need help?
       </Typography>
     </Box>
   );
@@ -738,14 +753,42 @@ const Tasks = () => {
       >
         <Box
           sx={{
-            height: 'calc(100vh - 32px)',
+            height: {
+              xs: 'auto',  // Scrollable height on mobile
+              sm: 'calc(100vh - 80px)' // Fixed height on larger screens
+            },
             display: 'flex',
-            gap: 2,
-            p: 2,
-            overflowX: 'hidden',
-            overflowY: 'hidden',
+            flexDirection: {
+              xs: 'column', // Stack columns on mobile
+              sm: 'row'     // Side by side on larger screens
+            },
+            gap: { xs: 2, sm: 2, md: 3 },
+            p: { xs: 1, sm: 2, md: 3 },
+            overflow: 'auto',
             width: '100%',
             boxSizing: 'border-box',
+            alignItems: {
+              xs: 'stretch', // Full width columns on mobile
+              sm: 'flex-start' // Natural width on larger screens
+            },
+            // Custom scrollbar styling
+            '&::-webkit-scrollbar': {
+              width: '8px',
+              height: '8px'
+            },
+            '&::-webkit-scrollbar-track': {
+              backgroundColor: 'rgba(0,0,0,0.05)',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: 'rgba(0,0,0,0.15)',
+              borderRadius: '4px',
+              '&:hover': {
+                backgroundColor: 'rgba(0,0,0,0.25)',
+              },
+            },
+            // Safari and Firefox scrollbar support
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'rgba(0,0,0,0.15) rgba(0,0,0,0.05)',
           }}
         >
           {statusColumns.map((status) => (
@@ -818,6 +861,7 @@ const Tasks = () => {
       <TaskHelpDialog 
         open={helpDialogOpen}
         onClose={() => setHelpDialogOpen(false)}
+        fullScreen={isMobile}
       />
     </>
   );
