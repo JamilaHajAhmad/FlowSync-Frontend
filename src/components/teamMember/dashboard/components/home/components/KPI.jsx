@@ -8,6 +8,14 @@ import CardContent from '@mui/material/CardContent';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   display: 'flex',
@@ -40,6 +48,7 @@ const KPI = () => {
   const [ kpiData, setKpiData ] = useState(0);
   const [ loading, setLoading ] = useState(true);
   const [ error, setError ] = useState(null);
+  const [ dialogOpen, setDialogOpen ] = useState(false);
 
   useEffect(() => {
     const fetchKPI = async () => {
@@ -57,9 +66,6 @@ const KPI = () => {
           }
         );
 
-        console.log('Raw KPI value:', response.data.kpi);
-
-        // Process the data once
         const processedData = {
           totalTasks: response.data.totalTasks || 0,
           completedTasks: response.data.completedTasks || 0,
@@ -69,10 +75,6 @@ const KPI = () => {
           kpi: response.data.kpi || 0
         };
 
-        // Log processed KPI value
-        console.log('Processed KPI value:', processedData.kpi);
-
-        // Calculate progress once
         const progress = processedData.totalTasks > 0
           ? (processedData.completedTasks / processedData.totalTasks)
           : 0;
@@ -84,7 +86,6 @@ const KPI = () => {
         setKpiData(finalData);
 
       } catch (err) {
-        console.error('Error fetching KPI:', err);
         setError(err.message || 'Failed to load KPI data');
       } finally {
         setLoading(false);
@@ -119,9 +120,16 @@ const KPI = () => {
   return (
     <StyledCard variant="outlined">
       <CardContent>
-        <Typography component="h2" variant="subtitle2" sx={{ mb: 2 }}>
-          KPI
-        </Typography>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+          <Typography component="h2" variant="subtitle2">
+            KPI
+          </Typography>
+          <Tooltip title="What is KPI?">
+            <IconButton size="small" onClick={() => setDialogOpen(true)}>
+              <HelpOutlineIcon color="primary" />
+            </IconButton>
+          </Tooltip>
+        </Stack>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <StyledGaugeChart
             id="gauge-chart"
@@ -175,6 +183,42 @@ const KPI = () => {
           </Box>
         </Stack>
       </CardContent>
+
+      {/* KPI Explanation Dialog */}
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          What is KPI?
+        </DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body1" gutterBottom>
+            <strong>KPI</strong> (Key Performance Indicator) is a measure of your task completion efficiency for the year.
+          </Typography>
+          <Typography variant="body2" gutterBottom>
+            <strong>How is it calculated?</strong>
+          </Typography>
+          <Box sx={{ bgcolor: '#F0FDF4', p: 2, borderRadius: 2, mb: 2 }}>
+            <Typography variant="body2" color="success.main">
+              <strong>KPI = (Completed Tasks ÷ Total Tasks) × 100</strong>
+            </Typography>
+          </Box>
+          <Typography variant="body2" gutterBottom>
+            For example, if you completed 80 out of 100 tasks, your KPI would be:
+          </Typography>
+          <Box sx={{ bgcolor: '#F3F4F6', p: 2, borderRadius: 2, mb: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              KPI = (80 ÷ 100) × 100 = <strong>80%</strong>
+            </Typography>
+          </Box>
+          <Typography variant="body2">
+            A higher KPI means you are completing more of your assigned tasks, reflecting better performance.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDialogOpen(false)} variant="contained" color="success">
+            Got it
+          </Button>
+        </DialogActions>
+      </Dialog>
     </StyledCard>
   );
 };
