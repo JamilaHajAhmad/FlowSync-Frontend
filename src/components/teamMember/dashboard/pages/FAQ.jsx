@@ -40,11 +40,11 @@ const FAQ = () => {
         },
         {
           question: "How do I update my profile?",
-          answer: "Go to 'Settings' from your dashboard, click on 'Profile', and update your information. Don't forget to save changes."
+          answer: "Go to 'Settings' from your dashboard, click on 'Profile Settings', and update your information. Don't forget to save changes."
         },
         {
           question: "How do I change my password?",
-          answer: "In the 'Settings' menu, go to 'Security', then click on 'Change Password'. Enter your current password and the new one."
+          answer: "In the 'Settings' menu, go to 'Profile Settings', then click on 'Change Password'. Enter your current password and the new one."
         }
       ]
     },
