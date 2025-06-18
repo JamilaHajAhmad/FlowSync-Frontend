@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '@mui/material/styles';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import Typography from '@mui/material/Typography';
+import {
+  Card, CardContent, Typography, Stack, Chip, IconButton,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button,
+  CircularProgress, Tooltip, Box, Divider, Grid
+} from '@mui/material';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import TaskIcon from '@mui/icons-material/Task';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { LineChart } from '@mui/x-charts/LineChart';
-import CircularProgress from '@mui/material/CircularProgress';
-import Stack from '@mui/material/Stack';
-import Chip from '@mui/material/Chip';
 import axios from 'axios';
 
 function AreaGradient({ color, id }) {
@@ -20,12 +22,46 @@ function AreaGradient({ color, id }) {
   );
 }
 
+// Add new InfoCard component
+const InfoCard = ({ icon, title, value, subtitle }) => (
+  <Box sx={{
+    p: 2,
+    bgcolor: 'background.paper',
+    borderRadius: 2,
+    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+    height: '100%',
+    transition: 'transform 0.2s',
+    '&:hover': {
+      transform: 'translateY(-2px)',
+      boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+    }
+  }}>
+    <Stack spacing={1}>
+      <Stack direction="row" spacing={1} alignItems="center">
+        {icon}
+        <Typography variant="body2" color="text.secondary">
+          {title}
+        </Typography>
+      </Stack>
+      <Typography variant="h4" component="div" sx={{ fontWeight: 'medium' }}>
+        {value}
+      </Typography>
+      {subtitle && (
+        <Typography variant="caption" color="text.secondary">
+          {subtitle}
+        </Typography>
+      )}
+    </Stack>
+  </Box>
+);
+
 export default function TasksChart() {
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [taskData, setTaskData] = useState(null);
   const [previousTaskCount, setPreviousTaskCount] = useState(null);
   const [trend, setTrend] = useState(0);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
     const fetchTasksByYear = async () => {
@@ -94,12 +130,138 @@ export default function TasksChart() {
     );
   }
 
+  // Add TaskDetailsDialog component
+  const TaskDetailsDialog = () => (
+    <Dialog
+      open={detailsOpen}
+      onClose={() => setDetailsOpen(false)}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        elevation: 0,
+        sx: {
+          borderRadius: 2,
+          maxWidth: 800
+        }
+      }}
+    >
+      <DialogTitle sx={{ 
+        pb: 1,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1
+      }}>
+        <TaskIcon color="primary" />
+        <Typography variant="h6">
+          Tasks Analysis {taskData?.year}
+        </Typography>
+      </DialogTitle>
+      
+      <DialogContent sx={{ pt: 2 }}>
+        <Box sx={{ p: 1 }}>
+          {/* Main Stats */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} md={6}>
+              <InfoCard
+                icon={<TaskIcon color="primary" />}
+                title="Total Tasks"
+                value={taskData?.taskCount || 0}
+                subtitle="Tasks assigned this year"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <InfoCard
+                icon={<CalendarMonthIcon color="success" />}
+                title="Monthly Average"
+                value={Math.round((taskData?.taskCount || 0) / 12)}
+                subtitle="Estimated tasks per month"
+              />
+            </Grid>
+          </Grid>
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* Detailed Analysis */}
+          <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+            Performance Insights
+          </Typography>
+          
+          <Box sx={{
+            bgcolor: 'background.default',
+            p: 2,
+            borderRadius: 2,
+            mb: 3
+          }}>
+            <Stack spacing={2}>
+              <Typography variant="body2" color="text.secondary">
+                • You have been assigned <strong>{taskData?.taskCount}</strong> tasks in {taskData?.year}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                • On average, you handle approximately <strong>{Math.round((taskData?.taskCount || 0) / 12)}</strong> tasks per month
+              </Typography>
+              {previousTaskCount !== null && (
+                <Typography variant="body2" color="text.secondary">
+                  • Task volume has {trend >= 0 ? 'increased' : 'decreased'} by <strong>{Math.abs(trend)}%</strong> compared to previous data
+                </Typography>
+              )}
+            </Stack>
+          </Box>
+
+          {/* Visualization */}
+          <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+            Visual Overview
+          </Typography>
+          <Box sx={{ height: 300, mb: 2 }}>
+            <LineChart
+              colors={[theme.palette.primary.main]}
+              xAxis={[{
+                scaleType: 'point',
+                data: [taskData?.year.toString()],
+                tickInterval: () => true,
+              }]}
+              series={[{
+                data: [taskData?.taskCount || 0],
+                area: true,
+                showMark: true,
+              }]}
+              margin={{ left: 50, right: 20, top: 20, bottom: 20 }}
+              grid={{ horizontal: true, vertical: true }}
+            />
+          </Box>
+        </Box>
+      </DialogContent>
+      
+      <DialogActions sx={{ p: 2 }}>
+        <Button 
+          onClick={() => setDetailsOpen(false)}
+          variant="outlined"
+          sx={{ borderRadius: 2 }}
+        >
+          Close
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
+  // Update the return statement to include the help icon and dialog
   return (
     <Card variant="outlined" sx={{ width: '100%' }}>
       <CardContent>
-        <Typography component="h2" variant="subtitle2" gutterBottom>
-          Tasks Overview {taskData?.year}
-        </Typography>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+          <Typography component="h2" variant="subtitle2">
+            Tasks Overview {taskData?.year}
+          </Typography>
+          <Tooltip title="View Detailed Analysis">
+            <IconButton 
+              size="small" 
+              onClick={() => setDetailsOpen(true)}
+              sx={{ color: theme.palette.text.secondary }}
+            >
+              <HelpOutlineIcon />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+        
         <Stack sx={{ justifyContent: 'space-between' }}>
           <Stack
             direction="row"
@@ -158,6 +320,7 @@ export default function TasksChart() {
         >
           <AreaGradient color={theme.palette.primary.light} id="tasks" />
         </LineChart>
+        <TaskDetailsDialog />
       </CardContent>
     </Card>
   );

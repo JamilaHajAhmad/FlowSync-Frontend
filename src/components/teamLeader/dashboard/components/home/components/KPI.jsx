@@ -7,6 +7,14 @@ import CardContent from '@mui/material/CardContent';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import CircularProgress from '@mui/material/CircularProgress';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import axios from 'axios';
 
 const colors = {
@@ -40,6 +48,7 @@ export default function KPI() {
   const [kpiData, setKpiData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchKPI = async () => {
@@ -56,12 +65,6 @@ export default function KPI() {
               }
             );
 
-            // Log raw KPI value from response
-            console.log('Raw KPI value:', response.data.kpi);
-                        console.log('Raw KPI value:', response.data);
-
-
-            // Process the data once
             const processedData = {
                 totalTasks: response.data.totalTasks || 0,
                 completedTasks: response.data.completedTasks || 0,
@@ -71,10 +74,6 @@ export default function KPI() {
                 kpi: response.data.kpi || 0
             };
 
-            // Log processed KPI value
-            console.log('Processed KPI value:', processedData.kpi);
-
-            // Calculate progress once
             const progress = processedData.totalTasks > 0 
                 ? (processedData.completedTasks / processedData.totalTasks)
                 : 0;
@@ -84,12 +83,9 @@ export default function KPI() {
                 progress: Math.min(progress, 1)
             };
 
-            // Log final KPI value being set to state
-            console.log('Final KPI value:', finalData.kpi);
             setKpiData(finalData);
 
         } catch (err) {
-            console.error('Error fetching KPI data:', err);
             setError(err.response?.data?.message || err.message || 'Failed to load KPI data');
         } finally {
             setLoading(false);
@@ -124,9 +120,16 @@ export default function KPI() {
   return (
     <StyledCard variant="outlined">
       <CardContent>
-        <Typography component="h2" variant="subtitle2" sx={{ mb: 2 }}>
-          KPI
-        </Typography>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+          <Typography component="h2" variant="subtitle2">
+            KPI
+          </Typography>
+          <Tooltip title="What is KPI?">
+            <IconButton size="small" onClick={() => setDialogOpen(true)}>
+              <HelpOutlineIcon color="primary" />
+            </IconButton>
+          </Tooltip>
+        </Stack>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <StyledGaugeChart
             id="gauge-chart"
@@ -180,6 +183,37 @@ export default function KPI() {
           </Box>
         </Stack>
       </CardContent>
+
+      {/* KPI Explanation Dialog */}
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          What is KPI?
+        </DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body1" gutterBottom>
+            <strong>KPI</strong> (Key Performance Indicator) is a measure of your team's task completion efficiency for the year.
+          </Typography>
+          <Typography variant="body2" gutterBottom>
+            <strong>How is it calculated?</strong>
+          </Typography>
+          <Box sx={{ bgcolor: '#F0FDF4', p: 2, borderRadius: 2, mb: 2 }}>
+            <Typography variant="body2">
+              The KPI is calculated based on the tasks completed divided by the total tasks assigned, reflecting the completion rate.
+            </Typography>
+          </Box>
+          <Typography variant="body2" gutterBottom>
+            <strong>Why is it important?</strong>
+          </Typography>
+          <Typography variant="body2">
+            KPI helps in assessing the efficiency and performance of the team in task completion, identifying areas of improvement.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDialogOpen(false)} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </StyledCard>
   );
 }
