@@ -14,32 +14,32 @@ import "react-toastify/dist/ReactToastify.css";
 import { getAllSignupRequests, approveSignupRequest, rejectSignupRequest } from "../../../../services/signupRequests";
 import { getAllFreezeRequests, approveFreezeRequest, rejectFreezeRequest } from "../../../../services/freezeRequests";
 import { getAllCompletionRequests, approveCompletionRequest } from "../../../../services/completionRequests";
-import { 
-    getAllDeleteAccountRequests, 
-    approveDeleteAccountRequest, 
-    rejectDeleteAccountRequest 
+import {
+    getAllDeleteAccountRequests,
+    approveDeleteAccountRequest,
+    rejectDeleteAccountRequest
 } from "../../../../services/deleteAccountRequests";
-import { 
-    getAllChangeStatusRequests, 
-    approveChangeStatusRequest, 
-    rejectChangeStatusRequest 
+import {
+    getAllChangeStatusRequests,
+    approveChangeStatusRequest,
+    rejectChangeStatusRequest
 } from "../../../../services/changeStatusRequests";
 import DeleteMemberDialog from '../components/DeleteMemberDialog';
 import { formatString } from "../../../../utils";
 
 const Requests = () => {
-    const [currentTab, setCurrentTab] = useState(0);
-    const [requests, setRequests] = useState({
+    const [ currentTab, setCurrentTab ] = useState(0);
+    const [ requests, setRequests ] = useState({
         signup: [],
         freeze: [],
         completion: [],
         deleteAccount: [],
         changeStatus: []
     });
-    const [isLoading, setIsLoading] = useState(true);
-    const [anchorEl, setAnchorEl] = React.useState(null);
+    const [ isLoading, setIsLoading ] = useState(true);
+    const [ anchorEl, setAnchorEl ] = React.useState(null);
     const open = Boolean(anchorEl);
-    const [confirmDialog, setConfirmDialog] = useState({
+    const [ confirmDialog, setConfirmDialog ] = useState({
         isOpen: false,
         title: '',
         message: '',
@@ -47,14 +47,14 @@ const Requests = () => {
         requestId: null,
         requestType: ''
     });
-    const [deleteMemberDialog, setDeleteMemberDialog] = useState({
+    const [ deleteMemberDialog, setDeleteMemberDialog ] = useState({
         open: false,
         memberId: null,
         memberName: '',
         requestId: null,
         type: null
     });
-    const [isConfirmLoading, setIsConfirmLoading] = useState(false);
+    const [ isConfirmLoading, setIsConfirmLoading ] = useState(false);
     const token = localStorage.getItem('authToken');
 
     const fetchRequests = async (type) => {
@@ -81,15 +81,19 @@ const Requests = () => {
                     return;
             }
             // Filter pending requests
-            const pendingRequests = response.data.filter(request => 
+            const pendingRequests = response.data.filter(request =>
                 request.requestStatus === 'Pending'
             );
             setRequests(prev => ({
                 ...prev,
-                [type]: pendingRequests
+                [ type ]: pendingRequests
             }));
         } catch (error) {
-            toast.error(`Failed to fetch ${type === 'deleteAccount' ? 'deactivateAccount ' : type} requests`);
+            const formattedType = type === 'deleteAccount' ? 'Deactivate Account' :
+                type === 'changeStatus' ? 'Change Status' :
+                    type.charAt(0).toUpperCase() + type.slice(1);
+
+            toast.error(`Failed to fetch ${formattedType} requests`);
             console.error(`Error fetching ${type} requests:`, error);
         } finally {
             setIsLoading(false);
@@ -99,7 +103,7 @@ const Requests = () => {
     const handleApprove = async (id, type) => {
         try {
             if (!token) throw new Error('No authentication token found');
-            const request = requests[type].find(req => req.requestId === id);
+            const request = requests[ type ].find(req => req.requestId === id);
             if (type === 'deleteAccount' || type === 'changeStatus') {
                 setDeleteMemberDialog({
                     open: true,
@@ -125,16 +129,26 @@ const Requests = () => {
             }
             setRequests(prev => ({
                 ...prev,
-                [type]: prev[type].filter(req => req.requestId !== id)
+                [ type ]: prev[ type ].filter(req => req.requestId !== id)
             }));
-            toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} request approved successfully!`);
+
+            // Update success message formatting
+            const formattedType = type === 'deleteAccount' ? 'Deactivate Account' :
+                type === 'changeStatus' ? 'Change Status' :
+                    type.charAt(0).toUpperCase() + type.slice(1);
+
+            toast.success(`${formattedType} request approved successfully!`);
             fetchRequests(type);
         } catch (error) {
-            toast.error(error?.response?.data?.message || 'Failed to approve request');
+            toast.error(`Failed to approve ${type === 'deleteAccount' ? 'Deactivate Account' : type} request`);
+            console.error(`Error approving ${type} request:`, error);
         }
     };
 
     const handleReject = async (id, type) => {
+        let formattedType = type === 'deleteAccount' ? 'Deactivate Account' :
+            type === 'changeStatus' ? 'Change Status' :
+                type.charAt(0).toUpperCase() + type.slice(1);
         try {
             if (!token) throw new Error('No authentication token found');
             switch (type) {
@@ -155,12 +169,14 @@ const Requests = () => {
             }
             setRequests(prev => ({
                 ...prev,
-                [type]: prev[type].filter(req => req.requestId !== id)
+                [ type ]: prev[ type ].filter(req => req.requestId !== id)
             }));
-            toast.success(`${type === 'deleteAccount' ? 'DeactivateAccount ' : type.charAt(0).toUpperCase() + type.slice(1)} request rejected successfully`);
+
+            toast.success(`${formattedType} request rejected successfully`);
             fetchRequests(type);
         } catch (error) {
-            toast.error(error.response?.data || 'Failed to reject request');
+            toast.error(`Failed to reject ${formattedType} request`);
+            console.error(`Error rejecting ${type} request:`, error);
         }
     };
 
@@ -173,7 +189,25 @@ const Requests = () => {
     };
 
     const handleDownload = (fileType) => {
-        const currentType = Object.keys(requests)[currentTab];
+        const currentType = Object.keys(requests)[ currentTab ];
+
+        // Format filename based on request type
+        const getFileName = (type) => {
+            return type === 'deleteAccount' ? 'deactivateAccount' : type;
+        };
+
+        // Add function to format request type for display
+        const formatRequestType = (type) => {
+            switch (type) {
+                case 'deleteAccount':
+                    return 'Deactivate Account';
+                case 'changeStatus':
+                    return 'Change Status';
+                default:
+                    return type.charAt(0).toUpperCase() + type.slice(1);
+            }
+        };
+
         const getExportColumns = (type) => {
             const baseColumns = {
                 'Name': row => row.memberName,
@@ -188,7 +222,7 @@ const Requests = () => {
                 'signup': {},
                 'freeze': { 'FRN': row => row.frnNumber, 'Reason': row => row.reason },
                 'completion': { 'FRN': row => row.frnNumber, 'Notes': row => row.notes },
-                'deactivateAccount': { 'Reason': row => row.reason },
+                'deleteAccount': { 'Reason': row => row.reason }, // Changed from 'deactivateAccount' to 'deleteAccount'
                 'changeStatus': {
                     'Current Status': row => formatString(row.previousStatus),
                     'Requested Status': row => formatString(row.newStatus),
@@ -199,52 +233,55 @@ const Requests = () => {
         };
 
         const columns = getExportColumns(currentType);
-        const exportData = requests[currentType].map(row => {
+        const exportData = requests[ currentType ].map(row => {
             const rowData = {};
-            Object.entries(columns).forEach(([header, getter]) => {
-                rowData[header] = getter(row);
+            Object.entries(columns).forEach(([ header, getter ]) => {
+                rowData[ header ] = getter(row);
             });
             return rowData;
         });
 
         switch (fileType) {
             case 'pdf':
-                { const doc = new jsPDF('landscape');
-                const tableColumn = Object.keys(columns);
-                const tableRows = exportData.map(item => Object.values(item));
-                doc.setFontSize(16);
-                doc.setTextColor(5, 150, 105);
-                doc.text(`${currentType.charAt(0).toUpperCase() + currentType.slice(1)} Requests`, 14, 15);
-                autoTable(doc, {
-                    head: [tableColumn],
-                    body: tableRows,
-                    startY: 25,
-                    theme: 'grid',
-                    styles: {
-                        fontSize: 8,
-                        cellPadding: 3,
-                        overflow: 'linebreak',
-                        halign: 'left'
-                    },
-                    headStyles: {
-                        fillColor: [5, 150, 105],
-                        textColor: 255,
-                        fontSize: 9,
-                        fontStyle: 'bold',
-                        halign: 'left'
-                    },
-                    columnStyles: {
-                        0: { cellWidth: 40 },
-                        1: { cellWidth: 60 },
-                        2: { cellWidth: 30 },
-                        3: { cellWidth: 30 },
-                        4: { cellWidth: 70 }
-                    },
-                    margin: { top: 25 }
-                });
-                doc.save(`${currentType}-requests.pdf`);
-                toast.success('PDF file exported successfully');
-                break; }
+                {
+                    const doc = new jsPDF('landscape');
+                    const tableColumn = Object.keys(columns);
+                    const tableRows = exportData.map(item => Object.values(item));
+                    doc.setFontSize(16);
+                    doc.setTextColor(5, 150, 105);
+                    // Update the title formatting
+                    doc.text(`${formatRequestType(currentType)} Requests`, 14, 15);
+                    autoTable(doc, {
+                        head: [ tableColumn ],
+                        body: tableRows,
+                        startY: 25,
+                        theme: 'grid',
+                        styles: {
+                            fontSize: 8,
+                            cellPadding: 3,
+                            overflow: 'linebreak',
+                            halign: 'left'
+                        },
+                        headStyles: {
+                            fillColor: [ 5, 150, 105 ],
+                            textColor: 255,
+                            fontSize: 9,
+                            fontStyle: 'bold',
+                            halign: 'left'
+                        },
+                        columnStyles: {
+                            0: { cellWidth: 40 },
+                            1: { cellWidth: 60 },
+                            2: { cellWidth: 30 },
+                            3: { cellWidth: 30 },
+                            4: { cellWidth: 70 }
+                        },
+                        margin: { top: 25 }
+                    });
+                    doc.save(`${getFileName(currentType)}-requests.pdf`);
+                    toast.success(`${formatRequestType(currentType)} requests exported to PDF successfully`);
+                    break;
+                }
             case 'excel':
                 try {
                     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -252,21 +289,21 @@ const Requests = () => {
                     const colWidths = [
                         { wch: 20 }, { wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 40 }
                     ];
-                    ws['!cols'] = colWidths;
+                    ws[ '!cols' ] = colWidths;
                     XLSX.utils.book_append_sheet(wb, ws, "Requests");
-                    XLSX.writeFile(wb, `${currentType}-requests.xlsx`);
-                    toast.success('Excel file exported successfully');
+                    XLSX.writeFile(wb, `${getFileName(currentType)}-requests.xlsx`);
+                    toast.success(`${formatRequestType(currentType)} requests exported to Excel successfully`);
                 } catch (error) {
-                    toast.error("Failed to create Excel file");
+                    toast.error(`Failed to export ${formatRequestType(currentType)} requests to Excel`);
                     console.error("Error exporting to Excel:", error);
                 }
                 break;
             case 'csv':
                 try {
-                    exportToCSV(exportData, `${currentType}-requests.csv`);
-                    toast.success('CSV file exported successfully');
+                    exportToCSV(exportData, `${getFileName(currentType)}-requests.csv`);
+                    toast.success(`${formatRequestType(currentType)} requests exported to CSV successfully`);
                 } catch (error) {
-                    toast.error("Failed to create CSV file");
+                    toast.error(`Failed to export ${formatRequestType(currentType)} requests to CSV`);
                     console.error("Error exporting to CSV:", error);
                 }
                 break;
@@ -277,19 +314,20 @@ const Requests = () => {
     };
 
     const exportToCSV = (data, filename) => {
+        if (!data.length) return;
         const csvRows = [];
-        const headers = Object.keys(data[0]);
+        const headers = Object.keys(data[ 0 ]);
         csvRows.push(headers.join(','));
         for (const row of data) {
             const values = headers.map(header => {
-                const value = row[header];
+                const value = row[ header ];
                 const escaped = String(value).replace(/"/g, '""');
                 return `"${escaped}"`;
             });
             csvRows.push(values.join(','));
         }
         const csvString = csvRows.join('\n');
-        const blob = new Blob([csvString], { type: 'text/csv' });
+        const blob = new Blob([ csvString ], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -301,12 +339,45 @@ const Requests = () => {
     };
 
     useEffect(() => {
-        fetchRequests(Object.keys(requests)[currentTab]);
+        fetchRequests(Object.keys(requests)[ currentTab ]);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentTab]);
+    }, [ currentTab ]);
 
     const getColumns = (type) => {
-        const baseColumns = [
+        // Move the actions column definition here
+        const actionsColumn = {
+            accessorKey: "actions",
+            header: "Actions",
+            size: 250,
+            enableColumnFilter: false,
+            Cell: ({ row }) => (
+                <Stack direction="row" spacing={1}>
+                    <Button
+                        variant="contained"
+                        color="success"
+                        size="small"
+                        startIcon={<CheckCircleIcon />}
+                        onClick={() => handleConfirmAction(row.original.requestId, type, 'approve', 'Are you sure you want to approve this request?')}
+                    >
+                        Approve
+                    </Button>
+                    {type !== 'completion' && (
+                        <Button
+                            variant="contained"
+                            color="error"
+                            size="small"
+                            startIcon={<CancelIcon />}
+                            onClick={() => handleConfirmAction(row.original.requestId, type, 'reject', 'Are you sure you want to reject this request?')}
+                        >
+                            Reject
+                        </Button>
+                    )}
+                </Stack>
+            ),
+        };
+
+        // Base columns array
+        let columns = [
             {
                 accessorKey: "memberName",
                 header: "Name",
@@ -331,79 +402,70 @@ const Requests = () => {
                 }
             },
         ];
-        const typeSpecificColumns = {
-            signup: [],
-            freeze: [
-                { accessorKey: "frnNumber", header: "FRN", size: 120 },
-                { accessorKey: "reason", header: "Reason", size: 150 }
-            ],
-            completion: [
-                { accessorKey: "frnNumber", header: "FRN", size: 120 },
-                { accessorKey: "notes", header: "Notes", size: 150 }
-            ],
-            deleteAccount: [
-                { accessorKey: "reason", header: "Reason", size: 200 }
-            ],
-            changeStatus: [
-                {
-                    accessorKey: "previousStatus",
-                    header: "Current Status",
-                    size: 120,
-                    Cell: ({ cell }) => formatString(cell.getValue())
-                },
-                {
-                    accessorKey: "newStatus",
-                    header: "Requested Status",
-                    size: 120,
-                    Cell: ({ cell }) => formatString(cell.getValue())
-                }
-            ]
-        };
-        return [
-            ...baseColumns,
-            ...typeSpecificColumns[type],
-            {
-                accessorKey: "actions",
-                header: "Actions",
-                size: 250,
-                enableColumnFilter: false,
-                Cell: ({ row }) => (
-                    <Stack direction="row" spacing={1}>
-                        <Button
-                            variant="contained"
-                            color="success"
-                            size="small"
-                            startIcon={<CheckCircleIcon />}
-                            onClick={() => handleConfirmAction(row.original.requestId, type, 'approve', 'Are you sure you want to approve this request?')}
-                        >
-                            Approve
-                        </Button>
-                        {type !== 'completion' && (
-                            <Button
-                                variant="contained"
-                                color="error"
-                                size="small"
-                                startIcon={<CancelIcon />}
-                                onClick={() => handleConfirmAction(row.original.requestId, type, 'reject', 'Are you sure you want to reject this request?')}
-                            >
-                                Reject
-                            </Button>
-                        )}
-                    </Stack>
-                ),
-            }
-        ];
+
+        // Add type-specific columns
+        switch (type) {
+            case 'freeze':
+                columns = [
+                    ...columns,
+                    { accessorKey: "frnNumber", header: "FRN", size: 120 },
+                    { accessorKey: "reason", header: "Reason", size: 150 }
+                ];
+                break;
+            case 'completion':
+                columns = [
+                    ...columns,
+                    { accessorKey: "frnNumber", header: "FRN", size: 120 },
+                    { accessorKey: "notes", header: "Notes", size: 150 }
+                ];
+                break;
+            case 'deleteAccount':
+                columns = [
+                    ...columns,
+                    { accessorKey: "reason", header: "Reason", size: 200 }
+                ];
+                break;
+            case 'changeStatus':
+                columns = [
+                    ...columns,
+                    {
+                        accessorKey: "previousStatus",
+                        header: "Current Status",
+                        size: 120,
+                        Cell: ({ cell }) => formatString(cell.getValue())
+                    },
+                    {
+                        accessorKey: "newStatus",
+                        header: "Requested Status",
+                        size: 120,
+                        Cell: ({ cell }) => formatString(cell.getValue())
+                    },
+                    { accessorKey: "reason", header: "Reason", size: 200 }
+                ];
+                break;
+            default:
+                break;
+        }
+
+        // Always add actions column at the end
+        columns.push(actionsColumn);
+        console.log("Columns for type", type, ":", columns);
+
+        return columns;
     };
 
     const table = useMaterialReactTable({
-        columns: getColumns(Object.keys(requests)[currentTab]),
-        data: requests[Object.keys(requests)[currentTab]],
+        columns: getColumns(Object.keys(requests)[ currentTab ]),
+        data: requests[ Object.keys(requests)[ currentTab ] ],
         enableTopToolbar: true,
         enableBottomToolbar: true,
         enablePagination: true,
         enableColumnFilters: true,
         initialState: {
             pagination: { pageSize: 5, pageIndex: 0 },
+            columnOrder: [ 'Name', 'Email', 'Requested At', 'Actions' ]
+
+
         },
         muiTableHeadCellProps: {
             sx: {
@@ -432,7 +494,6 @@ const Requests = () => {
                 borderRadius: 2,
                 backgroundColor: '#fff',
                 overflowX: { xs: 'auto', sm: 'auto', md: 'unset' }, // Responsive horizontal scroll
-                // No fixed height here so only one scroll (horizontal if needed)
             },
         },
         renderTopToolbarCustomActions: () => (
@@ -463,6 +524,8 @@ const Requests = () => {
         ),
         state: {
             isLoading: isLoading,
+            columnOrder: [ 'Name', 'Email', 'Requested At', 'Actions' ]
+
         },
     });
 
@@ -511,7 +574,7 @@ const Requests = () => {
             await approveDeleteAccountRequest(deleteMemberDialog.requestId, token);
             setRequests(prev => ({
                 ...prev,
-                deleteAccount: prev.deleteAccount.filter(req => 
+                deleteAccount: prev.deleteAccount.filter(req =>
                     req.requestId !== deleteMemberDialog.requestId
                 )
             }));
@@ -528,7 +591,7 @@ const Requests = () => {
             await approveChangeStatusRequest(deleteMemberDialog.requestId, token);
             setRequests(prev => ({
                 ...prev,
-                changeStatus: prev.changeStatus.filter(req => 
+                changeStatus: prev.changeStatus.filter(req =>
                     req.requestId !== deleteMemberDialog.requestId
                 )
             }));
@@ -563,8 +626,8 @@ const Requests = () => {
                 }}
             >
                 <Tab label="Sign Up" />
-                <Tab label="Freeze" />
-                <Tab label="Completion" />
+                <Tab label="Freeze Task" />
+                <Tab label="Complete Task" />
                 <Tab label="Deactivate Account" />
                 <Tab label="Change Status" />
             </Tabs>
