@@ -131,7 +131,7 @@ const ChangePW = () => {
                 }
 
                 const response = await axios.post(
-                    'https://localhost:55914/change-password',
+                    'https://localhost:49798/change-password',
                     {
                         currentPassword: values.currentPassword,
                         newPassword: values.newPassword,
