@@ -432,8 +432,13 @@ const DroppableColumn = ({ status, children }) => {
         flex: 1,
         minWidth: {
           xs: '100%',
-          sm: '300px',
-          md: '320px'
+          sm: '280px',
+          md: '300px'    // Take full width of parent on medium and up
+        },
+        maxWidth: {
+          xs: '100%',
+          sm: '45%',
+          md: '100%'    // Take full width of parent on medium and up
         },
         backgroundColor: '#f5f5f5',
         borderRadius: 2,
@@ -441,7 +446,8 @@ const DroppableColumn = ({ status, children }) => {
         flexDirection: 'column',
         height: {
           xs: 'auto',
-          sm: '100%'
+          sm: '75vh',
+          md: 'calc(100vh - 120px)' // Adjusted height for larger screens
         },
         overflow: 'hidden',
         borderTop: `3px solid ${getStatusColor(status).color}`,
@@ -754,41 +760,60 @@ const Tasks = () => {
         <Box
           sx={{
             height: {
-              xs: 'auto',  // Scrollable height on mobile
-              sm: 'calc(100vh - 80px)' // Fixed height on larger screens
+              xs: 'auto',
+              sm: 'calc(100vh - 80px)',
+              md: 'calc(100vh - 90px)',
+              lg: 'calc(100vh - 100px)'
             },
             display: 'flex',
             flexDirection: {
-              xs: 'column', // Stack columns on mobile
-              sm: 'row'     // Side by side on larger screens
+              xs: 'column',
+              sm: 'row'
             },
-            gap: { xs: 2, sm: 2, md: 3 },
-            p: { xs: 1, sm: 2, md: 3 },
-            overflow: 'auto',
+            flexWrap: {
+              xs: 'nowrap',
+              sm: 'wrap',
+              md: 'nowrap',    // Changed to nowrap for medium and up
+              lg: 'nowrap'
+            },
+            gap: { 
+              xs: 2, 
+              sm: 2, 
+              md: 2.5, 
+              lg: 3 
+            },
+            p: { 
+              xs: 1, 
+              sm: 2, 
+              md: 2.5, 
+              lg: 3 
+            },
+            overflow: {
+              xs: 'auto',
+              md: 'hidden'    // Hide overflow on medium and larger screens
+            },
             width: '100%',
             boxSizing: 'border-box',
-            alignItems: {
-              xs: 'stretch', // Full width columns on mobile
-              sm: 'flex-start' // Natural width on larger screens
+            alignItems: 'flex-start',
+            justifyContent: {
+              xs: 'flex-start',
+              sm: 'center',
+              md: 'space-between' // Distribute columns evenly on larger screens
             },
-            // Custom scrollbar styling
-            '&::-webkit-scrollbar': {
-              width: '8px',
-              height: '8px'
-            },
-            '&::-webkit-scrollbar-track': {
-              backgroundColor: 'rgba(0,0,0,0.05)',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              backgroundColor: 'rgba(0,0,0,0.15)',
-              borderRadius: '4px',
-              '&:hover': {
-                backgroundColor: 'rgba(0,0,0,0.25)',
+            '& > *': {
+              marginBottom: {
+                xs: 2,
+                sm: 2,
+                md: 0        // Remove bottom margin on medium and up
               },
-            },
-            // Safari and Firefox scrollbar support
-            scrollbarWidth: 'thin',
-            scrollbarColor: 'rgba(0,0,0,0.15) rgba(0,0,0,0.05)',
+              width: {
+                xs: '100%',
+                sm: '45%',
+                md: 'calc(25% - 24px)', // Equal width columns with gap consideration
+                lg: 'calc(25% - 32px)'
+              },
+              flexShrink: 0  // Prevent columns from shrinking
+            }
           }}
         >
           {statusColumns.map((status) => (
