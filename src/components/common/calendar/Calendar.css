@@ -7,7 +7,7 @@
 .calendar-page {
     display: flex;
     flex-direction: row;
-    height: calc(100vh - 64px); /* Adjust based on your header height */
+    height: calc(100vh + 44px); /* Adjust based on your header height */
     gap: 20px;
     padding: 20px;
     width: 100%;
@@ -28,7 +28,7 @@
 @media (max-width: 850px) {
     .calendar-page {
         flex-direction: column;
-        height: calc(100vh - 64px);
+        height: calc(100vh + 70px);
         overflow: hidden; /* Keep overflow hidden */
         padding: 10px;
         gap: 10px;
