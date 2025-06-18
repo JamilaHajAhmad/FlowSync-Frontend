@@ -28,7 +28,11 @@ const StyledTextField = styled(TextField)(() => ({
         '&.Mui-focused fieldset': {
             borderColor: '#059669',
         }
-    }
+    },
+    // Add these styles to change the label and input text color when focused
+    '& label.Mui-focused': {
+        color: '#059669',
+    },
 }));
 
 const CredentialsBox = styled(Paper)(({ theme }) => ({
@@ -178,7 +182,7 @@ const AdminCredentialsDialog = ({
                                 }))}
                             />
                             <StyledTextField
-                                fullWidth
+                                fullWidthDialogContent
                                 label="Last Name"
                                 value={nameVerification.lastName}
                                 onChange={(e) => setNameVerification(prev => ({
@@ -234,7 +238,6 @@ const AdminCredentialsDialog = ({
                                 >
                                     <IconButton
                                         onClick={handleCopyCredentials}
-                                        color="primary"
                                         sx={{
                                             bgcolor: copied ? '#059669' : 'transparent',
                                             color: copied ? 'white' : '#059669',
@@ -260,6 +263,14 @@ const AdminCredentialsDialog = ({
                     onClick={onClose}
                     variant="outlined"
                     disabled={loading}
+                    sx={{
+                        borderColor: '#10B981',
+                        color: '#059669',
+                        '&:hover': {
+                            borderColor: '#059669',
+                            bgcolor: 'rgba(5, 150, 105, 0.04)'
+                        }
+                    }}
                 >
                     Cancel
                 </Button>
@@ -271,11 +282,23 @@ const AdminCredentialsDialog = ({
                         sx={{
                             bgcolor: '#059669',
                             '&:hover': { bgcolor: '#047857' },
-                            minWidth: 120
+                            minWidth: 120,
+                            '&.Mui-disabled': {
+                                bgcolor: 'rgba(5, 150, 105, 0.12)',
+                                color: 'rgba(5, 150, 105, 0.26)'
+                            }
                         }}
                     >
                         {loading ? (
-                            <CircularProgress size={24} color="inherit" />
+                            <CircularProgress 
+                                size={24} 
+                                sx={{ 
+                                    color: 'inherit',
+                                    '& .MuiCircularProgress-circle': {
+                                        color: loading ? 'rgba(255, 255, 255, 0.7)' : '#fff'
+                                    }
+                                }} 
+                            />
                         ) : (
                             'Verify & Continue'
                         )}
