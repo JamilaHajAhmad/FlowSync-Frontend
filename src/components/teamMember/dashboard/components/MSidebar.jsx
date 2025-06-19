@@ -18,7 +18,8 @@ import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 import { handleLogout } from '../../../../utils';
 import { decodeToken } from '../../../../utils';
-import { getProfilePicture } from '../../../../services/profileService'; // Adjust the import based on your project structure
+import { getProfilePicture } from '../../../../services/profileService';
+import BadgeIcon from '@mui/icons-material/Badge';
 
 const drawerWidth = 260;
 
@@ -92,6 +93,7 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 const links = [
     { "text": "Dashboard", "icon": <HomeOutlinedIcon />, "path": "/member-dashboard" },
     { "text": "Tasks", "icon": <AssignmentOutlinedIcon />, "path": "/member-tasks" },
+    { "text": "Badges", "icon": <BadgeIcon />, "path": "/badges" },
     { "text": "Calendar", "icon": <CalendarMonthOutlinedIcon />, "path": "/calendar" },
     { "text": "Profile", "icon": <AccountCircleOutlinedIcon />, "path": "/profile" },
     { "text": "FAQs", "icon": <QuestionMarkIcon />, "path": "/faq" },
