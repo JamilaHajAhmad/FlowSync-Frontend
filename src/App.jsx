@@ -13,10 +13,12 @@ import ForgetPassword from './components/auth/ForgetPassword/ForgetPassword';
 import Home from './components/teamLeader/dashboard/components/Home';
 import Tasks from './components/teamLeader/dashboard/components/Tasks';
 import Members from './components/teamLeader/dashboard/components/Members';
+import LeaderBoard from './components/teamLeader/dashboard/components/LeaderBoard';
 import CalendarPage from './components/common/calendar/CalendarPage';
 import ProfilePage from './components/common/profile/ProfilePage';
 import MHome from './components/teamMember/dashboard/components/MHome';
 import MTasks from './components/teamMember/dashboard/components/MTasks';
+import Badges from './components/teamMember/dashboard/components/Badges';
 import Settings from './components/common/Settings';
 import Requests from './components/teamLeader/dashboard/components/Requests';
 import EditProfile from './components/common/EditProfile';
@@ -66,10 +68,12 @@ const App = () => {
                     <Route path="/leader-dashboard" element={<ProtectedRouter><Home /></ProtectedRouter>} />
                     <Route path="/team-tasks" element={<ProtectedRouter><Tasks /></ProtectedRouter>} />
                     <Route path="/team" element={<ProtectedRouter><Members /></ProtectedRouter>} />
+                    <Route path="/leader-board" element={<ProtectedRouter><LeaderBoard /></ProtectedRouter>} />
                     <Route path="/calendar" element={<ProtectedRouter><CalendarPage /></ProtectedRouter>} />
                     <Route path="/profile" element={<ProtectedRouter><ProfilePage /></ProtectedRouter>} />
                     <Route path="/member-dashboard" element={<ProtectedRouter><MHome /></ProtectedRouter>} />
                     <Route path="/member-tasks" element={<ProtectedRouter><MTasks /></ProtectedRouter>} />
+                    <Route path="/badges" element={<ProtectedRouter><Badges /></ProtectedRouter>} />
                     <Route path="/settings" element={<ProtectedRouter><Settings /></ProtectedRouter>} />
                     <Route path="/requests" element={<ProtectedRouter><Requests /></ProtectedRouter>} />
                     <Route path="/settings/edit-profile" element={<ProtectedRouter><EditProfile /></ProtectedRouter>} />
