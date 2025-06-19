@@ -25,6 +25,7 @@
     "@fullcalendar/timegrid": "^6.1.15",
     "@microsoft/signalr": "^8.0.7",
     "@mui/icons-material": "^6.4.7",
+    "@mui/joy": "^5.0.0-beta.52",
     "@mui/material": "^6.4.7",
     "@mui/x-charts": "^7.28.0",
     "@mui/x-data-grid": "^7.27.3",
