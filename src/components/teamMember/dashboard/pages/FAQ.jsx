@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Container,
@@ -36,15 +36,18 @@ const FAQ = () => {
       items: [
         {
           question: "How do I reset my password?",
-          answer: "Click on 'Forgot Password?' on the login page, enter your email, and follow the instructions sent to your inbox."
+          answer: "Click on 'Forgot Password?' on the login page, enter your email, and follow the instructions sent to your inbox.",
+          video: "/videos/ResetPassword.mp4"
         },
         {
           question: "How do I update my profile?",
-          answer: "Go to 'Settings' from your dashboard, click on 'Profile Settings', and update your information. Don't forget to save changes."
+          answer: "Go to 'Settings' from your dashboard, click on 'Profile Settings', and update your information. Don't forget to save changes.",
+          video: "/videos/UpdateProfile.mp4"
         },
         {
           question: "How do I change my password?",
-          answer: "In the 'Settings' menu, go to 'Profile Settings', then click on 'Change Password'. Enter your current password and the new one."
+          answer: "In the 'Settings' menu, go to 'Profile Settings', then click on 'Change Password'. Enter your current password and the new one.",
+          video: "/videos/ChangePassword.mp4"
         }
       ]
     },
@@ -94,20 +97,23 @@ const FAQ = () => {
       items: [
         {
           question: "How do I find the connected devices?",
-          answer: "In the 'Security' section of your settings, click on 'Connected Devices' to view and manage all devices linked to your account."
+          answer: "In the 'Security' section of your settings, click on 'Connected Devices' to view and manage all devices linked to your account.",
+          video: "/videos/ConnectedDevices.mp4"
+        },
+        {
+          question: "How do I enable two-factor authentication?",
+          answer: "In the 'Security' section of your settings, toggle on 'Two-Factor Authentication' and follow the setup instructions.",
+          video: "/videos/TwoFactor.mp4"
+        },
+        {
+          question: "How do I get the login notifications?",
+          answer: "In the 'Security' section of your settings, toggle on 'Login Notifications' to receive alerts for new logins from unrecognized devices.",
+          video: "/videos/Login.mp4"
         },
         {
           question: "What are the password requirements?",
           answer: "Passwords must be at least 8 characters long, including uppercase and lowercase letters, numbers, and special characters."
         },
-        {
-          question: "How do I enable two-factor authentication?",
-          answer: "In the 'Security' section of your settings, toggle on 'Two-Factor Authentication' and follow the setup instructions."
-        },
-        {
-          question: "How do I get the login notifications?",
-          answer: "In the 'Security' section of your settings, toggle on 'Login Notifications' to receive alerts for new logins from unrecognized devices."
-        }
       ]
     }
   ];
@@ -319,6 +325,52 @@ const FAQ = () => {
                   >
                     {highlightText(item.answer, searchQuery)}
                   </Typography>
+                  {item.video && (
+                    <Box
+                      sx={{
+                        mt: 2,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        bgcolor: '#f5f5f5',
+                        borderRadius: 2,
+                        p: 2,
+                        boxShadow: 1,
+                      }}
+                    >
+                      <Typography
+                        variant="subtitle2"
+                        sx={{
+                          mb: 1,
+                          color: 'primary.main',
+                          fontWeight: 600,
+                          letterSpacing: 1,
+                        }}
+                      >
+                        Watch Tutorial
+                      </Typography>
+                      <Box
+                        sx={{
+                          width: '100%',
+                          maxWidth: 400,
+                          borderRadius: 2,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <video
+                          src={item.video}
+                          controls
+                          style={{
+                            width: '100%',
+                            height: '220px',
+                            background: '#000',
+                            borderRadius: '8px',
+                          }}
+                          poster="/favicon.ico"
+                        />
+                      </Box>
+                    </Box>
+                  )}
                 </AccordionDetails>
               </Accordion>
             ))}
