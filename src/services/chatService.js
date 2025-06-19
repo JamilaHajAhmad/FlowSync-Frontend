@@ -45,3 +45,19 @@ export const sendMessageToTeam = async (message, token) => {
         }
     );
 };
+
+export const editMessage = async (messageId, newContent, token) => {
+    return await api.put(
+        `/chat/edit/${messageId}`,
+        { message: newContent },
+        {
+            headers: { Authorization: `Bearer ${token}` }
+        }
+    );
+};
+
+export const deleteMessage = async (messageId, token) => {
+    return await api.delete(`/chat/delete/${messageId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+};

@@ -19,7 +19,14 @@ import {
     createTheme,
     Tooltip,
     Popper,
-    ClickAwayListener
+    ClickAwayListener,
+    Menu,
+    MenuItem,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button
 } from '@mui/material';
 import {
     Send as SendIcon,
@@ -29,9 +36,13 @@ import {
     Check as CheckIcon,
     People as TeamIcon,
     ArrowBack,
-    InsertEmoticon as EmojiIcon
+    InsertEmoticon as EmojiIcon,
+    ContentCopy as ContentCopyIcon,
+    Edit as EditIcon,
+    Delete as DeleteIcon,
+    ForwardToInbox as ForwardToInboxIcon
 } from '@mui/icons-material';
-import { sendMessage, getConversation, getUnreadMessages, markMessagesAsRead, getChatUsers, sendMessageToTeam } from '../../../services/chatService';
+import { sendMessage, getConversation, getUnreadMessages, markMessagesAsRead, getChatUsers, sendMessageToTeam, editMessage, deleteMessage } from '../../../services/chatService';
 import * as signalR from '@microsoft/signalr';
 import './Chat.css';
 import Logo from '../../../assets/images/logo.png';
@@ -47,6 +58,8 @@ const MESSAGE_STATUS = {
     DELIVERED: 'delivered',
     FAILED: 'failed'
 };
+
+const LOCAL_META_KEY = 'chatMessageMeta';
 
 // Create a custom theme with green palette
 const theme = createTheme({
@@ -69,6 +82,33 @@ const theme = createTheme({
     }
 });
 
+// --- localStorage meta helpers ---
+function getMetaMap() {
+    try {
+        return JSON.parse(localStorage.getItem(LOCAL_META_KEY) || '{}');
+    } catch {
+        return {};
+    }
+}
+function saveMetaToLocalStorage(messageId, meta) {
+    const metaMap = getMetaMap();
+    metaMap[ messageId ] = { ...metaMap[ messageId ], ...meta };
+    localStorage.setItem(LOCAL_META_KEY, JSON.stringify(metaMap));
+}
+function removeMetaFromLocalStorage(messageId) {
+    const metaMap = getMetaMap();
+    delete metaMap[ messageId ];
+    localStorage.setItem(LOCAL_META_KEY, JSON.stringify(metaMap));
+}
+function mergeMetaFromLocalStorage(messages) {
+    const metaMap = getMetaMap();
+    return messages.map(msg => ({
+        ...msg,
+        ...metaMap[ msg.id ]
+    }));
+}
+// --- end localStorage meta helpers ---
+
 const Chat = () => {
     // State management
     const [ conversations, setConversations ] = useState([]);
@@ -86,18 +126,23 @@ const Chat = () => {
     const [ isTeamMessageEnabled ] = useState(() => {
         const token = localStorage.getItem('authToken');
         try {
-            // Decode the JWT token to get user role
             const role = decodeToken(token).role;
-            return role.includes('Leader') ? 'Leader' : role.includes('Member') ? 'Member' : false;
+            return role.includes('Leader');
         } catch (error) {
-            console.log('Error decoding token:', error);
+            console.error('Error decoding token:', error);
             return false;
         }
     });
-    // Add new state for team message dialog
     const [ teamMessageDialog, setTeamMessageDialog ] = useState(false);
     const [ showEmojiPicker, setShowEmojiPicker ] = useState(false);
     const [ emojiAnchorEl, setEmojiAnchorEl ] = useState(null);
+    const [ menuAnchorEl, setMenuAnchorEl ] = useState(null);
+    const [ selectedMsg, setSelectedMsg ] = useState(null);
+    const [ editMode, setEditMode ] = useState(false);
+    const [ editText, setEditText ] = useState('');
+    const [ copyTooltip, setCopyTooltip ] = useState(false);
+    const [ tooltipAnchor, setTooltipAnchor ] = useState(null);
+    const [ forwardDialog, setForwardDialog ] = useState(false);
 
     // Refs
     const messageEndRef = useRef(null);
@@ -131,21 +176,18 @@ const Chat = () => {
     // Memoized values
     const sortedUsers = useMemo(() => {
         return users.sort((a, b) => {
-            // Sort by unread messages first, then by last message time
             const aHasUnread = conversations.some(conv => conv.userId === a.id && conv.unreadCount > 0);
             const bHasUnread = conversations.some(conv => conv.userId === b.id && conv.unreadCount > 0);
 
             if (aHasUnread && !bHasUnread) return -1;
             if (!aHasUnread && bHasUnread) return 1;
 
-            // Sort by last message time (newest first)
             const aLastMessage = conversations.find(conv => conv.userId === a.id)?.lastMessageTime || 0;
             const bLastMessage = conversations.find(conv => conv.userId === b.id)?.lastMessageTime || 0;
             return new Date(bLastMessage) - new Date(aLastMessage);
         });
     }, [ users, conversations ]);
 
-    // Stable callback functions using useCallback with proper dependencies
     const showError = useCallback((message) => {
         setError(message);
         setTimeout(() => setError(null), 5000);
@@ -157,7 +199,6 @@ const Chat = () => {
         }, 100);
     }, []);
 
-    // Format functions - stable callbacks
     const formatLastMessageTime = useCallback((timestamp) => {
         if (!timestamp) return '';
 
@@ -201,13 +242,11 @@ const Chat = () => {
         }
     }, []);
 
-    // Stable fetch functions
     const fetchUnreadMessages = useCallback(async () => {
         try {
             const response = await getUnreadMessages(tokenRef.current);
             setUnreadCount(response.data.length);
         } catch (error) {
-            console.error('Error fetching unread messages:', error);
             if (error.response?.status === 401) {
                 showError('Session expired. Please log in again.');
             }
@@ -227,7 +266,6 @@ const Chat = () => {
                     };
                 }
                 acc[ msg.senderId ].unreadCount++;
-                // Keep the latest message
                 if (!acc[ msg.senderId ].lastMessageTime ||
                     new Date(msg.timestamp) > new Date(acc[ msg.senderId ].lastMessageTime)) {
                     acc[ msg.senderId ].lastMessage = msg.content;
@@ -236,37 +274,49 @@ const Chat = () => {
                 return acc;
             }, {});
             setConversations(Object.values(conversationsMap));
-        } catch (error) {
-            console.error('Error fetching conversations:', error);
-        }
+        } catch (error) { }
     }, []);
 
     const fetchUsers = useCallback(async () => {
         try {
             const response = await getChatUsers(tokenRef.current);
-            console.log('Fetched users:', response.data);
             setUsers(response.data);
         } catch (error) {
-            console.error('Error fetching users:', error);
             showError('Failed to load users');
         } finally {
             setLoading(false);
         }
     }, [ showError ]);
 
+    function getMeta(msg) {
+        return {
+            edited: msg.edited || msg.isEdited || false,
+            deleted: msg.deleted || msg.isDeleted || false,
+            deletedBy: msg.deletedBy || null,
+            forwarded: msg.forwarded || msg.isForwarded || false,
+            forwardedBy: msg.forwardedBy || null,
+        };
+    }
+
+    function ensureMeta(msg) {
+        const metaMap = getMetaMap();
+        return {
+            ...msg,
+            ...metaMap[ msg.id ]
+        };
+    }
+
     const fetchConversation = useCallback(async (userId, fromCache = true) => {
-        // Check cache first
         if (fromCache && conversationCacheRef.current.has(userId)) {
             const cachedData = conversationCacheRef.current.get(userId);
-            if (Date.now() - cachedData.timestamp < 30000) { // 30 seconds cache
-                setMessages(cachedData.messages);
+            if (Date.now() - cachedData.timestamp < 30000) {
+                setMessages(mergeMetaFromLocalStorage(cachedData.messages));
                 return;
             }
         }
 
         try {
             const response = await getConversation(userId, tokenRef.current);
-            console.log('Fetched conversation:', response.data);
 
             let messagesData;
 
@@ -278,7 +328,8 @@ const Chat = () => {
                     timestamp: msg.timestamp || msg.sentAt,
                     isRead: msg.isRead,
                     isMine: msg.isMine,
-                    status: msg.isMine ? MESSAGE_STATUS.DELIVERED : undefined
+                    status: msg.isMine ? MESSAGE_STATUS.DELIVERED : undefined,
+                    ...getMeta(msg)
                 }));
             } else if (response.data && Array.isArray(response.data.messages)) {
                 messagesData = response.data.messages.map(msg => ({
@@ -288,25 +339,21 @@ const Chat = () => {
                     timestamp: msg.timestamp || msg.sentAt,
                     isRead: msg.isRead,
                     isMine: msg.isMine,
-                    status: msg.isMine ? MESSAGE_STATUS.DELIVERED : undefined
+                    status: msg.isMine ? MESSAGE_STATUS.DELIVERED : undefined,
+                    ...getMeta(msg)
                 }));
             } else {
-                console.warn('Unexpected API response structure:', response.data);
                 messagesData = [];
             }
 
-            // Sort messages by timestamp to ensure correct order
             messagesData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            setMessages(mergeMetaFromLocalStorage(messagesData));
 
-            setMessages(messagesData);
-
-            // Cache the conversation
             conversationCacheRef.current.set(userId, {
                 messages: messagesData,
                 timestamp: Date.now()
             });
 
-            // Mark messages as read
             const unreadMessageIds = messagesData
                 .filter(m => !m.isRead && !m.isMine)
                 .map(m => m.id);
@@ -317,17 +364,14 @@ const Chat = () => {
                 fetchConversations();
             }
         } catch (error) {
-            console.error('Error fetching conversation:', error);
             showError('Failed to load conversation');
         }
     }, [ fetchUnreadMessages, fetchConversations, showError ]);
 
-    // Typing notification handler
     const sendTypingNotification = useCallback((isTypingValue) => {
         if (connection?.state === signalR.HubConnectionState.Connected && selectedUserIdRef.current) {
             connection.invoke("Typing", selectedUserIdRef.current, isTypingValue)
                 .catch(err => {
-                    console.error('Error sending typing notification:', err);
                     if (!err.message.includes("Method does not exist")) {
                         showError('Failed to send typing notification');
                     }
@@ -344,7 +388,6 @@ const Chat = () => {
         }, 1000);
     }, [ sendTypingNotification ]);
 
-    // Message sending with optimistic updates - REST API only
     const handleSendMessage = useCallback(async (e) => {
         e.preventDefault();
         if (!newMessage.trim()) return;
@@ -353,26 +396,22 @@ const Chat = () => {
         const tempId = `temp-${Date.now()}-${Math.random()}`;
         setNewMessage('');
 
-        // Handle team message
         if (isTeamMessage && isTeamMessageEnabled) {
             try {
                 await sendMessageToTeam(messageContent, tokenRef.current);
                 toast.success('Team message sent successfully');
                 setIsTeamMessage(false);
             } catch (error) {
-                console.error('Error sending team message:', error);
                 showError('Failed to send team message');
             }
             return;
         }
 
-        // Handle direct message
         if (!selectedUser) return;
 
         const isSelfMessage = selectedUser.id === currentUserIdRef.current;
 
-        // Always do optimistic update - including for self messages
-        const tempMessage = {
+        const tempMessage = ensureMeta({
             id: tempId,
             senderId: currentUserIdRef.current,
             content: messageContent,
@@ -380,46 +419,36 @@ const Chat = () => {
             isRead: true,
             isMine: true,
             status: MESSAGE_STATUS.SENDING
-        };
+        });
 
         setMessages(prev => [ ...prev, tempMessage ]);
         scrollToBottom();
 
         try {
-            // Send via REST API only
             const response = await sendMessage(selectedUser.id, messageContent, tokenRef.current);
             const sentMessageId = response.data?.id || response.data?.messageId;
 
-            // For self messages, don't update status here - let SignalR handle it
-            // For other messages, update status as normal
             if (!isSelfMessage) {
                 setMessages(prev => prev.map(msg =>
                     msg.id === tempId
-                        ? { ...msg, id: sentMessageId || tempId, status: MESSAGE_STATUS.DELIVERED }
+                        ? ensureMeta({ ...msg, id: sentMessageId || tempId, status: MESSAGE_STATUS.DELIVERED })
                         : msg
                 ));
             }
 
-            // Clear cache for this conversation to force refresh
             conversationCacheRef.current.delete(selectedUser.id);
 
         } catch (error) {
-            console.error('Error sending message:', error);
-
-            // Update message status to failed for all messages (including self messages)
             setMessages(prev => prev.map(msg =>
                 msg.id === tempId
-                    ? { ...msg, status: MESSAGE_STATUS.FAILED }
+                    ? ensureMeta({ ...msg, status: MESSAGE_STATUS.FAILED })
                     : msg
             ));
-
             showError('Failed to send message. Please try again.');
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ newMessage, selectedUser, isTeamMessage, isTeamMessageEnabled, showError ]);
 
-
-    // SignalR connection management - Fixed dependencies
+    // SignalR connection management
     useEffect(() => {
         if (!tokenRef.current) return;
 
@@ -438,60 +467,64 @@ const Chat = () => {
                     .configureLogging(signalR.LogLevel.Debug)
                     .build();
 
-                // Add handlers
                 newConnection.on("UserTyping", (userId, isTypingValue) => {
                     if (isMounted && selectedUserIdRef.current === userId) {
                         setIsTyping(isTypingValue);
                     }
                 });
 
-                // Updated SignalR event handler
-                newConnection.on("ReceiveMessage", async (senderId, messageContent, messageId, timestamp, isMine) => {
+                newConnection.on("ReceiveMessage", async (senderId, messageContent, messageId, timestamp, isMine, meta) => {
                     if (!isMounted) return;
-
                     const isSelfMessage = senderId === currentUserIdRef.current;
-
-                    // Skip if this is our own message that we just sent to someone else (it's already in the UI)
                     if (isMine && !isSelfMessage) return;
+
+                    // Enhanced meta data handling
+                    const metaData = meta || {};
+                    const enhancedMeta = {
+                        edited: metaData.edited || metaData.isEdited || false,
+                        deleted: metaData.deleted || metaData.isDeleted || false,
+                        deletedBy: metaData.deletedBy || null,
+                        forwarded: metaData.forwarded || metaData.isForwarded || false,
+                        forwardedBy: metaData.forwardedBy || null,
+                        originalSenderId: metaData.originalSenderId || null, // For forwarded messages
+                        forwardedFromName: metaData.forwardedFromName || null, // Original sender name for forwarded messages
+                    };
 
                     if (selectedUserIdRef.current === senderId) {
                         setMessages(prev => {
-                            // For self messages, find and replace the temp message
                             if (isSelfMessage) {
                                 const existingTempIndex = prev.findIndex(m =>
                                     m.content === messageContent &&
                                     m.senderId === senderId &&
                                     m.id.toString().startsWith('temp-')
                                 );
-
                                 if (existingTempIndex !== -1) {
-                                    // Replace temp message with real message from server
                                     const newMessages = [ ...prev ];
-                                    newMessages[ existingTempIndex ] = {
+                                    newMessages[ existingTempIndex ] = ensureMeta({
                                         id: messageId,
                                         senderId,
                                         content: messageContent,
                                         timestamp,
                                         isRead: true,
                                         isMine: true,
-                                        status: MESSAGE_STATUS.DELIVERED
-                                    };
+                                        status: MESSAGE_STATUS.DELIVERED,
+                                        ...enhancedMeta
+                                    });
                                     return newMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
                                 }
                             }
 
-                            // Check if message already exists to prevent duplicates
                             if (prev.some(m => m.id === messageId)) return prev;
 
-                            // Add new message for non-self messages
-                            const newMsg = {
+                            const newMsg = ensureMeta({
                                 id: messageId,
                                 senderId,
                                 content: messageContent,
                                 timestamp,
                                 isRead: selectedUserIdRef.current === senderId,
-                                isMine
-                            };
+                                isMine,
+                                ...enhancedMeta
+                            });
 
                             const newMessages = [ ...prev, newMsg ];
                             return newMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
@@ -503,26 +536,20 @@ const Chat = () => {
 
                         try {
                             await markMessagesAsRead([ messageId ], tokenRef.current);
-                        } catch (error) {
-                            console.error('Error marking message as read:', error);
-                        }
+                        } catch (error) { }
                     } else {
-                        // Trigger refresh for unread messages and conversations
                         fetchUnreadMessages();
                         fetchConversations();
                     }
                 });
 
-                // Start connection
                 await newConnection.start();
 
                 if (isMounted) {
                     setConnectionState('connected');
                     setConnection(newConnection);
-                    console.log("SignalR Connected");
                 }
 
-                // Connection state handlers
                 newConnection.onreconnecting(() => {
                     if (isMounted) {
                         setConnectionState('reconnecting');
@@ -543,11 +570,9 @@ const Chat = () => {
 
                 return newConnection;
             } catch (err) {
-                console.error("SignalR Connection Error:", err);
                 if (isMounted) {
                     setConnectionState('disconnected');
                 }
-                // Retry after delay
                 await new Promise(resolve => setTimeout(resolve, 5000));
                 return setupConnection();
             }
@@ -562,16 +587,12 @@ const Chat = () => {
             if (connection) {
                 connection.off("UserTyping");
                 connection.off("ReceiveMessage");
-                connection.stop().catch(err => {
-                    console.error('Error stopping connection:', err);
-                });
+                connection.stop().catch(() => { });
             }
             clearTimeout(typingTimeoutRef.current);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Empty dependency array - only run once
+    }, []);
 
-    // Initial data fetching effect - Fixed dependencies
     useEffect(() => {
         let isMounted = true;
 
@@ -583,14 +604,11 @@ const Chat = () => {
                     fetchUnreadMessages(),
                     fetchConversations()
                 ]);
-            } catch (error) {
-                console.error('Initial data fetch error:', error);
-            }
+            } catch (error) { }
         };
 
         fetchData();
 
-        // Polling fallback with stable intervals
         const unreadInterval = setInterval(() => {
             if (isMounted) fetchUnreadMessages();
         }, 30000);
@@ -606,7 +624,6 @@ const Chat = () => {
         };
     }, [ fetchUsers, fetchUnreadMessages, fetchConversations ]);
 
-    // Selected user effect - Modified to prevent message loss
     useEffect(() => {
         if (!selectedUser?.id) return;
 
@@ -616,13 +633,11 @@ const Chat = () => {
         const fetchAndSetConversation = async () => {
             await fetchConversation(selectedUser.id, false);
             if (isMounted) {
-                // Reduce polling frequency to prevent message loss
                 intervalId = setInterval(() => {
                     if (selectedUserIdRef.current === selectedUser.id) {
-                        // Only refresh from cache or if there might be new messages
                         fetchConversation(selectedUser.id, true);
                     }
-                }, 30000); // Increased from 10s to 30s
+                }, 30000);
             }
         };
 
@@ -634,18 +649,14 @@ const Chat = () => {
         };
     }, [ selectedUser?.id, fetchConversation ]);
 
-    // Scroll effect - only when messages change
     useEffect(() => {
         scrollToBottom();
     }, [ messages.length, scrollToBottom ]);
 
-    // Connection cleanup effect
     useEffect(() => {
         return () => {
             if (connection) {
-                connection.stop().catch(err => {
-                    console.error('Error stopping connection:', err);
-                });
+                connection.stop().catch(() => { });
             }
             clearTimeout(typingTimeoutRef.current);
         };
@@ -667,26 +678,22 @@ const Chat = () => {
         }
     };
 
-    // Update the team message button click handler
     const handleTeamMessageClick = useCallback(() => {
         if (isTeamMessageEnabled) {
             setTeamMessageDialog(true);
         }
     }, [ isTeamMessageEnabled ]);
 
-    // Add the send team message handler
     const handleSendTeamMessage = async (message) => {
         try {
             await sendMessageToTeam(message, tokenRef.current);
             toast.success('Team message sent successfully');
-            // Refresh conversations after sending team message
             await Promise.all([
                 fetchUnreadMessages(),
                 fetchConversations()
             ]);
             setTeamMessageDialog(false);
         } catch (error) {
-            console.error('Error sending team message:', error);
             showError('Failed to send team message');
         }
     };
@@ -709,6 +716,150 @@ const Chat = () => {
         setShowEmojiPicker(false);
     };
 
+    // Message options menu handlers
+    const handleMsgMenuOpen = (event, msg) => {
+        event.stopPropagation();
+        setMenuAnchorEl(event.currentTarget);
+        setSelectedMsg(msg);
+    };
+    const handleMsgMenuClose = () => {
+        setMenuAnchorEl(null);
+        setSelectedMsg(null);
+        setEditMode(false);
+        setEditText('');
+    };
+    const handleCopy = (event) => {
+        if (!selectedMsg || !selectedMsg.content) return;
+        navigator.clipboard.writeText(selectedMsg.content);
+        setTooltipAnchor(event ? event.currentTarget : menuAnchorEl);
+        setCopyTooltip(true);
+        setTimeout(() => setCopyTooltip(false), 1200);
+        handleMsgMenuClose();
+    };
+    const handleEdit = () => {
+        setEditMode(true);
+        setEditText(selectedMsg?.content || '');
+        setMenuAnchorEl(null);
+    };
+    const handleEditSubmit = async () => {
+        try {
+            await editMessage(selectedMsg.id, editText, tokenRef.current);
+            saveMetaToLocalStorage(selectedMsg.id, { edited: true });
+            setMessages(prev =>
+                mergeMetaFromLocalStorage(
+                    prev.map(m =>
+                        m.id === selectedMsg.id
+                            ? { ...m, content: editText }
+                            : m
+                    )
+                )
+            );
+            setEditMode(false);
+            setSelectedMsg(null);
+            setEditText('');
+        } catch (err) {
+            showError('Failed to edit message');
+        }
+    };
+    const handleEditCheckClick = async () => {
+        await handleEditSubmit();
+    };
+    const handleDelete = async () => {
+    try {
+        await deleteMessage(selectedMsg.id, tokenRef.current);
+        
+        // Save who deleted it with timestamp
+        saveMetaToLocalStorage(selectedMsg.id, {
+            deleted: true,
+            deletedBy: currentUserIdRef.current,
+            deletedAt: new Date().toISOString()
+        });
+        
+        setMessages(prev =>
+            mergeMetaFromLocalStorage(
+                prev.map(m =>
+                    m.id === selectedMsg.id
+                        ? { ...m, content: '' } // Clear content for deleted messages
+                        : m
+                )
+            )
+        );
+        handleMsgMenuClose();
+    } catch (err) {
+        showError('Failed to delete message');
+    }
+};
+    const handleForward = () => {
+        if (!selectedMsg?.content) {
+            showError('Cannot forward empty message');
+            return;
+        }
+        setForwardDialog(true);
+        setMenuAnchorEl(null);
+    };
+    const handleForwardSend = async (userId) => {
+    if (!selectedMsg?.content) {
+        showError('Cannot forward empty message');
+        return;
+    }
+    try {
+        // Get the original sender info for forwarded message attribution
+        const originalSenderName = selectedMsg.forwarded 
+            ? selectedMsg.forwardedFromName || getUserNameById(selectedMsg.originalSenderId)
+            : getUserNameById(selectedMsg.senderId);
+        
+        // Send the message with forward metadata
+        const response = await sendMessage(userId, selectedMsg.content, tokenRef.current);
+        const forwardedId = response.data?.id || response.data?.messageId;
+        
+        // Save comprehensive forward metadata
+        saveMetaToLocalStorage(forwardedId, { 
+            forwarded: true, 
+            forwardedBy: currentUserIdRef.current,
+            originalSenderId: selectedMsg.forwarded ? selectedMsg.originalSenderId : selectedMsg.senderId,
+            forwardedFromName: originalSenderName
+        });
+        
+        toast.success('Message forwarded');
+        setForwardDialog(false);
+        setSelectedMsg(null);
+    } catch (err) {
+        showError('Failed to forward message');
+    }
+};
+
+
+    const handleMessageContextMenu = (event, message) => {
+        event.preventDefault();
+        if (message.isMine) {
+            setMenuAnchorEl(event.currentTarget);
+            setSelectedMsg(message);
+        }
+    };
+
+    // For showing the name of a user by userId (for deleted/forwardedBy)
+    const getUserNameById = (id) => {
+    if (!id) return 'Unknown';
+    if (id === currentUserIdRef.current) return 'You';
+    const user = users.find(u => u.id === id);
+    return user ? user.fullName : 'Unknown User';
+};
+
+    // For deleted messages, show "You deleted a message" or "{name} deleted a message"
+    const getDeletedMessageText = (msg) => {
+    if (msg.deletedBy) {
+        const deleterName = getUserNameById(msg.deletedBy);
+        return `${deleterName} deleted this message`;
+    }
+    return "This message was deleted";
+};
+
+    // For forwarded messages, show "Forwarded by {name}"
+    const getForwardedByText = (msg) => {
+        if (!msg.forwarded) return null;
+        return `Forwarded by ${getUserNameById(msg.forwardedBy)}`;
+    };
+
     return (
         <ThemeProvider theme={theme}>
             <Box className="chat-container" sx={{
@@ -718,7 +869,6 @@ const Chat = () => {
                 flexDirection: { xs: 'column', md: 'row' },
                 bgcolor: 'background.default'
             }}>
-                {/* Connection status banner */}
                 {connectionState !== 'connected' && (
                     <Alert
                         severity={connectionState === 'reconnecting' ? 'warning' : 'error'}
@@ -735,7 +885,6 @@ const Chat = () => {
                     </Alert>
                 )}
 
-                {/* Error snackbar */}
                 <Snackbar
                     open={!!error}
                     autoHideDuration={5000}
@@ -747,7 +896,6 @@ const Chat = () => {
                     </Alert>
                 </Snackbar>
 
-                {/* Sidebar */}
                 <Paper className="chat-sidebar" elevation={2} sx={{
                     width: { xs: '100%', md: 300 },
                     height: { xs: selectedUser ? '0px' : '100vh', md: '100%' },
@@ -943,7 +1091,6 @@ const Chat = () => {
                                                             fontWeight: hasUnread ? 500 : 400,
                                                             overflow: 'hidden',
                                                             textOverflow: 'ellipsis',
-                                                            whiteSpace: 'nowrap',
                                                             maxWidth: '70%'
                                                         }}
                                                     >
@@ -974,7 +1121,6 @@ const Chat = () => {
                     </List>
                 </Paper>
 
-                {/* Main chat area */}
                 <Paper className="chat-main" elevation={1} sx={{
                     flex: 1,
                     display: 'flex',
@@ -985,7 +1131,6 @@ const Chat = () => {
                 }}>
                     {selectedUser ? (
                         <>
-                            {/* Chat header */}
                             <Box sx={{
                                 p: { xs: 1.5, sm: 2 },
                                 borderBottom: 1,
@@ -994,7 +1139,6 @@ const Chat = () => {
                                 alignItems: 'center',
                                 gap: { xs: 1, sm: 2 }
                             }}>
-                                {/* Add back button for mobile */}
                                 <IconButton
                                     sx={{
                                         display: { xs: 'flex', md: 'none' },
@@ -1065,14 +1209,18 @@ const Chat = () => {
                                 }}
                             >
                                 {messages.map((message) => (
-                                    <Box key={message.id} sx={{
-                                        display: 'flex',
-                                        alignItems: 'flex-start',
-                                        flexDirection: message.isMine ? 'row-reverse' : 'row',
-                                        gap: 1,
-                                        mb: 0.5
-                                    }}>
-                                        {/* Avatar - Enhanced positioning */}
+                                    <Box
+                                        key={message.id}
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'flex-start',
+                                            flexDirection: message.isMine ? 'row-reverse' : 'row',
+                                            gap: 1,
+                                            mb: 0.5,
+                                            position: 'relative'
+                                        }}
+                                        onContextMenu={e => handleMessageContextMenu(e, message)}
+                                    >
                                         <Avatar
                                             src={message.isMine ? currentUser?.pictureURL : selectedUser.pictureURL}
                                             alt={message.isMine ? currentUser?.fullName : selectedUser.fullName}
@@ -1089,14 +1237,29 @@ const Chat = () => {
                                                 : selectedUser.fullName[ 0 ]?.toUpperCase()
                                             }
                                         </Avatar>
-
-                                        {/* Message content and status */}
                                         <Box sx={{
                                             maxWidth: { xs: '75%', sm: '60%' },
                                             display: 'flex',
                                             flexDirection: 'column',
-                                            alignItems: message.isMine ? 'flex-end' : 'flex-start'
+                                            alignItems: message.isMine ? 'flex-end' : 'flex-start',
+                                            position: 'relative'
                                         }}>
+                                            {/* Meta labels above the message */}
+                                            {(message.edited || message.forwarded) && (
+                                                <Box sx={{ mb: 0.5, display: "flex", gap: 1, alignItems: "center" }}>
+                                                    {message.edited && (
+                                                        <Chip label="Edited" size="small" color="info" sx={{ fontWeight: 600, fontSize: 13 }} />
+                                                    )}
+                                                    {message.forwarded && (
+                                                        <Chip
+                                                            label={getForwardedByText(message)}
+                                                            size="small"
+                                                            color="secondary"
+                                                            sx={{ fontWeight: 600, fontSize: 13 }}
+                                                        />
+                                                    )}
+                                                </Box>
+                                            )}
                                             <Box sx={{
                                                 bgcolor: message.isMine ? 'primary.main' : 'grey.100',
                                                 color: message.isMine ? 'white' : 'text.primary',
@@ -1104,26 +1267,58 @@ const Chat = () => {
                                                 p: { xs: 1.5, sm: 2 },
                                                 maxWidth: '100%',
                                                 wordBreak: 'break-word',
-                                                position: 'relative'
+                                                position: 'relative',
+                                                opacity: message.deleted ? 0.6 : 1,
+                                                cursor: message.isMine ? 'pointer' : 'default'
                                             }}>
-                                                <Typography sx={{
-                                                    fontSize: { xs: '0.875rem', sm: '0.95rem' },
-                                                    lineHeight: 1.5
-                                                }}>
-                                                    {message.content}
-                                                </Typography>
+                                                {editMode && selectedMsg?.id === message.id ? (
+                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <textarea
+                                                            rows={3}
+                                                            style={{
+                                                                width: '100%',
+                                                                border: '1px solid #e0e0e0',
+                                                                borderRadius: 8,
+                                                                padding: 8,
+                                                                fontFamily: 'inherit',
+                                                                fontSize: '1rem',
+                                                                background: theme.palette.background.paper,
+                                                                marginRight: 8,
+                                                                resize: 'none'
+                                                            }}
+                                                            autoFocus
+                                                            value={editText}
+                                                            onChange={e => setEditText(e.target.value)}
+                                                        />
+                                                        <IconButton sx={{ bgcolor: 'white', color: '#064e3b', ml: '5px' }} size="small" onClick={handleEditCheckClick}>
+                                                            <CheckIcon />
+                                                        </IconButton>
+                                                    </Box>
+                                                ) : (
+                                                    <Typography
+                                                        sx={{
+                                                            fontSize: { xs: '0.875rem', sm: '0.95rem' },
+                                                            lineHeight: 1.5,
+                                                            fontStyle: message.deleted ? 'italic' : 'normal',
+                                                            color: message.deleted ? 'text.secondary' : undefined,
+                                                            whiteSpace: 'pre-line'
+                                                        }}
+                                                        onClick={message.isMine && !message.deleted ? (e) => handleMsgMenuOpen(e, message) : undefined}
+                                                    >
+                                                        {message.deleted
+                                                            ? getDeletedMessageText(message)
+                                                            : message.content}
+                                                    </Typography>
+                                                )}
                                             </Box>
-
                                             <Box sx={{
-                                                mt: 0.5,
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                gap: 0.5
+                                                gap: 0.5,
+                                                mt: 0.5,
+                                                justifyContent: message.isMine ? 'flex-end' : 'flex-start'
                                             }}>
-                                                <Typography variant="caption" sx={{
-                                                    fontSize: { xs: '0.65rem', sm: '0.7rem' },
-                                                    opacity: 0.7
-                                                }}>
+                                                <Typography variant="caption" color="text.secondary">
                                                     {formatMessageTime(message.timestamp)}
                                                 </Typography>
                                                 {message.isMine && renderMessageStatus(message.status)}
@@ -1131,8 +1326,6 @@ const Chat = () => {
                                         </Box>
                                     </Box>
                                 ))}
-
-                                {/* Typing indicator - enhanced visibility */}
                                 {isTyping && (
                                     <Box
                                         sx={{
@@ -1211,11 +1404,9 @@ const Chat = () => {
                                     </Box>
                                 )}
                             </Box>
-                            {/* Add any additional chat UI elements here */}
                         </>
                     ) : null}
 
-                    {/* Team message dialog */}
                     {isTeamMessageEnabled && (
                         <TeamMessageDialog
                             open={teamMessageDialog}
@@ -1224,7 +1415,6 @@ const Chat = () => {
                         />
                     )}
 
-                    {/* Emoji picker popper */}
                     <Popper
                         open={showEmojiPicker}
                         anchorEl={emojiAnchorEl}
@@ -1244,7 +1434,6 @@ const Chat = () => {
                         </ClickAwayListener>
                     </Popper>
 
-                    {/* Message input area */}
                     {selectedUser && (
                         <Box
                             component="form"
@@ -1373,6 +1562,93 @@ const Chat = () => {
                     </Box>
                 )}
 
+                <Menu
+                    anchorEl={menuAnchorEl}
+                    open={Boolean(menuAnchorEl)}
+                    onClose={handleMsgMenuClose}
+                    anchorOrigin={{
+                        vertical: 'top',
+                        horizontal: 'center',
+                    }}
+                    transformOrigin={{
+                        vertical: 'top',
+                        horizontal: 'center',
+                    }}
+                    getContentAnchorEl={null}
+                    PaperProps={{
+                        style: {
+                            zIndex: 1500
+                        }
+                    }}
+                >
+                    <MenuItem onClick={handleCopy}>
+                        <ContentCopyIcon fontSize="small" sx={{ mr: 1 }} />
+                        Copy
+                    </MenuItem>
+                    <MenuItem onClick={handleEdit}>
+                        <EditIcon fontSize="small" sx={{ mr: 1 }} />
+                        Edit
+                    </MenuItem>
+                    <MenuItem onClick={handleDelete}>
+                        <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+                        Delete
+                    </MenuItem>
+                    <MenuItem onClick={handleForward}>
+                        <ForwardToInboxIcon fontSize="small" sx={{ mr: 1 }} />
+                        Forward
+                    </MenuItem>
+                </Menu>
+                <Tooltip
+                    open={copyTooltip}
+                    title="Copied!"
+                    arrow
+                    placement="top"
+                    PopperProps={{
+                        anchorEl: tooltipAnchor,
+                    }}
+                >
+                    <span style={{ position: 'absolute', left: -9999, top: -9999 }} />
+                </Tooltip>
+
+                <Dialog
+                    open={forwardDialog}
+                    onClose={() => setForwardDialog(false)}
+                    maxWidth="sm"
+                    fullWidth
+                >
+                    <DialogTitle>Forward Message</DialogTitle>
+                    <DialogContent>
+                        <List>
+                            {users.filter(u => u.id !== currentUserIdRef.current).map(user => (
+                                <ListItem
+                                    key={user.id}
+                                    secondaryAction={
+                                        <Button
+                                            variant="contained"
+                                            size="small"
+                                            onClick={() => handleForwardSend(user.id)}
+                                        >
+                                            Send
+                                        </Button>
+                                    }
+                                >
+                                    <ListItemAvatar>
+                                        <Avatar src={user.pictureURL}>
+                                            {user.fullName[ 0 ]}
+                                        </Avatar>
+                                    </ListItemAvatar>
+                                    <ListItemText
+                                        primary={user.fullName}
+                                        secondary={user.email}
+                                    />
+                                </ListItem>
+                            ))}
+                        </List>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setForwardDialog(false)}>Close</Button>
+                    </DialogActions>
+                </Dialog>
             </Box>
         </ThemeProvider>
     );
