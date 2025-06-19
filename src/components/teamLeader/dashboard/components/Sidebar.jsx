@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     HomeOutlined,
@@ -8,7 +8,8 @@ import {
     CalendarMonthOutlined,
     Analytics,
     ExitToApp as ExitToAppIcon,
-    AddTask as AddTaskIcon
+    AddTask as AddTaskIcon,
+    EmojiEvents as EmojiEventsIcon
 } from '@mui/icons-material';
 import MuiDrawer from '@mui/material/Drawer';
 import {
@@ -102,6 +103,7 @@ const links = [
     { text: "Requests", icon: <AddTaskIcon />, path: "/requests" },
     { text: "Tasks", icon: <AssignmentOutlined />, path: "/team-tasks" },
     { text: "Team Members", icon: <GroupOutlined />, path: "/team" },
+    { text: "Leader Board", icon: <EmojiEventsIcon />, path: "/leader-board" },
     { text: "Calendar", icon: <CalendarMonthOutlined />, path: "/calendar" },
     { text: "Profile", icon: <AccountCircleOutlined />, path: "/profile" },
     { text: "Analytics", icon: <Analytics />, path: "/analytics" },
