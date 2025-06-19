@@ -16,6 +16,7 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import axios from 'axios';
+import { decodeToken } from '../../../../../../utils';
 
 const colors = {
   completed: '#059669',
@@ -52,18 +53,41 @@ export default function KPI() {
 
   useEffect(() => {
     const fetchKPI = async () => {
+        let response;
         try {
             const token = localStorage.getItem('authToken');
-            const response = await axios.get(
-              `https://localhost:49798/api/kpi/leader/annual-kpi`,
-              {
-                  headers: { 
-                      'Authorization': `Bearer ${token}`,
-                      'Accept': 'application/json',
-                      'Cache-Control': 'no-cache'
-                  }
-              }
-            );
+            const role = decodeToken(token)?.role;
+            
+            if (role.includes('Leader') && !role.includes('Admin')) {
+                response = await axios.get(
+                    `https://localhost:49798/api/kpi/leader/annual-kpi`,
+                    {
+                        headers: { 
+                            'Authorization': `Bearer ${token}`,
+                            'Accept': 'application/json',
+                            'Cache-Control': 'no-cache'
+                        }
+                    }
+                );
+            }
+            else if (role.includes('Admin')) {
+                response = await axios.get(
+                    `https://localhost:49798/api/kpi/admin/leader-annual-kpi`,
+                    {
+                        headers: { 
+                            'Authorization': `Bearer ${token}`,
+                            'Accept': 'application/json',
+                            'Cache-Control': 'no-cache'
+                        }
+                    }
+                );
+            } else {
+                throw new Error('Unauthorized role');
+            }
+
+            if (!response?.data) {
+                throw new Error('No data received from server');
+            }
 
             const processedData = {
                 totalTasks: response.data.totalTasks || 0,
@@ -86,6 +110,7 @@ export default function KPI() {
             setKpiData(finalData);
 
         } catch (err) {
+            console.error('KPI fetch error:', err);
             setError(err.response?.data?.message || err.message || 'Failed to load KPI data');
         } finally {
             setLoading(false);
