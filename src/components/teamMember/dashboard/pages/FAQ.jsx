@@ -19,12 +19,12 @@ import {
   Security,
   Clear,
 } from '@mui/icons-material';
+import MarkUnreadChatAltIcon from '@mui/icons-material/MarkUnreadChatAlt';
 
 const FAQ = () => {
   const [expanded, setExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Helper function to check if text matches search query
   const matchesSearch = (text, query) => {
     return text.toLowerCase().includes(query.toLowerCase());
   };
@@ -74,20 +74,28 @@ const FAQ = () => {
       ]
     },
     {
-      category: "Team Collaboration",
-      icon: <Settings sx={{ color: '#ff9800' }} />,
+      category: "Member Messaging System",
+      icon: <MarkUnreadChatAltIcon sx={{ color: '#1976d2' }} />,
       items: [
         {
-          question: "How do I communicate with my team?",
-          answer: "Use the built-in chat feature or task comments for team communication. For urgent matters, use the 'Priority Message' feature."
+          question: "How do I interact with a message I sent?",
+          answer: "Simply click on your own message to open a menu with options like Edit, Delete, Forward, and Copy."
         },
         {
-          question: "Where can I find team schedules?",
-          answer: "Access the 'Team Calendar' from your dashboard to view schedules, meetings, and task deadlines for your entire team."
+          question: "What happens when I edit a message?",
+          answer: "After editing, the message will update instantly and show an 'edited' label for transparency."
         },
         {
-          question: "How do I submit progress reports?",
-          answer: "Weekly progress reports can be generated automatically from your completed tasks or created manually in the 'Reports' section."
+          question: "Can I remove a message I no longer want visible?",
+          answer: "Yes, choose 'Delete' from the message menu. The message will be marked as deleted and hidden from others."
+        },
+        {
+          question: "How can I send a message to someone else from the chat?",
+          answer: "Use the 'Forward' option from the message menu to share it with another member in your team."
+        },
+        {
+          question: "Is it possible to copy the message text?",
+          answer: "Yes, just select 'Copy' from the message options to save the content to your clipboard."
         }
       ]
     },
@@ -127,19 +135,17 @@ const FAQ = () => {
     )
   })).filter(category => category.items.length > 0);
 
-  // Automatically expand items that match search
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
   };
 
-  // Highlight matching text
   const highlightText = (text, query) => {
     if (!query) return text;
 
     const parts = text.split(new RegExp(`(${query})`, 'gi'));
     return (
       <Typography component="span">
-        {parts.map((part, i) => 
+        {parts.map((part, i) =>
           matchesSearch(part, query) ? (
             <Box
               key={i}
@@ -166,20 +172,14 @@ const FAQ = () => {
   };
 
   return (
-    <Container 
-      maxWidth="md" 
-      sx={{ 
-        py: { xs: 2, sm: 3, md: 4 },
-        px: { xs: 2, sm: 3 }
-      }}
-    >
+    <Container maxWidth="md" sx={{ py: { xs: 2, sm: 3, md: 4 }, px: { xs: 2, sm: 3 } }}>
       <Box sx={{ textAlign: 'center', mb: { xs: 4, sm: 5, md: 6 } }}>
-        <Typography 
-          variant="h3" 
-          component="h1" 
-          gutterBottom 
-          sx={{ 
-            fontWeight: 'bold', 
+        <Typography
+          variant="h3"
+          component="h1"
+          gutterBottom
+          sx={{
+            fontWeight: 'bold',
             color: '#064e3b',
             fontSize: { xs: '1.8rem', sm: '2.5rem', md: '3rem' },
             mb: { xs: 2, sm: 3 }
@@ -200,38 +200,17 @@ const FAQ = () => {
           }}
           elevation={3}
         >
-          <IconButton 
-            sx={{ 
-              p: { xs: '8px', sm: '10px' },
-              '& .MuiSvgIcon-root': {
-                fontSize: { xs: '1.2rem', sm: '1.5rem' }
-              }
-            }} 
-            aria-label="search"
-          >
+          <IconButton sx={{ p: { xs: '8px', sm: '10px' } }} aria-label="search">
             <Search />
           </IconButton>
           <InputBase
-            sx={{ 
-              ml: 1, 
-              flex: 1,
-              fontSize: { xs: '0.9rem', sm: '1rem' }
-            }}
+            sx={{ ml: 1, flex: 1, fontSize: { xs: '0.9rem', sm: '1rem' } }}
             placeholder="Search FAQs..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
-            <IconButton 
-              sx={{ 
-                p: { xs: '8px', sm: '10px' },
-                '& .MuiSvgIcon-root': {
-                  fontSize: { xs: '1.2rem', sm: '1.5rem' }
-                }
-              }} 
-              aria-label="clear search"
-              onClick={handleClearSearch}
-            >
+            <IconButton sx={{ p: { xs: '8px', sm: '10px' } }} aria-label="clear search" onClick={handleClearSearch}>
               <Clear />
             </IconButton>
           )}
@@ -241,26 +220,13 @@ const FAQ = () => {
       <Box sx={{ mt: 2 }}>
         {filteredCategories.map((category, categoryIndex) => (
           <Box key={categoryIndex} sx={{ mb: { xs: 2, sm: 3 } }}>
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              mb: { xs: 1.5, sm: 2 },
-              px: { xs: 0.5, sm: 0 }
-            }}>
-              <Box sx={{
-                '& .MuiSvgIcon-root': {
-                  fontSize: { xs: '1.2rem', sm: '1.5rem' }
-                }
-              }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 1.5, sm: 2 }, px: { xs: 0.5, sm: 0 } }}>
+              <Box sx={{ '& .MuiSvgIcon-root': { fontSize: { xs: '1.2rem', sm: '1.5rem' } } }}>
                 {category.icon}
               </Box>
-              <Typography 
-                variant="h5" 
-                sx={{ 
-                  ml: 1, 
-                  fontWeight: 500,
-                  fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.5rem' }
-                }}
+              <Typography
+                variant="h5"
+                sx={{ ml: 1, fontWeight: 500, fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.5rem' } }}
               >
                 {highlightText(category.category, searchQuery)}
               </Typography>
@@ -277,52 +243,31 @@ const FAQ = () => {
                   border: '1px solid',
                   borderColor: 'divider',
                   borderRadius: '8px !important',
-                  '&:not(:last-child)': { mb: 1 },
                   '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.01)' },
-                  ...(searchQuery && (
-                    matchesSearch(item.question, searchQuery) || 
-                    matchesSearch(item.answer, searchQuery)
-                  ) && {
-                    borderColor: 'primary.main',
-                    borderWidth: 1,
-                    bgcolor: 'rgba(33, 150, 243, 0.02)'
-                  })
+                  ...(searchQuery &&
+                    (matchesSearch(item.question, searchQuery) || matchesSearch(item.answer, searchQuery)) && {
+                      borderColor: 'primary.main',
+                      borderWidth: 1,
+                      bgcolor: 'rgba(33, 150, 243, 0.02)'
+                    })
                 }}
               >
                 <AccordionSummary
-                  expandIcon={<ExpandMore sx={{ 
-                    fontSize: { xs: '1.3rem', sm: '1.5rem' } 
-                  }} />}
+                  expandIcon={<ExpandMore sx={{ fontSize: { xs: '1.3rem', sm: '1.5rem' } }} />}
                   sx={{
-                    '& .MuiAccordionSummary-content': { 
+                    '& .MuiAccordionSummary-content': {
                       margin: { xs: '8px 0', sm: '12px 0' },
                       pr: { xs: 1, sm: 2 }
                     },
                     minHeight: { xs: 48, sm: 56 }
                   }}
                 >
-                  <Typography 
-                    sx={{ 
-                      fontWeight: 500,
-                      fontSize: { xs: '0.9rem', sm: '1rem' },
-                      lineHeight: { xs: 1.4, sm: 1.5 }
-                    }}
-                  >
+                  <Typography sx={{ fontWeight: 500, fontSize: { xs: '0.9rem', sm: '1rem' }, lineHeight: { xs: 1.4, sm: 1.5 } }}>
                     {highlightText(item.question, searchQuery)}
                   </Typography>
                 </AccordionSummary>
-                <AccordionDetails sx={{
-                  pt: { xs: 0, sm: 1 },
-                  px: { xs: 2, sm: 2 },
-                  pb: { xs: 2, sm: 2 }
-                }}>
-                  <Typography 
-                    color="text.secondary"
-                    sx={{
-                      fontSize: { xs: '0.85rem', sm: '0.95rem' },
-                      lineHeight: { xs: 1.5, sm: 1.6 }
-                    }}
-                  >
+                <AccordionDetails sx={{ pt: { xs: 0, sm: 1 }, px: { xs: 2, sm: 2 }, pb: { xs: 2, sm: 2 } }}>
+                  <Typography color="text.secondary" sx={{ fontSize: { xs: '0.85rem', sm: '0.95rem' }, lineHeight: { xs: 1.5, sm: 1.6 } }}>
                     {highlightText(item.answer, searchQuery)}
                   </Typography>
                   {item.video && (
