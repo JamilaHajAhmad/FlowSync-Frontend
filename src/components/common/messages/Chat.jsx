@@ -61,7 +61,7 @@ const MESSAGE_STATUS = {
 
 const LOCAL_META_KEY = 'chatMessageMeta';
 
-// Create a custom theme with green palette
+// Custom theme: primary green, secondary purple (forwarded indicator)
 const theme = createTheme({
     palette: {
         primary: {
@@ -71,9 +71,9 @@ const theme = createTheme({
             contrastText: '#ffffff'
         },
         secondary: {
-            main: '#10b981',
-            light: '#d1fae5',
-            dark: '#065f46'
+            main: '#a259d9', // purple for forwarded
+            light: '#f3e9fb',
+            dark: '#7e44b8'
         },
         background: {
             default: '#f9fafb',
@@ -93,11 +93,6 @@ function getMetaMap() {
 function saveMetaToLocalStorage(messageId, meta) {
     const metaMap = getMetaMap();
     metaMap[ messageId ] = { ...metaMap[ messageId ], ...meta };
-    localStorage.setItem(LOCAL_META_KEY, JSON.stringify(metaMap));
-}
-function removeMetaFromLocalStorage(messageId) {
-    const metaMap = getMetaMap();
-    delete metaMap[ messageId ];
     localStorage.setItem(LOCAL_META_KEY, JSON.stringify(metaMap));
 }
 function mergeMetaFromLocalStorage(messages) {
@@ -274,7 +269,10 @@ const Chat = () => {
                 return acc;
             }, {});
             setConversations(Object.values(conversationsMap));
-        } catch (error) { }
+        } catch (error) { 
+            showError('Failed to load conversations');
+            console.error('Error fetching conversations:', error);
+        }
     }, []);
 
     const fetchUsers = useCallback(async () => {
@@ -283,6 +281,7 @@ const Chat = () => {
             setUsers(response.data);
         } catch (error) {
             showError('Failed to load users');
+            console.error('Error fetching users:', error);
         } finally {
             setLoading(false);
         }
@@ -295,6 +294,8 @@ const Chat = () => {
             deletedBy: msg.deletedBy || null,
             forwarded: msg.forwarded || msg.isForwarded || false,
             forwardedBy: msg.forwardedBy || null,
+            originalSenderId: msg.originalSenderId || null,
+            forwardedFromName: msg.forwardedFromName || null,
         };
     }
 
@@ -478,7 +479,6 @@ const Chat = () => {
                     const isSelfMessage = senderId === currentUserIdRef.current;
                     if (isMine && !isSelfMessage) return;
 
-                    // Enhanced meta data handling
                     const metaData = meta || {};
                     const enhancedMeta = {
                         edited: metaData.edited || metaData.isEdited || false,
@@ -486,8 +486,8 @@ const Chat = () => {
                         deletedBy: metaData.deletedBy || null,
                         forwarded: metaData.forwarded || metaData.isForwarded || false,
                         forwardedBy: metaData.forwardedBy || null,
-                        originalSenderId: metaData.originalSenderId || null, // For forwarded messages
-                        forwardedFromName: metaData.forwardedFromName || null, // Original sender name for forwarded messages
+                        originalSenderId: metaData.originalSenderId || null,
+                        forwardedFromName: metaData.forwardedFromName || null,
                     };
 
                     if (selectedUserIdRef.current === senderId) {
@@ -765,30 +765,27 @@ const Chat = () => {
         await handleEditSubmit();
     };
     const handleDelete = async () => {
-    try {
-        await deleteMessage(selectedMsg.id, tokenRef.current);
-        
-        // Save who deleted it with timestamp
-        saveMetaToLocalStorage(selectedMsg.id, {
-            deleted: true,
-            deletedBy: currentUserIdRef.current,
-            deletedAt: new Date().toISOString()
-        });
-        
-        setMessages(prev =>
-            mergeMetaFromLocalStorage(
-                prev.map(m =>
-                    m.id === selectedMsg.id
-                        ? { ...m, content: '' } // Clear content for deleted messages
-                        : m
+        try {
+            await deleteMessage(selectedMsg.id, tokenRef.current);
+            saveMetaToLocalStorage(selectedMsg.id, {
+                deleted: true,
+                deletedBy: currentUserIdRef.current,
+                deletedAt: new Date().toISOString()
+            });
+            setMessages(prev =>
+                mergeMetaFromLocalStorage(
+                    prev.map(m =>
+                        m.id === selectedMsg.id
+                            ? { ...m, content: '' }
+                            : m
+                    )
                 )
-            )
-        );
-        handleMsgMenuClose();
-    } catch (err) {
-        showError('Failed to delete message');
-    }
-};
+            );
+            handleMsgMenuClose();
+        } catch (err) {
+            showError('Failed to delete message');
+        }
+    };
     const handleForward = () => {
         if (!selectedMsg?.content) {
             showError('Cannot forward empty message');
@@ -798,36 +795,29 @@ const Chat = () => {
         setMenuAnchorEl(null);
     };
     const handleForwardSend = async (userId) => {
-    if (!selectedMsg?.content) {
-        showError('Cannot forward empty message');
-        return;
-    }
-    try {
-        // Get the original sender info for forwarded message attribution
-        const originalSenderName = selectedMsg.forwarded 
-            ? selectedMsg.forwardedFromName || getUserNameById(selectedMsg.originalSenderId)
-            : getUserNameById(selectedMsg.senderId);
-        
-        // Send the message with forward metadata
-        const response = await sendMessage(userId, selectedMsg.content, tokenRef.current);
-        const forwardedId = response.data?.id || response.data?.messageId;
-        
-        // Save comprehensive forward metadata
-        saveMetaToLocalStorage(forwardedId, { 
-            forwarded: true, 
-            forwardedBy: currentUserIdRef.current,
-            originalSenderId: selectedMsg.forwarded ? selectedMsg.originalSenderId : selectedMsg.senderId,
-            forwardedFromName: originalSenderName
-        });
-        
-        toast.success('Message forwarded');
-        setForwardDialog(false);
-        setSelectedMsg(null);
-    } catch (err) {
-        showError('Failed to forward message');
-    }
-};
-
+        if (!selectedMsg?.content) {
+            showError('Cannot forward empty message');
+            return;
+        }
+        try {
+            const originalSenderName = selectedMsg.forwarded
+                ? selectedMsg.forwardedFromName || getUserNameById(selectedMsg.originalSenderId)
+                : getUserNameById(selectedMsg.senderId);
+            const response = await sendMessage(userId, selectedMsg.content, tokenRef.current);
+            const forwardedId = response.data?.id || response.data?.messageId;
+            saveMetaToLocalStorage(forwardedId, {
+                forwarded: true,
+                forwardedBy: currentUserIdRef.current,
+                originalSenderId: selectedMsg.forwarded ? selectedMsg.originalSenderId : selectedMsg.senderId,
+                forwardedFromName: originalSenderName
+            });
+            toast.success('Message forwarded');
+            setForwardDialog(false);
+            setSelectedMsg(null);
+        } catch (err) {
+            showError('Failed to forward message');
+        }
+    };
 
     const handleMessageContextMenu = (event, message) => {
         event.preventDefault();
@@ -837,24 +827,21 @@ const Chat = () => {
         }
     };
 
-    // For showing the name of a user by userId (for deleted/forwardedBy)
     const getUserNameById = (id) => {
-    if (!id) return 'Unknown';
-    if (id === currentUserIdRef.current) return 'You';
-    const user = users.find(u => u.id === id);
-    return user ? user.fullName : 'Unknown User';
-};
+        if (!id) return 'Unknown';
+        if (id === currentUserIdRef.current) return 'You';
+        const user = users.find(u => u.id === id);
+        return user ? user.fullName : 'Unknown User';
+    };
 
-    // For deleted messages, show "You deleted a message" or "{name} deleted a message"
     const getDeletedMessageText = (msg) => {
-    if (msg.deletedBy) {
-        const deleterName = getUserNameById(msg.deletedBy);
-        return `${deleterName} deleted this message`;
-    }
-    return "This message was deleted";
-};
+        if (msg.deletedBy) {
+            const deleterName = getUserNameById(msg.deletedBy);
+            return `${deleterName} deleted this message`;
+        }
+        return "This message was deleted";
+    };
 
-    // For forwarded messages, show "Forwarded by {name}"
     const getForwardedByText = (msg) => {
         if (!msg.forwarded) return null;
         return `Forwarded by ${getUserNameById(msg.forwardedBy)}`;
@@ -1244,8 +1231,8 @@ const Chat = () => {
                                             alignItems: message.isMine ? 'flex-end' : 'flex-start',
                                             position: 'relative'
                                         }}>
-                                            {/* Meta labels above the message */}
-                                            {(message.edited || message.forwarded) && (
+                                            {/* Meta labels above the message, hidden if deleted */}
+                                            {!message.deleted && (message.edited || message.forwarded) && (
                                                 <Box sx={{ mb: 0.5, display: "flex", gap: 1, alignItems: "center" }}>
                                                     {message.edited && (
                                                         <Chip label="Edited" size="small" color="info" sx={{ fontWeight: 600, fontSize: 13 }} />
@@ -1530,8 +1517,11 @@ const Chat = () => {
                             flexDirection: 'column',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            maxWidth: '400px'
+                            maxWidth: '440px',
+                            width: '100%',
+                            gap: 3
                         }}>
+                            {/* Illustration as in your provided welcome image */}
                             <img
                                 src={Logo}
                                 alt="FlowSync Logo"
@@ -1545,7 +1535,7 @@ const Chat = () => {
                                 sx={{
                                     color: 'primary.main',
                                     fontWeight: 600,
-                                    mb: 2
+                                    mb: 1
                                 }}
                             >
                                 Welcome to FlowSync Chat
@@ -1553,11 +1543,40 @@ const Chat = () => {
                             <Typography
                                 variant="body1"
                                 color="text.secondary"
-                                sx={{ px: 3 }}
+                                sx={{ px: 3, mb: 2 }}
                             >
-                                Select a conversation from the left to start messaging.
+                                Select a conversation from the left to start messaging.<br />
                                 Stay connected with your team members in real-time.
                             </Typography>
+                            {/* Instructions Section */}
+                            <Paper
+                                elevation={2}
+                                sx={{
+                                    bgcolor: theme.palette.background.default,
+                                    border: `1.5px dashed ${theme.palette.primary.main}`,
+                                    borderRadius: 3,
+                                    textAlign: 'left',
+                                    p: 2,
+                                    width: '100%'
+                                }}
+                            >
+                                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                                    Instructions
+                                </Typography>
+                                <Box component="ul" sx={{ pl: 2, mb: 0, fontSize: '1rem', color: 'text.secondary' }}>
+                                    <li>Use the input box at the bottom of the screen to send a message to another team member.</li>
+                                    <li>You can only interact with messages that you have sent yourself.</li>
+                                    <li>When you click on your own message, a menu will appear with the following options:
+
+                                        <br></br><b>Edit:</b> Modify the message content. An “edited” label will appear after changes.
+
+                                        <br/><b>Delete:</b> Remove the message. It will be hidden and marked as deleted for all participants.
+
+                                        <br/><b>Forward:</b> Share the message with another member in your team.
+
+                                        <br/><b>Copy:</b> Copy the message text to your clipboard for reuse elsewhere.</li>
+                                </Box>
+                            </Paper>
                         </Box>
                     </Box>
                 )}
