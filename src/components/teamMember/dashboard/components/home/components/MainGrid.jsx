@@ -36,7 +36,7 @@ export default function MainGrid() {
         </Grid>
       </Grid>
       <Typography variant="h6" mb={2}>
-        Task Reminders
+        Task Status Overview
       </Typography>
       <Stack
         direction="row"

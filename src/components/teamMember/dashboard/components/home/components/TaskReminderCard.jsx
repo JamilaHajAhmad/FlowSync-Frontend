@@ -1,77 +1,85 @@
-import React,{ useState, useEffect } from "react";
-import { 
-    Card, CardContent, Typography, Chip, Box, CircularProgress,
+import React, { useState, useEffect } from "react";
+import {
+    Card, CardContent, Typography, Box, CircularProgress,
     Dialog, DialogTitle, DialogContent, List, ListItem, ListItemText,
     ListItemIcon, Divider, IconButton
 } from "@mui/material";
-import {PauseCircleOutline, ErrorOutline} from '@mui/icons-material';
+import { PauseCircleOutline, ErrorOutline, CheckCircleOutline } from '@mui/icons-material';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import CloseIcon from '@mui/icons-material/Close';
 import { getMemberTasks } from "../../../../../../services/taskService";
 import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 
 const getStatusColor = (status) => {
-  switch (status) {
-    case "Opened":
-      return { 
-        color: "#fff4e0",  // Light orange background
-        textColor: "orange", // Orange text
-        icon: <RotateLeftIcon sx={{ color: "#ed6c02" }} />,
-        borderLeftColor: "#ed6c02"
-      };
-    case "Frozen":
-      return { 
-        color: "#E3F2FD",  // Light blue background
-        textColor: "#1976D2", // Blue text
-        icon: <PauseCircleOutline sx={{ color: "#1976D2" }} />,
-        borderLeftColor: "#1976D2"
-      };
+    switch (status) {
+        case "Opened":
+            return {
+                color: "#fff4e0",  // Light orange background
+                textColor: "orange", // Orange text
+                icon: <RotateLeftIcon sx={{ color: "#ed6c02" }} />,
+                borderLeftColor: "#ed6c02"
+            };
+        case "Frozen":
+            return {
+                color: "#E3F2FD",  // Light blue background
+                textColor: "#1976D2", // Blue text
+                icon: <PauseCircleOutline sx={{ color: "#1976D2" }} />,
+                borderLeftColor: "#1976D2"
+            };
 
-    case "Delayed":
-      return { 
-        color: "#fde8e8",  // Light red background
-        textColor: "red", // Red text
-        icon: <ErrorOutline sx={{ color: "#d32f2f" }} />,
-        borderLeftColor: "#d32f2f"
-      };
-    default:
-      return { 
-        color: "#ecfdf5",  // Light green background
-        textColor: "#059669", // Green text
-        icon: null,
-        borderLeftColor: "#059669"
-      };
-  }
+        case "Delayed":
+            return {
+                color: "#fde8e8",  // Light red background
+                textColor: "red", // Red text
+                icon: <ErrorOutline sx={{ color: "#d32f2f" }} />,
+                borderLeftColor: "#d32f2f"
+            };
+        case "Completed":
+            return {
+                color: "#ecfdf5",  // Light green background
+                textColor: "#059669", // Green text
+                icon: <CheckCircleOutline sx={{ color: "#059669" }} />,
+                borderLeftColor: "#059669"
+            };
+        default:
+            return {
+                color: "#f0f0f0",  // Default light gray background
+                textColor: "#666", // Default gray text
+                icon: <ErrorOutline sx={{ color: "#666" }} />,
+                borderLeftColor: "#666"
+            };
+    }
 };
 
 const TaskReminderCard = () => {
-    const [tasks, setTasks] = useState({
+    const [ tasks, setTasks ] = useState({
         Opened: [],
         Delayed: [],
-        Frozen: []
+        Frozen: [],
+        Completed: []
     });
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [selectedType, setSelectedType] = useState(null);
-    const [dialogOpen, setDialogOpen] = useState(false);
+    const [ loading, setLoading ] = useState(true);
+    const [ error, setError ] = useState(null);
+    const [ selectedType, setSelectedType ] = useState(null);
+    const [ dialogOpen, setDialogOpen ] = useState(false);
 
     useEffect(() => {
         const fetchTasks = async () => {
             try {
                 const token = localStorage.getItem('authToken');
-                // Reorder task types to show Delayed first
-                const taskTypes = ['Delayed', 'Opened', 'Frozen'];
+                // Add Completed to the types
+                const taskTypes = [ 'Delayed', 'Opened', 'Frozen', 'Completed' ];
                 const tasksMap = {};
 
                 for (const type of taskTypes) {
                     const response = await getMemberTasks(token, type);
-                    tasksMap[type] = response.data || [];
+                    tasksMap[ type ] = response.data || [];
                 }
 
                 setTasks(tasksMap);
             } catch (err) {
-                console.error('Error fetching tasks:', err);
                 setError('Failed to load tasks');
+                console.error('Error fetching tasks:', err);
             } finally {
                 setLoading(false);
             }
@@ -86,11 +94,11 @@ const TaskReminderCard = () => {
     };
 
     const renderTaskDialog = () => {
-        const typeTasks = selectedType ? tasks[selectedType] || [] : [];
-        
+        const typeTasks = selectedType ? tasks[ selectedType ] || [] : [];
+
         return (
-            <Dialog 
-                open={dialogOpen} 
+            <Dialog
+                open={dialogOpen}
                 onClose={() => setDialogOpen(false)}
                 maxWidth="md"
                 fullWidth
@@ -98,7 +106,7 @@ const TaskReminderCard = () => {
                     sx: { borderRadius: 2 }
                 }}
             >
-                <DialogTitle 
+                <DialogTitle
                     sx={{
                         borderBottom: '1px solid #e2e8f0',
                         bgcolor: getStatusColor(selectedType).color,
@@ -204,17 +212,17 @@ const TaskReminderCard = () => {
                     px: 2
                 }}
             >
-                <CelebrationIcon 
-                    sx={{ 
-                        color: '#22c55e', 
+                <CelebrationIcon
+                    sx={{
+                        color: '#22c55e',
                         fontSize: { xs: 48, sm: 64 },
                         mb: 3
-                    }} 
+                    }}
                 />
-                <Typography 
-                    variant="h4" 
+                <Typography
+                    variant="h4"
                     color="#15803d"
-                    sx={{ 
+                    sx={{
                         mb: 2,
                         fontWeight: 600,
                         fontSize: { xs: '1.5rem', sm: '2rem' }
@@ -222,9 +230,9 @@ const TaskReminderCard = () => {
                 >
                     All Caught Up!
                 </Typography>
-                <Typography 
-                    variant="h6" 
-                    sx={{ 
+                <Typography
+                    variant="h6"
+                    sx={{
                         maxWidth: 500,
                         lineHeight: 1.5,
                         fontSize: { xs: '1rem', sm: '1.25rem' }
@@ -238,10 +246,10 @@ const TaskReminderCard = () => {
 
     return (
         <>
-            <Box 
-                display="flex" 
-                gap={4} 
-                sx={{ 
+            <Box
+                display="flex"
+                gap={4}
+                sx={{
                     overflowX: 'auto',
                     pb: 2,
                     display: 'flex',
@@ -263,11 +271,63 @@ const TaskReminderCard = () => {
                     sx={{
                         display: 'flex',
                         gap: 4,
-                        px: 2 // 20
+                        px: 2
                     }}
                 >
                     {Object.entries(tasks).map(([type, typeTasks]) => {
                         const { color, textColor, icon, borderLeftColor } = getStatusColor(type);
+
+                        // Completed card: different subtitle and no click handler
+                        if (type === "Completed") {
+                            return (
+                                <Card
+                                    key={type}
+                                    sx={{
+                                        minWidth: 300,
+                                        bgcolor: color,
+                                        borderLeft: `5px solid ${borderLeftColor}`,
+                                        boxShadow: 2,
+                                        opacity: 0.95,
+                                        position: 'relative'
+                                    }}
+                                >
+                                    <CardContent>
+                                        <Box display="flex" alignItems="center" gap={2} mb={2}>
+                                            {icon}
+                                            <Typography variant="h6" color={textColor}>
+                                                Completed Tasks
+                                            </Typography>
+                                        </Box>
+                                        <Typography variant="h4" color={textColor}>
+                                            {typeTasks.length}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            {typeTasks.length === 1 ? 'task' : 'tasks'}
+                                        </Typography>
+                                        <Box
+                                            sx={{
+                                                position: 'absolute',
+                                                bottom: 12,
+                                                right: 16,
+                                                bgcolor: '#43a047',
+                                                color: '#fff',
+                                                px: 1.5,
+                                                py: 0.5,
+                                                borderRadius: 2,
+                                                fontSize: 13,
+                                                fontWeight: 500,
+                                                boxShadow: 1,
+                                                opacity: 0.85
+                                            }}
+                                        >
+                                            Great job!
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            );
+                        }
+
+                        // Other cards (reminders)
                         return (
                             <Card
                                 key={type}
