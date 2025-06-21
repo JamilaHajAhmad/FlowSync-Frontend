@@ -1,4 +1,11 @@
-body, html {
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body,
+html {
     margin: 0;
     padding: 0;
     width: 100%;
@@ -8,4 +15,59 @@ body, html {
 #root {
     width: 100%;
     min-height: 100vh;
+}
+
+.main-grid-container {
+    width: 100%;
+    max-width: 1700px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+@media (max-width: 1500px) and (min-width: 901px) {
+    .main-grid-container {
+        max-width: 1000px;
+        overflow-x: hidden;
+    }
+}
+
+@media (max-width: 1200px) {
+    .main-grid-container {
+        max-width: 1000px;
+    }
+
+    .task-reminder-cards-container {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 900px) and (min-width: 601px) {
+    .main-grid-container {
+        max-width: 500px;
+        overflow-x: hidden;
+    }
+}
+
+@media (max-width: 600px) {
+    .main-grid-container {
+        max-width: 400px;
+        padding: 0 8px;
+        overflow-x: hidden;
+    }
+}
+
+@media (max-width: 600px) and (min-width: 501px) {
+    .main-grid-container {
+        max-width: 300px;
+        padding: 0 8px;
+        overflow-x: hidden;
+    }
+}
+
+@media (max-width: 500px) {
+    .main-grid-container {
+        max-width: 280px;  
+        padding: 0 4px;    
+        overflow-x: hidden;
+    }
 }

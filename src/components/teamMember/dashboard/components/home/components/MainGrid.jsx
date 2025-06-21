@@ -13,7 +13,7 @@ export default function MainGrid() {
   const taskTypes = ['Opened', 'Completed', 'Delayed', 'Frozen'];
 
   return (
-    <Box sx={{ width: '100%', maxWidth: { sm: '100%', md: '1700px' } }}>
+    <Box className="main-grid-container">
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
         Overview
       </Typography>

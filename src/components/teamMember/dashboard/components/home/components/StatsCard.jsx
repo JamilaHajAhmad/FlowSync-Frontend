@@ -163,7 +163,9 @@ function StatsCard({ taskType }) {
           }
         );
         console.log('Task statistics response:', response);
-        if (!response.data || response.data.length === 0) {
+
+        const data = response.data;
+        if (!data || !data.statusCounts) {
           setCardData({
             title: `${taskType} Tasks`,
             value: '0',
@@ -178,51 +180,32 @@ function StatsCard({ taskType }) {
           return;
         }
 
-        // Sort data by year and month to ensure latest month is first
-        const sortedData = [...response.data].sort((a, b) => {
-          if (a.year !== b.year) return b.year - a.year;
-          return b.month - a.month;
-        });
+        const month = data.month;
+        const year = data.year;
+        const count = data.statusCounts?.[taskType] || 0;
+        const daysInMonth = getDaysInMonth(month, year);
 
-        // Process all months' data
-        const monthsData = sortedData.map(monthData => ({
-          month: monthData.month,
-          year: monthData.year,
-          count: monthData.statusCounts?.[taskType] || 0,
-          daysInMonth: getDaysInMonth(monthData.month, monthData.year)
-        }));
+        // If you have previous month data, use it here:
+        // const previousCount = data.previousStatusCounts?.[taskType] || 0;
+        // For now, just use null since it's not available:
+        const previousCount = null;
 
-        // Get current month's data
-        const currentMonth = monthsData[0]; // Latest month after sorting
-        const previousMonth = monthsData[1];
+        const trends = handleTrendCalculation(count, previousCount);
 
-        // Calculate total for current month
-        const currentMonthCount = currentMonth?.count || 0;
+        const currentMonthData = Array(daysInMonth.length).fill(count);
 
-        // Calculate trend based on current and previous month
-        const trends = handleTrendCalculation(
-          currentMonthCount,
-          previousMonth?.count || 0
-        );
-
-        // Create data points for current month's sparkline
-        const currentMonthData = Array(currentMonth?.daysInMonth.length || 0).fill(currentMonthCount);
-
-        // Format month name for display - responsive formatting
-        const monthName = new Date(currentMonth?.year, currentMonth?.month - 1)
-          .toLocaleString('default', { 
-            month: isMobile ? 'short' : 'long' 
-          });
+        const monthName = new Date(year, month - 1)
+          .toLocaleString('default', { month: isMobile ? 'short' : 'long' });
 
         setCardData({
           title: `${taskType} Tasks`,
-          value: currentMonthCount.toString(),
-          interval: `${monthName}${isMobile ? '' : '-'}${currentMonth?.year}`,
-          trend: trends.trend || 'neutral',
-          trendPercentage: trends.percentage || 0,
+          value: count.toString(),
+          interval: `${monthName}${isMobile ? '' : '-'}${year}`,
+          trend: trends.trend,
+          trendPercentage: trends.percentage,
           data: currentMonthData,
-          daysInWeek: currentMonth?.daysInMonth || [],
-          months: monthsData
+          daysInWeek: daysInMonth,
+          months: [],
         });
 
         setLoading(false);
