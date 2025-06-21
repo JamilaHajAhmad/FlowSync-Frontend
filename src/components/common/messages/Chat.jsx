@@ -26,7 +26,8 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
-    Button
+    Button,
+    InputAdornment
 } from '@mui/material';
 import {
     Send as SendIcon,
@@ -40,7 +41,9 @@ import {
     ContentCopy as ContentCopyIcon,
     Edit as EditIcon,
     Delete as DeleteIcon,
-    ForwardToInbox as ForwardToInboxIcon
+    ForwardToInbox as ForwardToInboxIcon,
+    Search as SearchIcon,
+    Clear as ClearIcon
 } from '@mui/icons-material';
 import { sendMessage, getConversation, getUnreadMessages, markMessagesAsRead, getChatUsers, sendMessageToTeam, editMessage, deleteMessage } from '../../../services/chatService';
 import * as signalR from '@microsoft/signalr';
@@ -51,7 +54,6 @@ import { toast } from 'react-toastify';
 import TeamMessageDialog from './TeamMessageDialog';
 import EmojiPicker from 'emoji-picker-react';
 
-// Message status constants
 const MESSAGE_STATUS = {
     SENDING: 'sending',
     SENT: 'sent',
@@ -61,7 +63,6 @@ const MESSAGE_STATUS = {
 
 const LOCAL_META_KEY = 'chatMessageMeta';
 
-// Custom theme: primary green, secondary purple (forwarded indicator)
 const theme = createTheme({
     palette: {
         primary: {
@@ -71,7 +72,7 @@ const theme = createTheme({
             contrastText: '#ffffff'
         },
         secondary: {
-            main: '#a259d9', // purple for forwarded
+            main: '#a259d9', 
             light: '#f3e9fb',
             dark: '#7e44b8'
         },
@@ -82,7 +83,6 @@ const theme = createTheme({
     }
 });
 
-// --- localStorage meta helpers ---
 function getMetaMap() {
     try {
         return JSON.parse(localStorage.getItem(LOCAL_META_KEY) || '{}');
@@ -102,10 +102,8 @@ function mergeMetaFromLocalStorage(messages) {
         ...metaMap[ msg.id ]
     }));
 }
-// --- end localStorage meta helpers ---
 
 const Chat = () => {
-    // State management
     const [ conversations, setConversations ] = useState([]);
     const [ selectedUser, setSelectedUser ] = useState(null);
     const [ messages, setMessages ] = useState([]);
@@ -138,8 +136,8 @@ const Chat = () => {
     const [ copyTooltip, setCopyTooltip ] = useState(false);
     const [ tooltipAnchor, setTooltipAnchor ] = useState(null);
     const [ forwardDialog, setForwardDialog ] = useState(false);
+    const [ searchTerm, setSearchTerm ] = useState('');
 
-    // Refs
     const messageEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
     const conversationCacheRef = useRef(new Map());
@@ -147,18 +145,16 @@ const Chat = () => {
     const emojiButtonRef = useRef(null);
     const textFieldRef = useRef(null);
 
-    // Constants - moved to refs to prevent recreating on each render
     const tokenRef = useRef(localStorage.getItem('authToken'));
     const currentUserIdRef = useRef(decodeToken(tokenRef.current).id);
 
-    // Find the current user object from users array
     const currentUser = useMemo(
         () => users.find(u => u.id === currentUserIdRef.current),
         [ users ]
     );
 
-    // Update refs when selectedUser changes
     useEffect(() => {
+        document.title = 'FlowSync | Chat';
         selectedUserIdRef.current = selectedUser?.id || null;
     }, [ selectedUser?.id ]);
 
@@ -167,21 +163,6 @@ const Chat = () => {
             messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, [ messages, isTyping ]);
-
-    // Memoized values
-    const sortedUsers = useMemo(() => {
-        return users.sort((a, b) => {
-            const aHasUnread = conversations.some(conv => conv.userId === a.id && conv.unreadCount > 0);
-            const bHasUnread = conversations.some(conv => conv.userId === b.id && conv.unreadCount > 0);
-
-            if (aHasUnread && !bHasUnread) return -1;
-            if (!aHasUnread && bHasUnread) return 1;
-
-            const aLastMessage = conversations.find(conv => conv.userId === a.id)?.lastMessageTime || 0;
-            const bLastMessage = conversations.find(conv => conv.userId === b.id)?.lastMessageTime || 0;
-            return new Date(bLastMessage) - new Date(aLastMessage);
-        });
-    }, [ users, conversations ]);
 
     const showError = useCallback((message) => {
         setError(message);
@@ -269,10 +250,11 @@ const Chat = () => {
                 return acc;
             }, {});
             setConversations(Object.values(conversationsMap));
-        } catch (error) { 
+        } catch (error) {
             showError('Failed to load conversations');
             console.error('Error fetching conversations:', error);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchUsers = useCallback(async () => {
@@ -293,9 +275,7 @@ const Chat = () => {
             deleted: msg.deleted || msg.isDeleted || false,
             deletedBy: msg.deletedBy || null,
             forwarded: msg.forwarded || msg.isForwarded || false,
-            forwardedBy: msg.forwardedBy || null,
             originalSenderId: msg.originalSenderId || null,
-            forwardedFromName: msg.forwardedFromName || null,
         };
     }
 
@@ -366,6 +346,7 @@ const Chat = () => {
             }
         } catch (error) {
             showError('Failed to load conversation');
+            console.error('Error fetching conversation:', error);
         }
     }, [ fetchUnreadMessages, fetchConversations, showError ]);
 
@@ -404,6 +385,7 @@ const Chat = () => {
                 setIsTeamMessage(false);
             } catch (error) {
                 showError('Failed to send team message');
+                console.error('Error sending team message:', error);
             }
             return;
         }
@@ -446,10 +428,11 @@ const Chat = () => {
                     : msg
             ));
             showError('Failed to send message. Please try again.');
+            console.error('Error sending message:', error);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ newMessage, selectedUser, isTeamMessage, isTeamMessageEnabled, showError ]);
 
-    // SignalR connection management
     useEffect(() => {
         if (!tokenRef.current) return;
 
@@ -485,9 +468,7 @@ const Chat = () => {
                         deleted: metaData.deleted || metaData.isDeleted || false,
                         deletedBy: metaData.deletedBy || null,
                         forwarded: metaData.forwarded || metaData.isForwarded || false,
-                        forwardedBy: metaData.forwardedBy || null,
                         originalSenderId: metaData.originalSenderId || null,
-                        forwardedFromName: metaData.forwardedFromName || null,
                     };
 
                     if (selectedUserIdRef.current === senderId) {
@@ -536,7 +517,10 @@ const Chat = () => {
 
                         try {
                             await markMessagesAsRead([ messageId ], tokenRef.current);
-                        } catch (error) { }
+                        } catch (error) { 
+                            showError('Failed to mark message as read');
+                            console.error('Error marking messages as read:', error);
+                        }
                     } else {
                         fetchUnreadMessages();
                         fetchConversations();
@@ -572,6 +556,8 @@ const Chat = () => {
             } catch (err) {
                 if (isMounted) {
                     setConnectionState('disconnected');
+                    showError('Failed to connect to chat server. Retrying...');
+                    console.error('Error setting up SignalR connection:', err);
                 }
                 await new Promise(resolve => setTimeout(resolve, 5000));
                 return setupConnection();
@@ -591,6 +577,7 @@ const Chat = () => {
             }
             clearTimeout(typingTimeoutRef.current);
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -604,7 +591,10 @@ const Chat = () => {
                     fetchUnreadMessages(),
                     fetchConversations()
                 ]);
-            } catch (error) { }
+            } catch (error) { 
+                showError('Failed to load initial data');
+                console.error('Error fetching initial data:', error);
+            }
         };
 
         fetchData();
@@ -622,6 +612,7 @@ const Chat = () => {
             clearInterval(unreadInterval);
             clearInterval(conversationsInterval);
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ fetchUsers, fetchUnreadMessages, fetchConversations ]);
 
     useEffect(() => {
@@ -695,6 +686,7 @@ const Chat = () => {
             setTeamMessageDialog(false);
         } catch (error) {
             showError('Failed to send team message');
+            console.error('Error sending team message:', error);
         }
     };
 
@@ -759,6 +751,7 @@ const Chat = () => {
             setEditText('');
         } catch (err) {
             showError('Failed to edit message');
+            console.error('Error editing message:', err);
         }
     };
     const handleEditCheckClick = async () => {
@@ -784,6 +777,7 @@ const Chat = () => {
             handleMsgMenuClose();
         } catch (err) {
             showError('Failed to delete message');
+            console.error('Error deleting message:', err);
         }
     };
     const handleForward = () => {
@@ -800,22 +794,18 @@ const Chat = () => {
             return;
         }
         try {
-            const originalSenderName = selectedMsg.forwarded
-                ? selectedMsg.forwardedFromName || getUserNameById(selectedMsg.originalSenderId)
-                : getUserNameById(selectedMsg.senderId);
             const response = await sendMessage(userId, selectedMsg.content, tokenRef.current);
             const forwardedId = response.data?.id || response.data?.messageId;
             saveMetaToLocalStorage(forwardedId, {
                 forwarded: true,
-                forwardedBy: currentUserIdRef.current,
                 originalSenderId: selectedMsg.forwarded ? selectedMsg.originalSenderId : selectedMsg.senderId,
-                forwardedFromName: originalSenderName
             });
             toast.success('Message forwarded');
             setForwardDialog(false);
             setSelectedMsg(null);
         } catch (err) {
             showError('Failed to forward message');
+            console.error('Error forwarding message:', err);
         }
     };
 
@@ -844,7 +834,7 @@ const Chat = () => {
 
     const getForwardedByText = (msg) => {
         if (!msg.forwarded) return null;
-        return `Forwarded by ${getUserNameById(msg.forwardedBy)}`;
+        return `Forwarded`;
     };
 
     return (
@@ -959,153 +949,211 @@ const Chat = () => {
                                 sx={{ mt: 1 }}
                             />
                         )}
+                        {/* Search Panel */}
+                        <Box sx={{ mt: 2 }}>
+                            <TextField
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                placeholder="Search users..."
+                                size="small"
+                                fullWidth
+                                variant="outlined"
+                                sx={{
+                                    bgcolor: '#f5f5f5',
+                                    borderRadius: '30px',
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '30px',
+                                        pr: 0
+                                    },
+                                    '& .MuiInputBase-input': {
+                                        borderRadius: '30px',
+                                        py: 1.2
+                                    }
+                                }}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <SearchIcon color="action" />
+                                        </InputAdornment>
+                                    ),
+                                    endAdornment: searchTerm && (
+                                        <InputAdornment position="end">
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => setSearchTerm('')}
+                                                sx={{
+                                                    borderRadius: '50%',
+                                                    bgcolor: 'transparent',
+                                                    '&:hover': { bgcolor: '#e0e0e0' }
+                                                }}
+                                                aria-label="Clear search"
+                                            >
+                                                <ClearIcon />
+                                            </IconButton>
+                                        </InputAdornment>
+                                    )
+                                }}
+                                autoComplete="off"
+                            />
+                        </Box>
                     </Box>
 
-                    <List sx={{ flexGrow: 1, overflow: 'auto' }}>
-                        {loading ? (
-                            Array.from({ length: 5 }).map((_, index) => (
-                                <ListItem key={index}>
-                                    <ListItemAvatar>
-                                        <Skeleton variant="circular" width={40} height={40} />
-                                    </ListItemAvatar>
-                                    <ListItemText
-                                        primary={<Skeleton width="60%" />}
-                                        secondary={<Skeleton width="80%" />}
-                                    />
-                                </ListItem>
-                            ))
-                        ) : (
-                            sortedUsers.map((user) => {
-                                const conversation = conversations.find(conv => conv.userId === user.id);
-                                const hasUnread = conversation?.unreadCount > 0;
+                    {/*
+                        Define filteredUsers before rendering the List.
+                    */}
+                    {(() => {
+                        const filteredUsers = users.filter(user =>
+                            user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+                        );
+                        return (
+                            <List sx={{ flexGrow: 1, overflow: 'auto' }}>
+                                {loading ? (
+                                    Array.from({ length: 5 }).map((_, index) => (
+                                        <ListItem key={index}>
+                                            <ListItemAvatar>
+                                                <Skeleton variant="circular" width={40} height={40} />
+                                            </ListItemAvatar>
+                                            <ListItemText
+                                                primary={<Skeleton width="60%" />}
+                                                secondary={<Skeleton width="80%" />}
+                                            />
+                                        </ListItem>
+                                    ))
+                                ) : (
+                                    filteredUsers.map((user) => {
+                                        const conversation = conversations.find(conv => conv.userId === user.id);
+                                        const hasUnread = conversation?.unreadCount > 0;
 
-                                return (
-                                    <ListItem
-                                        key={user.id}
-                                        component="div"
-                                        selected={selectedUser?.id === user.id}
-                                        onClick={() => setSelectedUser(user)}
-                                        sx={{
-                                            cursor: 'pointer',
-                                            '&:hover': {
-                                                backgroundColor: 'action.hover',
-                                            },
-                                            '&.Mui-selected': {
-                                                backgroundColor: 'primary.light',
-                                                '&:hover': {
-                                                    backgroundColor: 'primary.light',
-                                                }
-                                            }
-                                        }}
-                                    >
-                                        <ListItemAvatar>
-                                            <Badge
-                                                overlap="circular"
-                                                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                                                badgeContent={
-                                                    <Box
-                                                        sx={{
-                                                            width: 12,
-                                                            height: 12,
-                                                            borderRadius: '50%',
-                                                            backgroundColor: user.isOnline ? 'success.main' : 'grey.500',
-                                                            border: '2px solid white'
-                                                        }}
-                                                    />
-                                                }
-                                            >
-                                                <Badge
-                                                    badgeContent={hasUnread ? conversation.unreadCount : 0}
-                                                    color="error"
-                                                    max={99}
-                                                >
-                                                    <Avatar
-                                                        src={user.pictureURL}
-                                                        alt={user.fullName}
-                                                        sx={{
-                                                            width: 40,
-                                                            height: 40,
-                                                            border: hasUnread ? 2 : 0,
-                                                            borderColor: 'primary.main'
-                                                        }}
-                                                    >
-                                                        {user.fullName[ 0 ]?.toUpperCase()}
-                                                    </Avatar>
-                                                </Badge>
-                                            </Badge>
-                                        </ListItemAvatar>
-                                        <ListItemText
-                                            primary={
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Typography
-                                                        sx={{
-                                                            fontWeight: hasUnread ? 600 : 400,
-                                                            fontSize: '0.95rem'
-                                                        }}
-                                                    >
-                                                        {user.fullName}
-                                                    </Typography>
-                                                    {user.id === currentUserIdRef.current && (
-                                                        <Typography
-                                                            component="span"
-                                                            sx={{
-                                                                ml: 1,
-                                                                color: 'text.secondary',
-                                                                fontSize: '0.8rem'
-                                                            }}
-                                                        >
-                                                            (You)
-                                                        </Typography>
-                                                    )}
-                                                </Box>
-                                            }
-                                            secondary={
-                                                <Typography
-                                                    component="div"
-                                                    variant="body2"
-                                                    color="text.secondary"
-                                                    sx={{
-                                                        display: 'flex',
-                                                        justifyContent: 'space-between',
-                                                        alignItems: 'center'
-                                                    }}
-                                                >
-                                                    <Typography
-                                                        component="span"
-                                                        variant="caption"
-                                                        sx={{
-                                                            display: 'inline-block',
-                                                            fontWeight: hasUnread ? 500 : 400,
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis',
-                                                            maxWidth: '70%'
-                                                        }}
-                                                    >
-                                                        {conversation?.lastMessage?.length > 30
-                                                            ? `${conversation.lastMessage.substring(0, 30)}...`
-                                                            : conversation?.lastMessage
+                                        return (
+                                            <ListItem
+                                                key={user.id}
+                                                component="div"
+                                                selected={selectedUser?.id === user.id}
+                                                onClick={() => setSelectedUser(user)}
+                                                sx={{
+                                                    cursor: 'pointer',
+                                                    '&:hover': {
+                                                        backgroundColor: 'action.hover',
+                                                    },
+                                                    '&.Mui-selected': {
+                                                        backgroundColor: 'primary.light',
+                                                        '&:hover': {
+                                                            backgroundColor: 'primary.light',
                                                         }
-                                                    </Typography>
-                                                    {conversation?.lastMessageTime && (
+                                                    }
+                                                }}
+                                            >
+                                                <ListItemAvatar>
+                                                    <Badge
+                                                        overlap="circular"
+                                                        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                                                        badgeContent={
+                                                            <Box
+                                                                sx={{
+                                                                    width: 12,
+                                                                    height: 12,
+                                                                    borderRadius: '50%',
+                                                                    backgroundColor: user.isOnline ? 'success.main' : 'grey.500',
+                                                                    border: '2px solid white'
+                                                                }}
+                                                            />
+                                                        }
+                                                    >
+                                                        <Badge
+                                                            badgeContent={hasUnread ? conversation.unreadCount : 0}
+                                                            color="error"
+                                                            max={99}
+                                                        >
+                                                            <Avatar
+                                                                src={user.pictureURL}
+                                                                alt={user.fullName}
+                                                                sx={{
+                                                                    width: 40,
+                                                                    height: 40,
+                                                                    border: hasUnread ? 2 : 0,
+                                                                    borderColor: 'primary.main'
+                                                                }}
+                                                            >
+                                                                {user.fullName[ 0 ]?.toUpperCase()}
+                                                            </Avatar>
+                                                        </Badge>
+                                                    </Badge>
+                                                </ListItemAvatar>
+                                                <ListItemText
+                                                    primary={
+                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                            <Typography
+                                                                sx={{
+                                                                    fontWeight: hasUnread ? 600 : 400,
+                                                                    fontSize: '0.95rem'
+                                                                }}
+                                                            >
+                                                                {user.fullName}
+                                                            </Typography>
+                                                            {user.id === currentUserIdRef.current && (
+                                                                <Typography
+                                                                    component="span"
+                                                                    sx={{
+                                                                        ml: 1,
+                                                                        color: 'text.secondary',
+                                                                        fontSize: '0.8rem'
+                                                                    }}
+                                                                >
+                                                                    (You)
+                                                                </Typography>
+                                                            )}
+                                                        </Box>
+                                                    }
+                                                    secondary={
                                                         <Typography
-                                                            component="span"
-                                                            variant="caption"
+                                                            component="div"
+                                                            variant="body2"
+                                                            color="text.secondary"
                                                             sx={{
-                                                                fontSize: '0.7rem',
-                                                                ml: 1
+                                                                display: 'flex',
+                                                                justifyContent: 'space-between',
+                                                                alignItems: 'center'
                                                             }}
                                                         >
-                                                            {formatLastMessageTime(conversation.lastMessageTime)}
+                                                            <Typography
+                                                                component="span"
+                                                                variant="caption"
+                                                                sx={{
+                                                                    display: 'inline-block',
+                                                                    fontWeight: hasUnread ? 500 : 400,
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    maxWidth: '70%'
+                                                                }}
+                                                            >
+                                                                {conversation?.lastMessage?.length > 30
+                                                                    ? `${conversation.lastMessage.substring(0, 30)}...`
+                                                                    : conversation?.lastMessage
+                                                                }
+                                                            </Typography>
+                                                            {conversation?.lastMessageTime && (
+                                                                <Typography
+                                                                    component="span"
+                                                                    variant="caption"
+                                                                    sx={{
+                                                                        fontSize: '0.7rem',
+                                                                        ml: 1
+                                                                    }}
+                                                                >
+                                                                    {formatLastMessageTime(conversation.lastMessageTime)}
+                                                                </Typography>
+                                                            )}
                                                         </Typography>
-                                                    )}
-                                                </Typography>
-                                            }
-                                        />
-                                    </ListItem>
-                                );
-                            })
-                        )}
-                    </List>
+                                                    }
+                                                />
+                                            </ListItem>
+                                        );
+                                    })
+                                )}
+                            </List>
+                        );
+                    })()}
                 </Paper>
 
                 <Paper className="chat-main" elevation={1} sx={{
@@ -1499,84 +1547,167 @@ const Chat = () => {
                 {!selectedUser && (
                     <Box sx={{
                         display: { xs: 'none', md: 'flex' },
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
                         height: '100%',
-                        textAlign: 'center',
-                        p: 3,
                         flex: 1,
                         bgcolor: 'white',
-                        position: 'absolute',
-                        top: '50%',
-                        left: '58%',
-                        transform: 'translate(-58%, -50%)',
                     }}>
+                        {/* Left Side - Welcome Section */}
                         <Box sx={{
+                            width: '80%',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            maxWidth: '440px',
-                            width: '100%',
-                            gap: 3
+                            bgcolor: 'white',
+                            p: 3,
+                            minHeight: '100%',
+                            ml: '-80%'
                         }}>
-                            {/* Illustration as in your provided welcome image */}
-                            <img
-                                src={Logo}
-                                alt="FlowSync Logo"
-                                style={{
-                                    width: '120px',
-                                    marginBottom: '24px'
-                                }}
-                            />
-                            <Typography
-                                variant="h5"
-                                sx={{
-                                    color: 'primary.main',
-                                    fontWeight: 600,
-                                    mb: 1
-                                }}
-                            >
-                                Welcome to FlowSync Chat
-                            </Typography>
-                            <Typography
-                                variant="body1"
-                                color="text.secondary"
-                                sx={{ px: 3, mb: 2 }}
-                            >
-                                Select a conversation from the left to start messaging.<br />
-                                Stay connected with your team members in real-time.
-                            </Typography>
-                            {/* Instructions Section */}
-                            <Paper
-                                elevation={2}
-                                sx={{
-                                    bgcolor: theme.palette.background.default,
-                                    border: `1.5px dashed ${theme.palette.primary.main}`,
-                                    borderRadius: 3,
-                                    textAlign: 'left',
-                                    p: 2,
-                                    width: '100%'
-                                }}
-                            >
-                                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                                    Instructions
+                            <Box sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                maxWidth: '350px',
+                                width: '100%',
+                            }}>
+                                <img
+                                    src={Logo}
+                                    alt="FlowSync Logo"
+                                    style={{
+                                        width: '100px',
+                                        marginBottom: '24px',
+                                        marginLeft: '100px'
+                                    }}
+                                />
+                                <Typography
+                                    variant="h5"
+                                    sx={{
+                                        color: 'primary.main',
+                                        fontWeight: 600,
+                                        mb: 1.5,
+                                        textAlign: 'center',
+                                        whiteSpace: 'nowrap',
+                                        ml: '100px'
+                                    }}
+                                >
+                                    Welcome to FlowSync Chat
                                 </Typography>
-                                <Box component="ul" sx={{ pl: 2, mb: 0, fontSize: '1rem', color: 'text.secondary' }}>
-                                    <li>Use the input box at the bottom of the screen to send a message to another team member.</li>
-                                    <li>You can only interact with messages that you have sent yourself.</li>
-                                    <li>When you click on your own message, a menu will appear with the following options:
+                                <Typography
+                                    variant="body1"
+                                    color="text.secondary"
+                                    sx={{
+                                        textAlign: 'center',
+                                        lineHeight: 1.6,
+                                        fontSize: '0.95rem',
+                                        ml: '100px',
+                                    }}
+                                >
+                                    Select a conversation from the left to start messaging.<br />
+                                    Stay connected with your team members in real-time.
+                                </Typography>
+                            </Box>
+                        </Box>
 
-                                        <br></br><b>Edit:</b> Modify the message content. An “edited” label will appear after changes.
+                        {/* Right Side - Instructions Section */}
+                        <Box sx={{
+                            width: '180%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-start',
+                            justifyContent: 'center',
+                            bgcolor: theme.palette.background.default,
+                            p: 3,
+                            minHeight: '100%',
+                            ml: '30%',
+                        }}>
+                            <Box sx={{
+                                width: '100%',
+                            }}>
+                                <Typography
+                                    variant="h6"
+                                    sx={{
+                                        color: 'primary.main',
+                                        fontWeight: 600,
+                                        mb: 2
+                                    }}
+                                >
+                                    Getting Started with FlowSync Chat
+                                </Typography>
 
-                                        <br/><b>Delete:</b> Remove the message. It will be hidden and marked as deleted for all participants.
+                                <Paper
+                                    elevation={2}
+                                    sx={{
+                                        bgcolor: 'white',
+                                        border: `1.5px dashed ${theme.palette.primary.main}`,
+                                        borderRadius: 2,
+                                        p: 2.5,
+                                        width: '100%'
+                                    }}
+                                >
+                                    <Typography
+                                        variant="subtitle1"
+                                        sx={{
+                                            fontWeight: 600,
+                                            mb: 1.5,
+                                            color: 'primary.main'
+                                        }}
+                                    >
+                                        Instructions
+                                    </Typography>
 
-                                        <br/><b>Forward:</b> Share the message with another member in your team.
+                                    <Box component="div" sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+                                        <Box sx={{ mb: 1.5 }}>
+                                            • Use the input box at the bottom of the screen to send a message to another team member.
+                                        </Box>
 
-                                        <br/><b>Copy:</b> Copy the message text to your clipboard for reuse elsewhere.</li>
-                                </Box>
-                            </Paper>
+                                        <Box sx={{ mb: 1.5 }}>
+                                            • You can only interact with messages that you have sent yourself.
+                                        </Box>
+
+                                        <Box sx={{ mb: 1 }}>
+                                            • When you click on your own message, a menu will appear with the following options:
+                                        </Box>
+
+                                        <Box sx={{ pl: 1.5, mt: 1 }}>
+                                            <Box sx={{ mb: 1 }}>
+                                                <Typography component="span" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                                                    Edit:
+                                                </Typography>
+                                                <Typography component="span" sx={{ ml: 1, fontSize: '0.875rem' }}>
+                                                    Modify the message content. An "edited" label will appear after changes.
+                                                </Typography>
+                                            </Box>
+
+                                            <Box sx={{ mb: 1 }}>
+                                                <Typography component="span" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                                                    Delete:
+                                                </Typography>
+                                                <Typography component="span" sx={{ ml: 1, fontSize: '0.875rem' }}>
+                                                    Remove the message. It will be hidden and marked as deleted for all participants.
+                                                </Typography>
+                                            </Box>
+
+                                            <Box sx={{ mb: 1 }}>
+                                                <Typography component="span" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                                                    Forward:
+                                                </Typography>
+                                                <Typography component="span" sx={{ ml: 1, fontSize: '0.875rem' }}>
+                                                    Share the message with another member in your team.
+                                                </Typography>
+                                            </Box>
+
+                                            <Box>
+                                                <Typography component="span" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                                                    Copy:
+                                                </Typography>
+                                                <Typography component="span" sx={{ ml: 1, fontSize: '0.875rem' }}>
+                                                    Copy the message text to your clipboard for reuse elsewhere.
+                                                </Typography>
+                                            </Box>
+                                        </Box>
+                                    </Box>
+                                </Paper>
+                            </Box>
                         </Box>
                     </Box>
                 )}
