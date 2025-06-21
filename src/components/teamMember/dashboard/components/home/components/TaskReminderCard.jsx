@@ -266,6 +266,7 @@ const TaskReminderCard = () => {
                         borderRadius: 2
                     },
                 }}
+                className="task-reminder-cards-container"
             >
                 <Box 
                     sx={{
