@@ -6,7 +6,6 @@ import {
     Grid,
     Container,
     Box,
-    CircularProgress,
     IconButton,
     Tooltip
 } from '@mui/material';
