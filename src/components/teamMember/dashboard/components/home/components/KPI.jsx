@@ -22,7 +22,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
   flexDirection: 'column',
   gap: '8px',
   flexGrow: 1,
-  backgroundColor: '#FFFFFF',
+  backgroundColor: '#F3FCF7',
   borderRadius: '12px',
   padding: theme.spacing(2),
 }));
