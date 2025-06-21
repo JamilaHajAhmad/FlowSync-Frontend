@@ -56,13 +56,14 @@ html {
     margin-bottom: 12px;
     display: flex;
     align-items: flex-start; /* Change from center to flex-start */
-    white-space: normal; /* Remove nowrap */
+    white-space: nowrap; /* Remove nowrap */
     line-height: 1.4;
 }
 
 .highlights li strong {
     margin-left: 5px;
     font-family: "Oswald", sans-serif;
+    white-space: nowrap; /* Prevent line breaks in strong text */
 }
 
 .cta-button {
@@ -93,7 +94,7 @@ html {
 }
 
 .about-image img {
-    max-width: 100%;
+    max-width: 120%;
 }
 
 @media (max-width: 900px) {
