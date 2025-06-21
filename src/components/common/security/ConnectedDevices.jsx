@@ -36,6 +36,7 @@ const ConnectedDevices = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
+        document.title = "FlowSync | Connected Devices"; // Set the document title
         fetchConnectedDevices();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

@@ -1,4 +1,4 @@
-import { useState } from "react"; // Update the import
+import { useState, useEffect } from "react"; // Update the import
 import { toast } from "react-toastify";
 import { FaEye, FaEyeSlash } from 'react-icons/fa'; // Add this import
 import "react-toastify/dist/ReactToastify.css";
@@ -15,6 +15,11 @@ import { decodeToken } from '../../../utils';
 const Login = () => {
     const navigate = useNavigate();
     const [ showPassword, setShowPassword ] = useState(false); // Add this state
+
+    // Set the document title
+    useEffect(() => {
+        document.title = "FlowSync | Login";
+    }, []);
 
     // Add toggle function
     const togglePasswordVisibility = () => {

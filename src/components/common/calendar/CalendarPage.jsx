@@ -30,6 +30,7 @@ export default function MiniDrawer() {
             const decoded = decodeToken(token);
             setUserRole(decoded.role);
         }
+        document.title = "FlowSync | Calendar"; // Set the document title
     }, []);
 
     const handleDrawerOpen = () => {

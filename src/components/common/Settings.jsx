@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Box,
     Typography,
@@ -31,6 +31,10 @@ import { decodeToken } from "../../utils";
 const Settings = () => {
     const navigate = useNavigate();
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    useEffect(() => {
+        document.title = "FlowSync | Settings";
+    }, []);
 
     const handleBackToDashboard = () => {
         const token = localStorage.getItem('authToken');

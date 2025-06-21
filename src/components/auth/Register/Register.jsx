@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -13,6 +13,12 @@ import axios from 'axios';
 
 const Register = () => {
   const navigate = useNavigate();
+
+  // Set the document title
+  useEffect(() => {
+    document.title = "FlowSync | Register";
+  }, []);
+  // State to manage password visibility
   const [showPasswords, setShowPasswords] = useState({
     password: false,
     confirmPassword: false

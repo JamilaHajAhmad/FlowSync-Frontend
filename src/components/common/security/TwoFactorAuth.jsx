@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Box,
     Button,
@@ -24,6 +24,10 @@ const TwoFactorAuth = () => {
     const token = localStorage.getItem('authToken');
     const navigate = useNavigate();
 
+    useEffect(() => {
+        document.title = "FlowSync | Two-Factor Authentication";
+    }, []);
+
     const handleEnable2FA = async (token) => {
         setLoading(true);
         try {
@@ -32,7 +36,7 @@ const TwoFactorAuth = () => {
             console.log(response);
             setIsEnabled(true);
             setError('');
-            toast.success(response.data || '2FA enabled successfully');
+            toast.success('Please check your email for the verification code');
         } catch (err) {
             setError('Failed to enable 2FA');
             toast.error(err.message || 'Failed to enable 2FA');
@@ -163,7 +167,7 @@ const TwoFactorAuth = () => {
                             }}
                         >
                             {!isEnabled ?
-                                "To enable two-factor authentication, click the button below to receive a verification code via email." :
+                                "Click the button below to receive a verification code via email." :
                                 "Enter the 6-digit verification code that was sent to your email address."
                             }
                         </Typography>

@@ -91,10 +91,13 @@ const validationSchema = Yup.object({
 
 const EditProfile = () => {
     const navigate = useNavigate();
+    useEffect(() => {
+        document.title = "FlowSync | Edit profile";
+    }, []);
     const [ loading, setLoading ] = useState(false);
-    const [initialLoading, setInitialLoading] = useState(true);
+    const [ initialLoading, setInitialLoading ] = useState(true);
     const [ imageLoading, setImageLoading ] = useState(false);
-    const [originalValues, setOriginalValues] = useState({
+    const [ originalValues, setOriginalValues ] = useState({
         firstName: "",
         lastName: "",
         email: "",
@@ -106,8 +109,8 @@ const EditProfile = () => {
         status: "On_Duty",
         pictureURL: null
     });
-    const [showAdminDialog, setShowAdminDialog] = useState(false);
-    const [pendingStatus, setPendingStatus] = useState(null);
+    const [ showAdminDialog, setShowAdminDialog ] = useState(false);
+    const [ pendingStatus, setPendingStatus ] = useState(null);
 
     const formik = useFormik({
         initialValues: {
@@ -127,24 +130,24 @@ const EditProfile = () => {
             setLoading(true);
             try {
                 const token = localStorage.getItem('authToken');
-            
+
                 // Calculate changed fields
                 const updatedFields = {};
                 for (const key in values) {
-                    if (values[key] !== originalValues[key]) {
+                    if (values[ key ] !== originalValues[ key ]) {
                         // Adjust date of birth before sending to server
-                        updatedFields[key] = key === 'dateOfBirth' 
-                            ? new Date(values[key]).toISOString() 
-                            : values[key];
+                        updatedFields[ key ] = key === 'dateOfBirth'
+                            ? new Date(values[ key ]).toISOString()
+                            : values[ key ];
                     }
                 }
-            
+
                 if (Object.keys(updatedFields).length === 0) {
                     toast.info("No changes detected");
                     setLoading(false);
                     return;
                 }
-            
+
                 // Convert status to number if it's changed
                 if (updatedFields.status) {
                     const statusMapping = {
@@ -152,13 +155,13 @@ const EditProfile = () => {
                         "Annually_Leave": 1,
                         "Temporarily_Leave": 0
                     };
-                    updatedFields.status = statusMapping[updatedFields.status];
+                    updatedFields.status = statusMapping[ updatedFields.status ];
                 }
-            
+
                 const response = await updateProfile(updatedFields, token);
                 console.log('Profile updated successfully:', response.data);
                 toast.success(response.data);
-                
+
                 // Add delay before navigation
                 setTimeout(() => {
                     navigate('/profile');
@@ -180,7 +183,7 @@ const EditProfile = () => {
                 const response = await getProfile(token);
                 console.log('Profile fetched successfully:', response);
                 const profileData = response.data;
-    
+
                 const formattedData = {
                     firstName: profileData.firstName || "",
                     lastName: profileData.lastName || "",
@@ -193,7 +196,7 @@ const EditProfile = () => {
                     status: profileData.status || "On_Duty",
                     pictureURL: profileData.pictureURL || null
                 };
-    
+
                 formik.setValues(formattedData);
                 console.log(formattedData);
                 setOriginalValues(formattedData);
@@ -204,9 +207,9 @@ const EditProfile = () => {
                 setInitialLoading(false);
             }
         };
-    
+
         fetchProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const theme = useTheme();
 
@@ -280,7 +283,7 @@ const EditProfile = () => {
 
         const role = decodeToken(localStorage.getItem('authToken')).role;
         // Check if user is leader and changing to leave status
-        if (role.includes('Leader') && 
+        if (role.includes('Leader') &&
             (newStatus === 'Temporarily_Leave' || newStatus === 'Annually_Leave')) {
             setPendingStatus(newStatus);
             setShowAdminDialog(true);
@@ -314,25 +317,25 @@ const EditProfile = () => {
                 gap: { xs: 2, sm: 3, md: 4 }
             }}>
                 {/* Logo & Title */}
-                <Box display="flex" 
-                    alignItems="center" 
+                <Box display="flex"
+                    alignItems="center"
                     sx={{
                         position: { xs: 'static', md: 'relative' },
                         left: { xs: 0, md: "-310px" },
                         mb: { xs: 2, md: 0 }
                     }}
                 >
-                    <img src={logo} 
-                        alt="FlowSync Logo" 
-                        style={{ 
-                            height: 'clamp(30px, 5vw, 40px)', 
-                            marginRight: 10 
-                        }} 
+                    <img src={logo}
+                        alt="FlowSync Logo"
+                        style={{
+                            height: 'clamp(30px, 5vw, 40px)',
+                            marginRight: 10
+                        }}
                     />
-                    <Typography 
-                        variant="h6" 
-                        sx={{ 
-                            color: '#059669', 
+                    <Typography
+                        variant="h6"
+                        sx={{
+                            color: '#059669',
                             fontWeight: 'bold',
                             fontSize: { xs: '1.1rem', sm: '1.25rem' }
                         }}
@@ -379,7 +382,7 @@ const EditProfile = () => {
 
                     <Box display="flex" alignItems="center" gap={3} mb={4}>
                         {/* Profile Avatar */}
-                        <Box sx={{ 
+                        <Box sx={{
                             position: 'relative', // Changed to relative
                             display: 'flex',
                             justifyContent: { xs: 'center', md: 'flex-start' },
@@ -509,7 +512,7 @@ const EditProfile = () => {
                                         InputLabelProps={{ shrink: true }}
                                         InputProps={{
                                             inputProps: {
-                                                max: new Date().toISOString().split('T')[0] // Prevent future dates
+                                                max: new Date().toISOString().split('T')[ 0 ] // Prevent future dates
                                             }
                                         }}
                                     />

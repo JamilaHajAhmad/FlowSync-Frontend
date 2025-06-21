@@ -21,6 +21,7 @@ const ToggleTwoFactorAuth = () => {
     const [is2FAEnabled, setIs2FAEnabled] = useState(false);
 
     useEffect(() => {
+        document.title = 'FlowSync | Two-Factor Authentication';
         const storedValue = localStorage.getItem('is2FAEnabled');
         if (storedValue === 'true') {
             setIs2FAEnabled(true);

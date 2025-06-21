@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
@@ -14,6 +14,10 @@ import { resetPasswordMotion } from "../../../variants";
 
 const ResetPassword = () => {
     const navigate = useNavigate();
+    // Set the document title
+    useEffect(() => {
+        document.title = "FlowSync | Reset Password";
+    }, []);
     const location = useLocation();
 
     const queryParams = new URLSearchParams(location.search);

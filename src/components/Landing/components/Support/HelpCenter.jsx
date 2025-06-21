@@ -1,3 +1,4 @@
+import React from 'react';
 import { motion as Motion } from 'framer-motion';
 import { useState, useMemo } from 'react';
 import { containerVariants, itemVariants } from '../../../../variants';
@@ -11,6 +12,9 @@ import './Support.css';
 const HelpCenter = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
+    React.useEffect(() => {
+        document.title = "FlowSync | Help Center";
+    }, []);
 
     const faqs = [
         {

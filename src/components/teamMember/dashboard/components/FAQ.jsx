@@ -24,6 +24,10 @@ export default function MiniDrawer() {
         setOpen(!open);
     };
 
+    React.useEffect(() => {
+        document.title = "FlowSync | FAQ";
+    }, []);
+
     const [ mode, setMode ] = React.useState(
         localStorage.getItem("currentMode") ? 
         localStorage.getItem("currentMode") :

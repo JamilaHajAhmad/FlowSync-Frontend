@@ -36,6 +36,7 @@ const NotificationsPage = () => {
             const decoded = decodeToken(token);
             setUserRole(decoded.role);
         }
+        document.title = "FlowSync | Notifications";
     }, []);
 
     const theme = React.useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
@@ -56,9 +57,10 @@ const NotificationsPage = () => {
     };
 
     const renderSidebar = () => {
-        if (userRole === 'Leader') {
+        if (!userRole) return null; // Ensure userRole is set before rendering
+        if (userRole.includes('Leader')) {
             return <Sidebar open={open} />;
-        } else if (userRole === 'Member') {
+        } else if (userRole.includes('Member')) {
             return <MSidebar open={open} />;
         }
         return null;

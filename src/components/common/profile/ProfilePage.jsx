@@ -29,6 +29,7 @@ export default function MiniDrawer() {
             const decoded = decodeToken(token);
             setUserRole(decoded.role);
         }
+        document.title = "FlowSync | Profile"; // Set the document title
     }, []);
 
     const handleDrawerOpen = () => {

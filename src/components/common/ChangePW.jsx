@@ -1,5 +1,4 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Button, Paper, TextField, Typography, LinearProgress, CssBaseline, InputAdornment, IconButton } from "@mui/material";
 import { styled, ThemeProvider, createTheme } from "@mui/material/styles";
 import { motion as Motion } from "framer-motion";
@@ -40,7 +39,7 @@ const theme = createTheme({
 const PasswordStrengthBar = styled(LinearProgress)(({ theme, strength }) => ({
     height: 8,
     borderRadius: 4,
-    backgroundColor: theme.palette.grey[200],
+    backgroundColor: theme.palette.grey[ 200 ],
     '& .MuiLinearProgress-bar': {
         backgroundColor:
             strength === 0 ? '#EF4444' :
@@ -87,20 +86,23 @@ const validationSchema = Yup.object({
     newPassword: Yup.string()
         .required('New password is required')
         .min(8, 'Password must be at least 8 characters')
-        .notOneOf([Yup.ref('currentPassword')], 'New password must be different from current password'),
+        .notOneOf([ Yup.ref('currentPassword') ], 'New password must be different from current password'),
     confirmNewPassword: Yup.string()
         .required('Please confirm your new password')
-        .oneOf([Yup.ref('newPassword')], 'Passwords must match')
+        .oneOf([ Yup.ref('newPassword') ], 'Passwords must match')
 });
 
 const ChangePW = () => {
     const navigate = useNavigate();
-    const [showPassword, setShowPassword] = useState({
+    useEffect(() => {
+        document.title = "FlowSync | Change Password";
+    }, []);
+    const [ showPassword, setShowPassword ] = useState({
         current: false,
         new: false,
         confirm: false
     });
-    const [strength, setStrength] = useState(0);
+    const [ strength, setStrength ] = useState(0);
 
     const handleBack = () => {
         navigate('/profile');
@@ -166,10 +168,10 @@ const ChangePW = () => {
             const result = zxcvbn(formik.values.newPassword);
             setStrength(result.score);
         }
-    }, [formik.values.newPassword]);
+    }, [ formik.values.newPassword ]);
 
     const togglePasswordVisibility = (field) => {
-        setShowPassword(prev => ({ ...prev, [field]: !prev[field] }));
+        setShowPassword(prev => ({ ...prev, [ field ]: !prev[ field ] }));
     };
 
     return (
@@ -220,21 +222,21 @@ const ChangePW = () => {
                         }}
                     >
                         <Box display="flex" alignItems="center" justifyContent="center">
-                            <img 
-                                src={logo} 
-                                alt="FlowSync Logo" 
-                                style={{ 
+                            <img
+                                src={logo}
+                                alt="FlowSync Logo"
+                                style={{
                                     height: 'clamp(40px, 8vw, 50px)',
                                     width: 'auto'
-                                }} 
+                                }}
                             />
                         </Box>
 
                         <Box textAlign="center">
-                            <Typography 
-                                variant="h5" 
-                                fontWeight="bold" 
-                                color="primary.main" 
+                            <Typography
+                                variant="h5"
+                                fontWeight="bold"
+                                color="primary.main"
                                 gutterBottom
                                 sx={{
                                     fontSize: { xs: '1.25rem', sm: '1.5rem' }
@@ -242,8 +244,8 @@ const ChangePW = () => {
                             >
                                 Change Password
                             </Typography>
-                            <Typography 
-                                variant="body2" 
+                            <Typography
+                                variant="body2"
                                 color="text.secondary"
                                 sx={{
                                     fontSize: { xs: '0.875rem', sm: '1rem' },
@@ -251,7 +253,7 @@ const ChangePW = () => {
                                 }}
                             >
                                 <Typewriter
-                                    words={['Keep your account secure by updating your password regularly']}
+                                    words={[ 'Keep your account secure by updating your password regularly' ]}
                                     cursor={false}
                                     typeSpeed={50}
                                     loop={1}
@@ -260,9 +262,9 @@ const ChangePW = () => {
                         </Box>
 
                         <form onSubmit={formik.handleSubmit}>
-                            <Box 
-                                display="flex" 
-                                flexDirection="column" 
+                            <Box
+                                display="flex"
+                                flexDirection="column"
                                 gap={{ xs: 1.5, sm: 2 }}
                             >
                                 {[
@@ -291,18 +293,18 @@ const ChangePW = () => {
                                         name={field.name}
                                         label={field.label}
                                         type={field.show ? 'text' : 'password'}
-                                        value={formik.values[field.name]}
+                                        value={formik.values[ field.name ]}
                                         onChange={formik.handleChange}
                                         onBlur={formik.handleBlur}
-                                        error={formik.touched[field.name] && Boolean(formik.errors[field.name])}
-                                        helperText={formik.touched[field.name] && formik.errors[field.name]}
+                                        error={formik.touched[ field.name ] && Boolean(formik.errors[ field.name ])}
+                                        helperText={formik.touched[ field.name ] && formik.errors[ field.name ]}
                                         required
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">
                                                     <Lock
                                                         size={20}
-                                                        color={formik.touched[field.name] && formik.errors[field.name]
+                                                        color={formik.touched[ field.name ] && formik.errors[ field.name ]
                                                             ? '#EF4444'
                                                             : theme.palette.primary.main}
                                                     />
@@ -338,10 +340,10 @@ const ChangePW = () => {
                                             value={(strength + 1) * 20}
                                             strength={strength}
                                         />
-                                        <Typography 
-                                            variant="caption" 
-                                            color="text.secondary" 
-                                            sx={{ 
+                                        <Typography
+                                            variant="caption"
+                                            color="text.secondary"
+                                            sx={{
                                                 mt: 0.5,
                                                 fontSize: { xs: '0.7rem', sm: '0.75rem' }
                                             }}
@@ -385,5 +387,6 @@ const ChangePW = () => {
         </ThemeProvider>
     );
 };
+
 
 export default ChangePW;

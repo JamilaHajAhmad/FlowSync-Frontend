@@ -22,6 +22,7 @@ const LoginNotifications = () => {
     });
 
     useEffect(() => {
+        document.title = 'FlowSync | Login Notifications';
         localStorage.setItem('securityNotificationsEnabled', isEnabled);
     }, [isEnabled]);
 

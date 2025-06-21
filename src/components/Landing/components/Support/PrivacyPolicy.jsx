@@ -1,3 +1,4 @@
+import React from 'react';
 import { motion as Motion } from 'framer-motion';
 import { containerVariants, itemVariants } from '../../../../variants';
 import logo from '../../../../assets/images/logo.png';
@@ -7,6 +8,9 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const PrivacyPolicy = () => {
     const navigate = useNavigate();
+    React.useEffect(() => {
+        document.title = "FlowSync | Privacy Policy";
+    }, []);
 
     return (
         <Motion.div

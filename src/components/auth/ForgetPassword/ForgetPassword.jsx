@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
@@ -11,6 +12,12 @@ import { forgetPasswordMotion } from "../../../variants";
 
 const ForgetPassword = () => {
     const navigate = useNavigate();
+
+    // Set the document title
+    useEffect(() => {
+        document.title = "FlowSync | Forget Password";
+    }
+    , []);
     // Validation Schema
     const validationSchema = Yup.object({
         email: Yup.string()
