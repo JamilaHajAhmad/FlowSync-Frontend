@@ -181,6 +181,7 @@ const FAQ = () => {
           sx={{
             fontWeight: 'bold',
             color: '#064e3b',
+            filter: 'brightness(150%)',
             fontSize: { xs: '1.8rem', sm: '2.5rem', md: '3rem' },
             mb: { xs: 2, sm: 3 }
           }}

@@ -315,7 +315,8 @@ const handleSupportReset = () => {
                   mb: { xs: 3, sm: 4 },
                   '& .MuiOutlinedInput-root': {
                     backgroundColor: '#f8fafc',
-                    fontSize: { xs: '0.9rem', sm: '1rem' }
+                    fontSize: { xs: '0.9rem', sm: '1rem' },
+                    color: 'black'
                   }
                 }}
               />
@@ -477,10 +478,15 @@ const handleSupportReset = () => {
                     placeholder="Select request type"
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    sx={{ 
+                    sx={{
                       '& .MuiOutlinedInput-root': {
                         backgroundColor: '#f8fafc',
-                        fontSize: { xs: '0.9rem', sm: '1rem' }
+                        fontSize: { xs: '0.9rem', sm: '1rem' },
+                        color: 'black',
+                      },
+                      // Make the select arrow visible in dark mode
+                      '& .MuiSelect-icon': {
+                        color: theme => theme.palette.text.secondary,
                       }
                     }}
                   >
@@ -520,7 +526,8 @@ const handleSupportReset = () => {
                     sx={{ 
                       '& .MuiOutlinedInput-root': {
                         backgroundColor: '#f8fafc',
-                        fontSize: { xs: '0.9rem', sm: '1rem' }
+                        fontSize: { xs: '0.9rem', sm: '1rem' },
+                        color: 'black'
                       }
                     }}
                   />
@@ -549,7 +556,8 @@ const handleSupportReset = () => {
                     sx={{ 
                       '& .MuiOutlinedInput-root': {
                         backgroundColor: '#f8fafc',
-                        fontSize: { xs: '0.9rem', sm: '1rem' }
+                        fontSize: { xs: '0.9rem', sm: '1rem' },
+                        color: 'black'
                       }
                     }}
                   />
@@ -576,7 +584,12 @@ const handleSupportReset = () => {
                     sx={{ 
                       '& .MuiOutlinedInput-root': {
                         backgroundColor: '#f8fafc',
-                        fontSize: { xs: '0.9rem', sm: '1rem' }
+                        fontSize: { xs: '0.9rem', sm: '1rem' },
+                        color: 'black',
+                      },
+                      // Make the select arrow visible in dark mode
+                      '& .MuiSelect-icon': {
+                        color: theme => theme.palette.text.secondary,
                       }
                     }}
                   >
