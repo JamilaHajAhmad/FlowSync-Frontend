@@ -101,9 +101,10 @@ export default function Members({ showActions = true }) {
                         />
                     </Box>
                     <Typography
+                        variant="body1"
                         sx={{
                             fontWeight: 500,
-                            color: row.original.isDeactivated ? '#94a3b8' : '#111827',
+                            color: row.original.isDeactivated ? '#94a3b8' : 'black',
                         }}
                     >
                         {cell.getValue()}
@@ -381,7 +382,7 @@ export default function Members({ showActions = true }) {
                 borderRadius: 2,
                 backgroundColor: 'transparent',
                 border: '1px solid #e0e0e0', // Add border to paper
-
+                color: 'black'
             },
         },
         renderTopToolbarCustomActions: () => (

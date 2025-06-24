@@ -477,7 +477,7 @@ const Requests = () => {
         muiTableBodyProps: {
             sx: {
                 '& .MuiTableCell-root': {
-                    color: '#374151',
+                    color: 'black',
                 },
             },
         },
