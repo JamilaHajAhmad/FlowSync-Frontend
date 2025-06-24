@@ -146,7 +146,7 @@ export default function KPI() {
     <StyledCard variant="outlined">
       <CardContent>
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-          <Typography component="h2" variant="subtitle2">
+          <Typography component="h2" variant="subtitle2" color="black">
             KPI
           </Typography>
           <Tooltip title="What is KPI?">
@@ -169,7 +169,7 @@ export default function KPI() {
         </Box>
         <Stack direction="row" justifyContent="space-between" sx={{ mt: 2, gap: 1 }}>
           <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="h6">{kpiData.totalTasks}</Typography>
+            <Typography variant="h6" color="black">{kpiData.totalTasks}</Typography>
             <Typography sx={{fontSize: 12 }} variant="body2" color="text.secondary">
               Total
             </Typography>

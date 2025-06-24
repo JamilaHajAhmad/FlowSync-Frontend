@@ -125,31 +125,106 @@ function StatsCard({ taskType }) {
     return 1;
   };
 
+  // FIXED: Improved trend calculation function
   const calculateTrend = (current, previous) => {
-    if (previous === null || previous === undefined)
+    // Handle edge cases
+    if (previous === null || previous === undefined || isNaN(previous)) {
       return { trend: 'neutral', percentage: 0 };
-    if (previous === 0)
-      return {
-        trend: current > 0 ? 'up' : 'neutral',
-        percentage: current > 0 ? 100 : 0,
-      };
+    }
+    
+    if (current === null || current === undefined || isNaN(current)) {
+      return { trend: 'neutral', percentage: 0 };
+    }
 
-    const percentageChange = ((current - previous) / previous) * 100;
-    const roundedPercentage = Math.round(percentageChange);
+    // Convert to numbers to ensure proper calculation
+    const currentNum = Number(current);
+    const previousNum = Number(previous);
 
+    // If previous is 0, handle specially to avoid division by zero
+    if (previousNum === 0) {
+      if (currentNum > 0) {
+        return { trend: 'up', percentage: 100 };
+      } else if (currentNum < 0) {
+        return { trend: 'down', percentage: 100 };
+      } else {
+        return { trend: 'neutral', percentage: 0 };
+      }
+    }
+
+    // Calculate percentage change
+    const percentageChange = ((currentNum - previousNum) / Math.abs(previousNum)) * 100;
+    const roundedPercentage = Math.round(Math.abs(percentageChange)); // Always positive for display
+
+    // Determine trend direction with a small threshold to avoid noise
     let trendDirection = 'neutral';
-    if (roundedPercentage > 0) trendDirection = 'up';
-    else if (roundedPercentage < 0) trendDirection = 'down';
+    const threshold = 1; // Ignore changes less than 1%
+    
+    if (Math.abs(percentageChange) >= threshold) {
+      if (percentageChange > 0) {
+        trendDirection = 'up';
+      } else if (percentageChange < 0) {
+        trendDirection = 'down';
+      }
+    }
 
     return { trend: trendDirection, percentage: roundedPercentage };
   };
 
-  const handleTrendCalculation = (currentCount, previousCount) => {
-    if (previousCount === undefined || previousCount === null) {
-      return { trend: 'neutral', percentage: 0 };
+  // Process the new API response format
+  const processApiData = (dataArr) => {
+    if (!Array.isArray(dataArr) || dataArr.length === 0) {
+      return {
+        dailyCounts: [],
+        totalCount: 0,
+        month: null,
+        year: null,
+        daysInMonth: []
+      };
     }
 
-    return calculateTrend(currentCount, previousCount);
+    // Get month and year from the first data point
+    const { month, year } = dataArr[0];
+    const daysInMonth = getDaysInMonth(month, year);
+    
+    // Initialize daily counts array with zeros
+    const dailyCounts = Array(daysInMonth.length).fill(0);
+    
+    // Filter and aggregate data for the specific task type
+    const normalize = s => (s || '').toString().trim().toLowerCase();
+    const normalizedTaskType = normalize(taskType);
+    
+    // Group data by day and sum counts for matching status
+    const dayMap = {};
+    
+    dataArr.forEach(item => {
+      const itemStatus = normalize(item.status);
+      const day = item.day;
+      
+      if (itemStatus === normalizedTaskType && day >= 1 && day <= daysInMonth.length) {
+        if (!dayMap[day]) {
+          dayMap[day] = 0;
+        }
+        dayMap[day] += item.count || 0;
+      }
+    });
+    
+    // Fill the dailyCounts array with aggregated data
+    Object.keys(dayMap).forEach(day => {
+      const dayIndex = parseInt(day) - 1;
+      if (dayIndex >= 0 && dayIndex < dailyCounts.length) {
+        dailyCounts[dayIndex] = dayMap[day];
+      }
+    });
+    
+    const totalCount = dailyCounts.reduce((sum, val) => sum + val, 0);
+    
+    return {
+      dailyCounts,
+      totalCount,
+      month,
+      year,
+      daysInMonth
+    };
   };
 
   useEffect(() => {
@@ -157,19 +232,20 @@ function StatsCard({ taskType }) {
       try {
         const token = localStorage.getItem('authToken');
         const response = await axios.get(
-          'https://localhost:49798/api/reports/leader/monthly-task-status-counts',
+          'https://localhost:49798/api/reports/leader/monthly-task-status-summary',
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
         console.log('Task statistics response:', response);
 
-        const data = response.data;
-        if (!data || !data.statusCounts) {
+        const dataArr = response.data || [];
+        
+        if (!Array.isArray(dataArr) || dataArr.length === 0) {
           setCardData({
             title: `${taskType} Tasks`,
             value: '0',
-            interval: '',
+            interval: 'No Data',
             trend: 'neutral',
             trendPercentage: 0,
             data: [],
@@ -180,30 +256,67 @@ function StatsCard({ taskType }) {
           return;
         }
 
-        const month = data.month;
-        const year = data.year;
-        const count = data.statusCounts?.[taskType] || 0;
-        const daysInMonth = getDaysInMonth(month, year);
+        // Process the new API response format
+        const { dailyCounts, totalCount, month, year, daysInMonth } = processApiData(dataArr);
 
-        // If you have previous month data, use it here:
-        // const previousCount = data.previousStatusCounts?.[taskType] || 0;
-        // For now, just use null since it's not available:
-        const previousCount = null;
+        // IMPROVED: Better trend calculation logic
+        let trend = { trend: 'neutral', percentage: 0 };
+        
+        if (dailyCounts.length >= 14) {
+          // Compare last 7 days vs previous 7 days
+          const last7Days = dailyCounts.slice(-7).reduce((a, b) => a + b, 0);
+          const prev7Days = dailyCounts.slice(-14, -7).reduce((a, b) => a + b, 0);
+          trend = calculateTrend(last7Days, prev7Days);
+          
+        } else if (dailyCounts.length >= 8) {
+          // Compare second half vs first half of available data
+          const midPoint = Math.floor(dailyCounts.length / 2);
+          const secondHalf = dailyCounts.slice(midPoint).reduce((a, b) => a + b, 0);
+          const firstHalf = dailyCounts.slice(0, midPoint).reduce((a, b) => a + b, 0);
+          trend = calculateTrend(secondHalf, firstHalf);
+          
+        } else if (dailyCounts.length >= 4) {
+          // Compare last quarter vs first quarter of available data
+          const quarterSize = Math.floor(dailyCounts.length / 4);
+          if (quarterSize > 0) {
+            const lastQuarter = dailyCounts.slice(-quarterSize).reduce((a, b) => a + b, 0);
+            const firstQuarter = dailyCounts.slice(0, quarterSize).reduce((a, b) => a + b, 0);
+            trend = calculateTrend(lastQuarter, firstQuarter);
+          }
+          
+        } else if (dailyCounts.length >= 2) {
+          // Compare last day vs average of previous days
+          const lastDay = dailyCounts[dailyCounts.length - 1];
+          const previousDays = dailyCounts.slice(0, -1);
+          const avgPreviousDays = previousDays.length > 0 ? 
+            previousDays.reduce((a, b) => a + b, 0) / previousDays.length : 0;
+          trend = calculateTrend(lastDay, avgPreviousDays);
+        }
 
-        const trends = handleTrendCalculation(count, previousCount);
+        // Add debug logging to help troubleshoot
+        console.log('Trend calculation debug:', {
+          taskType,
+          dailyCounts,
+          totalCount,
+          calculatedTrend: trend
+        });
 
-        const currentMonthData = Array(daysInMonth.length).fill(count);
-
-        const monthName = new Date(year, month - 1)
-          .toLocaleString('default', { month: isMobile ? 'short' : 'long' });
+        // Format interval display
+        const monthName = month && year ? 
+          new Date(year, month - 1).toLocaleString('default', { 
+            month: isMobile ? 'short' : 'long' 
+          }) : 'Unknown';
+        
+        const intervalText = month && year ? 
+          `${monthName}${isMobile ? '' : '-'}${year}` : 'No Data';
 
         setCardData({
           title: `${taskType} Tasks`,
-          value: count.toString(),
-          interval: `${monthName}${isMobile ? '' : '-'}${year}`,
-          trend: trends.trend,
-          trendPercentage: trends.percentage,
-          data: currentMonthData,
+          value: totalCount.toString(),
+          interval: intervalText,
+          trend: trend.trend,
+          trendPercentage: trend.percentage, // Already absolute value from calculateTrend
+          data: dailyCounts,
           daysInWeek: daysInMonth,
           months: [],
         });
@@ -211,6 +324,19 @@ function StatsCard({ taskType }) {
         setLoading(false);
       } catch (error) {
         console.error('Error fetching task statistics:', error);
+        
+        // Set error state
+        setCardData({
+          title: `${taskType} Tasks`,
+          value: '0',
+          interval: 'Error',
+          trend: 'neutral',
+          trendPercentage: 0,
+          data: [],
+          daysInWeek: [],
+          months: [],
+        });
+        
         setLoading(false);
       }
     };
@@ -312,7 +438,7 @@ function StatsCard({ taskType }) {
               <Chip
                 size={getChipSize()}
                 color={color}
-                label={`${cardData.trendPercentage > 0 ? '+' : ''}${cardData.trendPercentage}%`}
+                label={`${cardData.trend === 'up' ? '+' : cardData.trend === 'down' ? '-' : ''}${cardData.trendPercentage}%`}
                 sx={{
                   fontWeight: 500,
                   fontSize: { xs: '0.75rem', sm: '0.75rem' },
@@ -342,7 +468,7 @@ function StatsCard({ taskType }) {
               minHeight: getChartHeight(),
             }}
           >
-            {cardData.data.length !== 0 ? (
+            {cardData.data.length > 0 && cardData.data.some(val => val > 0) ? (
               <SparkLineChart
                 colors={[chartColor]}
                 data={cardData.data}
