@@ -11,25 +11,27 @@ import { decodeToken } from '../../../utils';
 import { createEvent, deleteEvent, getTaskDeadlines, getEvents, updateEvent } from '../../../services/calendarService';
 
 export default function Calendar() {
-    const [currentEvents, setCurrentEvents] = useState([]);
-    const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
-    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-    const [isDeadlineInfoModalOpen, setIsDeadlineInfoModalOpen] = useState(false);
-    const [isEditEventModalOpen, setIsEditEventModalOpen] = useState(false);
-    const [selectedEvent, setSelectedEvent] = useState(null);
-    const [selectedDeadline, setSelectedDeadline] = useState(null);
-    const [newEventTitle, setNewEventTitle] = useState('');
-    const [newEventTime, setNewEventTime] = useState('');
-    const [editEventTitle, setEditEventTitle] = useState('');
-    const [editEventTime, setEditEventTime] = useState('');
-    const [userId, setUserId] = useState(null);
+    const [ currentEvents, setCurrentEvents ] = useState([]);
+    const [ isAddEventModalOpen, setIsAddEventModalOpen ] = useState(false);
+    const [ isConfirmModalOpen, setIsConfirmModalOpen ] = useState(false);
+    const [ isDeadlineInfoModalOpen, setIsDeadlineInfoModalOpen ] = useState(false);
+    const [ isEditEventModalOpen, setIsEditEventModalOpen ] = useState(false);
+    const [ selectedEvent, setSelectedEvent ] = useState(null);
+    const [ selectedDeadline, setSelectedDeadline ] = useState(null);
+    const [ newEventTitle, setNewEventTitle ] = useState('');
+    const [ newEventTime, setNewEventTime ] = useState('');
+    const [ editEventTitle, setEditEventTitle ] = useState('');
+    const [ editEventTime, setEditEventTime ] = useState('');
+    const [ originalEditEventTitle, setOriginalEditEventTitle ] = useState('');
+    const [ originalEditEventTime, setOriginalEditEventTime ] = useState('');
+    const [ userId, setUserId ] = useState(null);
     // eslint-disable-next-line no-unused-vars
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    const [ windowWidth, setWindowWidth ] = useState(window.innerWidth);
 
     useEffect(() => {
         const token = localStorage.getItem('authToken');
         const user = JSON.parse(localStorage.getItem('user'));
-        
+
         if (token && user) {
             const decoded = decodeToken(token);
             const currentUserId = decoded.id;
@@ -57,13 +59,9 @@ export default function Calendar() {
     const fetchAllEvents = async (token, currentUserId, role) => {
         try {
             const eventsResponse = await getEvents(token);
-            
-            // Transform API events to calendar events format
             let events = eventsResponse.data.map(event => {
-                // إنشاء كائن تاريخ جديد من التاريخ المخزن
                 const serverDate = new Date(event.eventDate);
-                
-                // إنشاء تاريخ البداية مع الحفاظ على التوقيت المحلي
+
                 const startDate = new Date(
                     serverDate.getFullYear(),
                     serverDate.getMonth(),
@@ -74,7 +72,6 @@ export default function Calendar() {
                     0
                 );
 
-                // إنشاء تاريخ النهاية
                 const endDate = new Date(startDate);
                 if (startDate.getHours() === 23) {
                     endDate.setHours(23);
@@ -94,17 +91,14 @@ export default function Calendar() {
                 };
             }) || [];
 
-            // If user is a member, fetch task deadlines
             if (role === 'Member') {
                 const deadlinesResponse = await getTaskDeadlines(token);
                 console.log("Fetched deadlines:", deadlinesResponse.data);
-                
+
                 if (deadlinesResponse && deadlinesResponse.data) {
                     const deadlineEvents = deadlinesResponse.data.map(deadline => {
-                        // Create new date from deadline start
                         const startDate = new Date(deadline.start);
-                        
-                        // Create end date with same day handling for 11:XX PM
+
                         const endDate = new Date(startDate);
                         if (startDate.getHours() === 23) {
                             endDate.setHours(23);
@@ -114,10 +108,10 @@ export default function Calendar() {
                         }
 
                         return {
-                            id: `deadline-${deadline.title.split('#')[1] || Date.now()}`,
+                            id: `deadline-${deadline.title.split('#')[ 1 ] || Date.now()}`,
                             title: deadline.title,
                             start: startDate.toISOString(),
-                            end: endDate.toISOString(), // Use calculated end date
+                            end: endDate.toISOString(),
                             allDay: false,
                             userId: currentUserId,
                             isDeadline: true,
@@ -125,7 +119,7 @@ export default function Calendar() {
                             editable: false
                         };
                     });
-                    events = [...events, ...deadlineEvents];
+                    events = [ ...events, ...deadlineEvents ];
                 }
             }
 
@@ -137,12 +131,10 @@ export default function Calendar() {
     };
 
     function handleDateSelect(selectInfo) {
-        // Add check for mobile view
         if (window.innerWidth < 768 && selectInfo.view.type === 'dayGridMonth') {
-            // For mobile month view, manually handle date selection
             const selectedDate = new Date(selectInfo.start);
             const today = new Date();
-            
+
             today.setHours(0, 0, 0, 0);
             selectedDate.setHours(0, 0, 0, 0);
 
@@ -151,8 +143,6 @@ export default function Calendar() {
                 toast.warning("Cannot create events in the past");
                 return;
             }
-
-            // Force trigger the add event dialog
             setSelectedEvent({
                 ...selectInfo,
                 start: selectedDate,
@@ -160,7 +150,6 @@ export default function Calendar() {
             });
             setIsAddEventModalOpen(true);
         } else {
-            // Original desktop behavior
             const selectedDate = new Date(selectInfo.start);
             const today = new Date();
 
@@ -179,28 +168,23 @@ export default function Calendar() {
     }
 
     function checkEventOverlap(newEventDate, existingEvents, excludeEventId = null) {
-    const newDate = new Date(newEventDate);
-    const newDateOnly = new Date(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
-    const newTime = newDate.getHours() * 60 + newDate.getMinutes(); // Convert to minutes for easier comparison
+        const newDate = new Date(newEventDate);
+        const newDateOnly = new Date(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
+        const newTime = newDate.getHours() * 60 + newDate.getMinutes();
 
-    return existingEvents.some(event => {
-        if (event.id === excludeEventId) return false;
-        if (event.isDeadline) return false; // Skip deadline events
-        
-        // Get the event date (handle both transformed events with start and raw API events with eventDate)
-        const eventDate = new Date(event.start || event.eventDate);
-        const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
-        
-        // Only check events on the same date
-        if (newDateOnly.getTime() !== eventDateOnly.getTime()) {
-            return false;
-        }
-        
-        // Check if the times are the same (same hour and minute)
-        const eventTime = eventDate.getHours() * 60 + eventDate.getMinutes();
-        return newTime === eventTime;
-    });
-}
+        return existingEvents.some(event => {
+            if (event.id === excludeEventId) return false;
+            if (event.isDeadline) return false;
+
+            const eventDate = new Date(event.start || event.eventDate);
+            const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+            if (newDateOnly.getTime() !== eventDateOnly.getTime()) {
+                return false;
+            }
+            const eventTime = eventDate.getHours() * 60 + eventDate.getMinutes();
+            return newTime === eventTime;
+        });
+    }
 
     async function handleAddEvent() {
         if (!newEventTitle.trim() || !newEventTime) {
@@ -211,12 +195,9 @@ export default function Calendar() {
         let calendarApi = selectedEvent.view.calendar;
         calendarApi.unselect();
 
-        const [hours, minutes] = newEventTime.split(':');
-        
-        // إنشاء كائن تاريخ جديد من التاريخ المحدد
+        const [ hours, minutes ] = newEventTime.split(':');
         const selectedDate = new Date(selectedEvent.startStr || selectedEvent.start);
-        
-        // ضبط التوقيت مع الحفاظ على نفس اليوم
+
         const startDate = new Date(
             selectedDate.getFullYear(),
             selectedDate.getMonth(),
@@ -227,7 +208,6 @@ export default function Calendar() {
             0
         );
 
-        // إنشاء تاريخ النهاية في نفس اليوم
         const endDate = new Date(startDate);
         if (parseInt(hours) === 23) {
             endDate.setHours(23);
@@ -253,7 +233,7 @@ export default function Calendar() {
                 isDeadline: false
             };
 
-            setCurrentEvents(prevEvents => [...prevEvents, newEvent]);
+            setCurrentEvents(prevEvents => [ ...prevEvents, newEvent ]);
             setIsAddEventModalOpen(false);
             setNewEventTitle('');
             setNewEventTime('');
@@ -280,18 +260,19 @@ export default function Calendar() {
             toast.error('Cannot modify events from other users');
             return;
         }
-        
+
         setSelectedEvent(clickInfo.event);
-        // Pre-fill edit form with current event data
         const eventDate = new Date(clickInfo.event.start);
-        setEditEventTitle(clickInfo.event.title);
-        setEditEventTime(
-            eventDate.toLocaleTimeString('en-US', {
-                hour12: false,
-                hour: '2-digit',
-                minute: '2-digit'
-            })
-        );
+        const title = clickInfo.event.title;
+        const time = eventDate.toLocaleTimeString('en-US', {
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        setEditEventTitle(title);
+        setEditEventTime(time);
+        setOriginalEditEventTitle(title);
+        setOriginalEditEventTime(time);
         setIsEditEventModalOpen(true);
     }
 
@@ -305,16 +286,13 @@ export default function Calendar() {
         try {
             const token = localStorage.getItem('authToken');
             await deleteEvent(selectedEvent.id, token);
-            
-            // Remove from calendar
+
             selectedEvent.remove();
 
-            // Update local state
-            setCurrentEvents(prevEvents => 
+            setCurrentEvents(prevEvents =>
                 prevEvents.filter(event => event.id !== selectedEvent.id)
             );
 
-            // Close both modals
             setIsConfirmModalOpen(false);
             setIsEditEventModalOpen(false);
             toast.success('Event deleted successfully');
@@ -363,7 +341,6 @@ export default function Calendar() {
         }
 
         try {
-            // Update local state only (removed updateEvent API call)
             setCurrentEvents((prevEvents) =>
                 prevEvents.map((evt) =>
                     evt.id === event.id
@@ -392,8 +369,8 @@ export default function Calendar() {
         }
 
         const eventDate = new Date(selectedEvent.start);
-        const [hours, minutes] = editEventTime.split(':');
-        
+        const [ hours, minutes ] = editEventTime.split(':');
+
         const updatedDate = new Date(
             eventDate.getFullYear(),
             eventDate.getMonth(),
@@ -404,7 +381,6 @@ export default function Calendar() {
             0
         );
 
-        // Check for overlap
         if (checkEventOverlap(updatedDate, currentEvents, selectedEvent.id)) {
             toast.error('Cannot update event: Time slot is already occupied');
             return;
@@ -417,18 +393,17 @@ export default function Calendar() {
                 eventDate: updatedDate.toISOString()
             }, token);
 
-            // Update local state
             setCurrentEvents(prevEvents =>
                 prevEvents.map(event =>
-                event.id === selectedEvent.id
-                    ? {
-                        ...event,
-                        title: editEventTitle.trim(),
-                        start: updatedDate.toISOString(),
-                        end: new Date(updatedDate.getTime() + 60 * 60 * 1000).toISOString()
-                    }
-                    : event
-            ))
+                    event.id === selectedEvent.id
+                        ? {
+                            ...event,
+                            title: editEventTitle.trim(),
+                            start: updatedDate.toISOString(),
+                            end: new Date(updatedDate.getTime() + 60 * 60 * 1000).toISOString()
+                        }
+                        : event
+                ))
 
             setIsEditEventModalOpen(false);
             toast.success('Event updated successfully');
@@ -438,17 +413,24 @@ export default function Calendar() {
         }
     }
 
+    function isRealUpdate() {
+        return (
+            editEventTitle.trim() !== originalEditEventTitle.trim() ||
+            editEventTime !== originalEditEventTime
+        );
+    }
+
     return (
         <div className="calendar-page">
             <Sidebar currentEvents={currentEvents} />
             <div className='calendar-main'>
                 <FullCalendar
-                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                    plugins={[ dayGridPlugin, timeGridPlugin, interactionPlugin ]}
                     headerToolbar={{
                         left: window.innerWidth < 768 ? 'prev,next' : 'prev,next today',
                         center: 'title',
-                        right: window.innerWidth < 576 
-                            ? 'dayGridMonth,timeGridDay' 
+                        right: window.innerWidth < 576
+                            ? 'dayGridMonth,timeGridDay'
                             : 'dayGridMonth,timeGridWeek,timeGridDay',
                     }}
                     initialView={window.innerWidth < 576 ? 'timeGridDay' : 'dayGridMonth'}
@@ -458,7 +440,6 @@ export default function Calendar() {
                     selectable={true}
                     selectMirror={true}
                     dateClick={(info) => {
-                        // Handle date clicks on mobile
                         if (window.innerWidth < 768) {
                             handleDateSelect({
                                 start: info.date,
@@ -467,7 +448,7 @@ export default function Calendar() {
                         }
                     }}
                     select={handleDateSelect}
-                    selectLongPressDelay={0} // Remove delay for mobile selection
+                    selectLongPressDelay={0} 
                     dayMaxEvents={window.innerWidth < 768 ? 2 : true}
                     weekends={true}
                     eventContent={renderEventContent}
@@ -681,7 +662,7 @@ export default function Calendar() {
                         <p style={{ margin: '0.5rem 0' }}>
                             <b>{selectedDeadline?.title}</b>
                         </p>
-                        <p style={{ margin: '0.5rem 0', color: '#555' }}>
+                        <p style={{ margin: '0.5rem 0', color: 'black' }}>
                             {selectedDeadline && formatDeadlineDateTime(selectedDeadline.start)}
                         </p>
                         <p style={{ margin: '0.5rem 0', color: '#d32f2f' }}>
@@ -792,7 +773,11 @@ export default function Calendar() {
                         onClick={handleEventUpdate}
                         color="primary"
                         variant="contained"
-                        disabled={!editEventTitle.trim() || !editEventTime}
+                        disabled={
+                            !editEventTitle.trim() ||
+                            !editEventTime ||
+                            !isRealUpdate()
+                        }
                         sx={{
                             textTransform: 'none',
                             borderRadius: '4px',
@@ -837,7 +822,7 @@ function formatDeadlineDateTime(dateTimeString) {
 
 function renderEventContent(eventInfo) {
     const isDeadline = eventInfo.event.extendedProps.isDeadline;
-    
+
     if (isDeadline) {
         // For deadline events, extract time from the start date
         const eventDate = new Date(eventInfo.event.start);
@@ -846,11 +831,11 @@ function renderEventContent(eventInfo) {
             minute: '2-digit',
             hour12: true
         });
-        
+
         return (
-            <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
                 textAlign: 'center',
                 backgroundColor: '#ffe5e5',
                 border: '2px solid #ff4444',
@@ -882,11 +867,11 @@ function renderEventContent(eventInfo) {
             minute: '2-digit'
         });
         const formattedTime = formatEventTime(timeString);
-        
+
         return (
-            <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
                 textAlign: 'center',
                 padding: '4px 6px',
                 width: '100%'
@@ -930,9 +915,9 @@ function Sidebar({ currentEvents }) {
 function SidebarEvent({ event }) {
     return (
         <li key={event.id} className="sidebar-event">
-            <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
                 gap: '10px',
                 backgroundColor: 'transparent',
                 padding: '0',

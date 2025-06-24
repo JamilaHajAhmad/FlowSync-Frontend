@@ -99,6 +99,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden; /* Prevent main container from scrolling */
+    color: #333;
 }
 
 .calendar-page .fc {
@@ -162,6 +163,7 @@
     /* Scrollbar styling */
     scrollbar-width: thin;
     scrollbar-color: #90a4ae #e9ecef;
+    color: black;
 }
 
 .calendar-page .calendar-sidebar-section ul::-webkit-scrollbar {
