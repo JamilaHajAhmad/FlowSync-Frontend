@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react"; // Update the import
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { FaEye, FaEyeSlash } from 'react-icons/fa'; // Add this import
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import "react-toastify/dist/ReactToastify.css";
 import "./Login.css";
 import logo from '../../../assets/images/logo.png';
@@ -12,9 +12,13 @@ import * as Yup from 'yup';
 import axios from 'axios';
 import { decodeToken } from '../../../utils';
 
+// Add MUI Button and Home icon
+import Button from '@mui/material/Button';
+import HomeIcon from '@mui/icons-material/Home';
+
 const Login = () => {
     const navigate = useNavigate();
-    const [ showPassword, setShowPassword ] = useState(false); // Add this state
+    const [ showPassword, setShowPassword ] = useState(false);
 
     // Set the document title
     useEffect(() => {
@@ -93,6 +97,11 @@ const Login = () => {
         }
     });
 
+    // Return to Home handler
+    const handleReturnHome = () => {
+        navigate('/');
+    };
+
     return (
         <Motion.div
             className="login-container"
@@ -101,6 +110,36 @@ const Login = () => {
             variants={loginMotion}
         >
             <div className="login-left">
+                {/* Return to Home Button - now on the left and with improved color */}
+                <Button
+                    variant="contained"
+                    color="success"
+                    startIcon={<HomeIcon />}
+                    onClick={handleReturnHome}
+                    sx={{
+                        borderRadius: '30px',
+                        fontWeight: 600,
+                        fontSize: { xs: '0.9rem', sm: '1rem' },
+                        alignSelf: 'flex-start',
+                        boxShadow: 2,
+                        transition: 'all 0.2s',
+                        minWidth: { xs: 36, sm: 120 },
+                        px: { xs: 1.5, sm: 3 },
+                        py: { xs: 0.5, sm: 1 },
+                        background: 'linear-gradient(90deg, #059669 60%, #10b981 100%)',
+                        color: '#fff',
+                        '&:hover': {
+                            background: 'linear-gradient(90deg, #059669 60%, #10b981 100%)',
+                            boxShadow: 4,
+                        },
+                        position: { xs: 'static', md: 'absolute' },
+                        top: { md: 35 },
+                        left: { md: 32 },
+                        mb: { xs: 2, md: 0 },
+                    }}
+                >
+                    <span>Return Home</span>
+                </Button>
                 <img src={logo} alt="FlowSync" className="login-logo" />
                 <h2 className="login-title">Welcome Back to FlowSync</h2>
                 <p className="login-subtitle">Login to continue managing your team effortlessly</p>

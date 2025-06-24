@@ -3,14 +3,17 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
 import { toast } from "react-toastify";
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import "react-toastify/dist/ReactToastify.css";
 import "./ResetPassword.css";
 import logo from '../../../assets/images/logo.png';
-import { Link } from "react-router-dom";
 import { motion as Motion } from "framer-motion";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { resetPasswordMotion } from "../../../variants";
+
+// MUI Button and Home icon
+import Button from '@mui/material/Button';
+import HomeIcon from '@mui/icons-material/Home';
 
 const ResetPassword = () => {
     const navigate = useNavigate();
@@ -24,7 +27,7 @@ const ResetPassword = () => {
     const token = queryParams.get("token");
     const userId = queryParams.get("userId");
 
-    const [ showPassword, setShowPassword ] = useState({
+    const [showPassword, setShowPassword] = useState({
         password: false,
         confirmPassword: false
     });
@@ -32,7 +35,7 @@ const ResetPassword = () => {
     const togglePasswordVisibility = (field) => {
         setShowPassword(prev => ({
             ...prev,
-            [ field ]: !prev[ field ]
+            [field]: !prev[field]
         }));
     };
 
@@ -46,7 +49,7 @@ const ResetPassword = () => {
             ),
         confirmPassword: Yup.string()
             .required('Please confirm your password')
-            .oneOf([ Yup.ref('password') ], 'Passwords must match')
+            .oneOf([Yup.ref('password')], 'Passwords must match')
     });
 
     const formik = useFormik({
@@ -83,6 +86,11 @@ const ResetPassword = () => {
         }
     });
 
+    // Return to Home handler
+    const handleReturnHome = () => {
+        navigate('/');
+    };
+
     return (
         <Motion.div
             className="reset-password-container"
@@ -91,6 +99,35 @@ const ResetPassword = () => {
             variants={resetPasswordMotion}
         >
             <div className="reset-password-left">
+                {/* Return to Home Button - left, attractive, responsive */}
+                <Button
+                    variant="contained"
+                    startIcon={<HomeIcon />}
+                    onClick={handleReturnHome}
+                    sx={{
+                        borderRadius: '30px',
+                        fontWeight: 600,
+                        fontSize: { xs: '0.9rem', sm: '1rem' },
+                        alignSelf: 'flex-start',
+                        boxShadow: 2,
+                        transition: 'all 0.2s',
+                        minWidth: { xs: 36, sm: 120 },
+                        px: { xs: 1.5, sm: 3 },
+                        py: { xs: 0.5, sm: 1 },
+                        background: 'linear-gradient(90deg, #059669 60%, #10b981 100%)',
+                        color: '#fff',
+                        '&:hover': {
+                            background: 'linear-gradient(90deg, #059669 60%, #10b981 100%)',
+                            boxShadow: 4,
+                        },
+                        position: { xs: 'static', md: 'absolute' },
+                        top: { md: 35 },
+                        left: { md: 32 },
+                        mb: { xs: 2, md: 0 },
+                    }}
+                >
+                    <span>Return Home</span>
+                </Button>
                 <img src={logo} alt="FlowSync" className="reset-password-logo" />
                 <h2 className="reset-password-title">Reset Your Password</h2>
                 <p className="reset-password-subtitle">Enter your new password</p>
@@ -105,8 +142,7 @@ const ResetPassword = () => {
                             name="password"
                             placeholder="New Password"
                             {...formik.getFieldProps('password')}
-                            className={`reset-password-input ${formik.touched.password && formik.errors.password ? 'error' : ''
-                                }`}
+                            className={`reset-password-input ${formik.touched.password && formik.errors.password ? 'error' : ''}`}
                         />
                         <button
                             type="button"
@@ -126,8 +162,7 @@ const ResetPassword = () => {
                             name="confirmPassword"
                             placeholder="Confirm New Password"
                             {...formik.getFieldProps('confirmPassword')}
-                            className={`reset-password-input ${formik.touched.confirmPassword && formik.errors.confirmPassword ? 'error' : ''
-                                }`}
+                            className={`reset-password-input ${formik.touched.confirmPassword && formik.errors.confirmPassword ? 'error' : ''}`}
                         />
                         <button
                             type="button"

@@ -15,6 +15,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    position: relative;
     background-color: white;
     color: #102027;
     padding: clamp(1.5rem, 3vw, 2.5rem);
@@ -47,6 +48,7 @@
     padding: clamp(1.5rem, 3vw, 2.5rem);
     background: linear-gradient(135deg, #064e3b, #16a34a, #10b981);
     color: white;
+    min-height: 100vh;
 }
 
 .register-form {
@@ -286,29 +288,5 @@
 
     .password-toggle {
         top: 35%;
-    }
-}
-
-/* Landscape Mode */
-@media screen and (max-height: 600px) and (orientation: landscape) {
-    .register-container {
-        flex-direction: row;
-    }
-
-    .register-left {
-        width: 35%;
-        padding: 1rem;
-    }
-
-    .register-right {
-        width: 65%;
-        padding: 1rem;
-        min-height: 100vh;
-    }
-
-    .register-form {
-        padding: 1rem;
-        max-height: 90vh;
-        overflow-y: auto;
     }
 }

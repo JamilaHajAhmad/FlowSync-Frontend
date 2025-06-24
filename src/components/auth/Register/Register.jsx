@@ -11,6 +11,10 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
 
+// MUI Button and Home icon
+import Button from '@mui/material/Button';
+import HomeIcon from '@mui/icons-material/Home';
+
 const Register = () => {
   const navigate = useNavigate();
 
@@ -19,7 +23,7 @@ const Register = () => {
     document.title = "FlowSync | Register";
   }, []);
   // State to manage password visibility
-  const [showPasswords, setShowPasswords] = useState({
+  const [ showPasswords, setShowPasswords ] = useState({
     password: false,
     confirmPassword: false
   });
@@ -27,7 +31,7 @@ const Register = () => {
   const togglePasswordVisibility = (field) => {
     setShowPasswords(prev => ({
       ...prev,
-      [field]: !prev[field]
+      [ field ]: !prev[ field ]
     }));
   };
 
@@ -56,10 +60,10 @@ const Register = () => {
       ),
     confirmPassword: Yup.string()
       .required('Please confirm your password')
-      .oneOf([Yup.ref('password')], 'Passwords must match'),
+      .oneOf([ Yup.ref('password') ], 'Passwords must match'),
     role: Yup.string()
       .required('Please select a role')
-      .oneOf(['teamLeader', 'teamMember'], 'Invalid role selected')
+      .oneOf([ 'teamLeader', 'teamMember' ], 'Invalid role selected')
   });
 
   const formik = useFormik({
@@ -80,9 +84,9 @@ const Register = () => {
           role: convertRoleToNumber(values.role)
         };
 
-        console.log('Form submitted:', apiValues);
         const response = await axios.post('https://localhost:49798/register', apiValues);
-        
+        console.log(response.data);
+
         // Show different messages and navigate based on role
         if (values.role === 'teamLeader') {
           toast.success('Registration successful! Please check your email to verify your account.');
@@ -91,14 +95,16 @@ const Register = () => {
           toast.success('Registration successful! Your request is waiting for team leader approval.');
           navigate('/'); // Navigate to landing page for team members
         }
-
-        console.log('Registration response:', response.data);
       } catch (err) {
-        console.error('Error registering user:', err.response.data.detail);
-        toast.error(err.response.data.detail || 'An error occurred');
+        toast.error(err.response?.data?.detail || 'An error occurred');
       }
     }
   });
+
+  // Return to Home handler
+  const handleReturnHome = () => {
+    navigate('/');
+  };
 
   return (
     <Motion.div
@@ -108,6 +114,35 @@ const Register = () => {
       variants={registerMotion}
     >
       <div className="register-left">
+        {/* Return to Home Button - left, attractive, responsive */}
+        <Button
+          variant="contained"
+          startIcon={<HomeIcon />}
+          onClick={handleReturnHome}
+          sx={{
+            borderRadius: '30px',
+            fontWeight: 600,
+            fontSize: { xs: '0.9rem', sm: '1rem' },
+            alignSelf: 'flex-start',
+            boxShadow: 2,
+            transition: 'all 0.2s',
+            minWidth: { xs: 36, sm: 120 },
+            px: { xs: 1.5, sm: 3 },
+            py: { xs: 0.5, sm: 1 },
+            background: 'linear-gradient(90deg, #059669 60%, #10b981 100%)',
+            color: '#fff',
+            '&:hover': {
+              background: 'linear-gradient(90deg, #059669 60%, #10b981 100%)',
+              boxShadow: 4,
+            },
+            position: { xs: 'static', md: 'absolute' },
+            top: { md: 35 },
+            left: { md: 32 },
+            mb: { xs: 2, md: 0 },
+          }}
+        >
+          <span>Return Home</span>
+        </Button>
         <img src={logo} alt="FlowSync" className="register-logo" />
         <h2 className="register-title">Join FlowSync</h2>
         <p className="register-text">Sync your team's workflow effortlessly</p>
@@ -115,7 +150,7 @@ const Register = () => {
       <div className="register-right">
         <form onSubmit={formik.handleSubmit} className="register-form">
           <h2 className="form-title">Register Now</h2>
-          
+
           <input
             type="text"
             name="firstName"
@@ -157,7 +192,7 @@ const Register = () => {
               {...formik.getFieldProps('password')}
               className={`form-input ${formik.touched.password && formik.errors.password ? 'error' : ''}`}
             />
-            <button 
+            <button
               type="button"
               className="password-toggle"
               onClick={() => togglePasswordVisibility('password')}
@@ -177,7 +212,7 @@ const Register = () => {
               {...formik.getFieldProps('confirmPassword')}
               className={`form-input ${formik.touched.confirmPassword && formik.errors.confirmPassword ? 'error' : ''}`}
             />
-            <button 
+            <button
               type="button"
               className="password-toggle"
               onClick={() => togglePasswordVisibility('confirmPassword')}
@@ -218,7 +253,7 @@ const Register = () => {
           <button type="submit" className="form-button" disabled={formik.isSubmitting}>
             {formik.isSubmitting ? 'Signing up...' : 'Sign Up'}
           </button>
-          
+
           <p className="login-option" style={{ color: 'black' }}>
             Already have an account? <Link className="link" to="/login">Log in</Link>
           </p>

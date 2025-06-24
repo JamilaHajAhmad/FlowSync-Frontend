@@ -16,6 +16,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    position: relative;
     background-color: white;
     color: #102027;
     padding: 2.5rem;
@@ -48,6 +49,7 @@
     padding: 2.5rem;
     background: linear-gradient(135deg, #064e3b, #16a34a, #10b981);
     color: white;
+    min-height: 100vh;
 }
 
 .login-form {
@@ -257,34 +259,3 @@
         font-size: 0.875rem;
     }
 }
-
-/* Landscape Mode */
-@media screen and (max-height: 600px) and (orientation: landscape) {
-    .login-container {
-        flex-direction: row;
-    }
-
-    .login-left {
-        width: 35%;
-        padding: 1rem;
-    }
-
-    .login-right {
-        width: 65%;
-        padding: 1rem;
-        min-height: 100vh;
-    }
-
-    .login-form {
-        padding: 1rem;
-    }
-
-    .form-title {
-        margin-bottom: 1.5rem;
-    }
-
-    .login-input {
-        margin-bottom: 0.75rem;
-    }
-}
-
