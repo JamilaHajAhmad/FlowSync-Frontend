@@ -67,8 +67,8 @@ const DeleteAccountModal = ({ open, onClose }) => {
 
     // Add admin credentials (these would come from your backend in production)
     const adminCredentials = {
-        email: "admin@dubaipolice.gov.ae",
-        password: "Admin123*",
+        email: "flowsync.adm@outlook.com",
+        password: "FSAdmin2025*",
     };
 
     const firstName = user.displayName.split(' ')[0];

@@ -661,8 +661,8 @@ const EditProfile = () => {
                     profileData={formik.values}
                     newStatus={pendingStatus}
                     adminCredentials={{
-                        email: "admin@dubaipolice.gov.ae",
-                        password: "Admin123*"
+                        email: "flowsync.adm@outlook.com",
+                        password: "FSAdmin2025*"
                     }}
                 />
             </Box>
