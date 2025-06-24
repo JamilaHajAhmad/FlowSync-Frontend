@@ -33,7 +33,7 @@ const getDesignTokens = (mode) => ({
                 },
                 text: {
                     primary: "#ffffff", // Pure white for primary text
-                    secondary: "#ffffff", // Pure white for secondary text
+                    secondary: "black", // Pure white for secondary text
                     disabled: "#94a3b8", // Lighter shade for disabled text
                 },
                 action: {
