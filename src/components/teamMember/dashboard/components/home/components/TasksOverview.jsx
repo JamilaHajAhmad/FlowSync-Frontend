@@ -238,6 +238,7 @@ function TasksOverview() {
       sx: {
         backgroundColor: '#F9FAFB',
         fontWeight: 'bold',
+        color: 'black'
       },
     },
     renderTopToolbarCustomActions: () => (
