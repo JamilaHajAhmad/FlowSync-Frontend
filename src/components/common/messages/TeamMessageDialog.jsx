@@ -16,7 +16,6 @@ import {
 } from '@mui/material';
 import { 
     People as TeamIcon, 
-    Close as CloseIcon,
     EmojiEmotions as EmojiIcon 
 } from '@mui/icons-material';
 import EmojiPicker from 'emoji-picker-react';
@@ -84,17 +83,6 @@ export default function TeamMessageDialog({ open, onClose, onSend }) {
                 >
                     Send Message to All Team Members
                 </Typography>
-                <IconButton
-                    onClick={onClose}
-                    sx={{ 
-                        ml: 'auto',
-                        color: 'inherit',
-                        '&:hover': { bgcolor: 'primary.dark' },
-                        padding: { xs: 1, sm: 1.5 }
-                    }}
-                >
-                    <CloseIcon sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }} />
-                </IconButton>
             </DialogTitle>
 
             <DialogContent sx={{ 

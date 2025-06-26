@@ -45,7 +45,7 @@ import {
     Search as SearchIcon,
     Clear as ClearIcon
 } from '@mui/icons-material';
-import { sendMessage, getConversation, getUnreadMessages, markMessagesAsRead, getChatUsers, sendMessageToTeam, editMessage, deleteMessage } from '../../../services/chatService';
+import { sendMessage, getConversation, getUnreadMessages, markMessagesAsRead, getChatUsers, sendMessageToTeam, editMessage, deleteMessage, createChatHubConnection } from '../../../services/chatService';
 import * as signalR from '@microsoft/signalr';
 import './Chat.css';
 import Logo from '../../../assets/images/logo.png';
@@ -72,7 +72,7 @@ const theme = createTheme({
             contrastText: '#ffffff'
         },
         secondary: {
-            main: '#a259d9', 
+            main: '#a259d9',
             light: '#f3e9fb',
             dark: '#7e44b8'
         },
@@ -254,7 +254,7 @@ const Chat = () => {
             showError('Failed to load conversations');
             console.error('Error fetching conversations:', error);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchUsers = useCallback(async () => {
@@ -430,7 +430,7 @@ const Chat = () => {
             showError('Failed to send message. Please try again.');
             console.error('Error sending message:', error);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ newMessage, selectedUser, isTeamMessage, isTeamMessageEnabled, showError ]);
 
     useEffect(() => {
@@ -441,15 +441,7 @@ const Chat = () => {
 
         const setupConnection = async () => {
             try {
-                const newConnection = new signalR.HubConnectionBuilder()
-                    .withUrl("https://localhost:49798/chatHub", {
-                        accessTokenFactory: () => tokenRef.current,
-                        skipNegotiation: true,
-                        transport: signalR.HttpTransportType.WebSockets
-                    })
-                    .withAutomaticReconnect([ 0, 2000, 5000, 10000, 30000 ])
-                    .configureLogging(signalR.LogLevel.Debug)
-                    .build();
+                const newConnection = createChatHubConnection(tokenRef.current);
 
                 newConnection.on("UserTyping", (userId, isTypingValue) => {
                     if (isMounted && selectedUserIdRef.current === userId) {
@@ -517,7 +509,7 @@ const Chat = () => {
 
                         try {
                             await markMessagesAsRead([ messageId ], tokenRef.current);
-                        } catch (error) { 
+                        } catch (error) {
                             showError('Failed to mark message as read');
                             console.error('Error marking messages as read:', error);
                         }
@@ -577,7 +569,7 @@ const Chat = () => {
             }
             clearTimeout(typingTimeoutRef.current);
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -591,7 +583,7 @@ const Chat = () => {
                     fetchUnreadMessages(),
                     fetchConversations()
                 ]);
-            } catch (error) { 
+            } catch (error) {
                 showError('Failed to load initial data');
                 console.error('Error fetching initial data:', error);
             }
@@ -612,7 +604,7 @@ const Chat = () => {
             clearInterval(unreadInterval);
             clearInterval(conversationsInterval);
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ fetchUsers, fetchUnreadMessages, fetchConversations ]);
 
     useEffect(() => {
@@ -809,14 +801,6 @@ const Chat = () => {
         }
     };
 
-    const handleMessageContextMenu = (event, message) => {
-        event.preventDefault();
-        if (message.isMine) {
-            setMenuAnchorEl(event.currentTarget);
-            setSelectedMsg(message);
-        }
-    };
-
     const getUserNameById = (id) => {
         if (!id) return 'Unknown';
         if (id === currentUserIdRef.current) return 'You';
@@ -998,9 +982,6 @@ const Chat = () => {
                         </Box>
                     </Box>
 
-                    {/*
-                        Define filteredUsers before rendering the List.
-                    */}
                     {(() => {
                         const filteredUsers = users.filter(user =>
                             user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1024,7 +1005,6 @@ const Chat = () => {
                                     filteredUsers.map((user) => {
                                         const conversation = conversations.find(conv => conv.userId === user.id);
                                         const hasUnread = conversation?.unreadCount > 0;
-
                                         return (
                                             <ListItem
                                                 key={user.id}
@@ -1254,7 +1234,6 @@ const Chat = () => {
                                             mb: 0.5,
                                             position: 'relative'
                                         }}
-                                        onContextMenu={e => handleMessageContextMenu(e, message)}
                                     >
                                         <Avatar
                                             src={message.isMine ? currentUser?.pictureURL : selectedUser.pictureURL}
@@ -1268,8 +1247,8 @@ const Chat = () => {
                                             }}
                                         >
                                             {message.isMine
-                                                ? currentUser?.fullName[ 0 ]?.toUpperCase()
-                                                : selectedUser.fullName[ 0 ]?.toUpperCase()
+                                                ? currentUser?.fullName[0]?.toUpperCase()
+                                                : selectedUser.fullName[0]?.toUpperCase()
                                             }
                                         </Avatar>
                                         <Box sx={{
