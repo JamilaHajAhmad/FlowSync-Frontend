@@ -46,10 +46,10 @@ const Search = styled('div')(({ theme }) => ({
     width: '100%',
     [theme.breakpoints.up('sm')]: {
         marginLeft: theme.spacing(3),
-        width: '400px', // Increased from auto
+        width: '400px',
     },
     [theme.breakpoints.up('md')]: {
-        width: '500px', // Even wider on larger screens
+        width: '500px',
     }
 }));
 
@@ -69,7 +69,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
     '& .MuiInputBase-input': {
         padding: theme.spacing(1, 1, 1, 0),
         paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-        paddingRight: '48px', // Make room for clear icon
+        paddingRight: '48px',
         transition: theme.transitions.create('width'),
         width: '100%',
     },
@@ -95,13 +95,13 @@ const StyledAppBar = styled(AppBar, {
     shouldForwardProp: (prop) => prop !== 'open',
 })(({ theme }) => ({
     zIndex: theme.zIndex.drawer + 1,
-    width: '100%', // This ensures the Topbar spans full width
+    width: '100%', 
     position: 'fixed',
     left: 0,
-    height: 64, // Set a fixed height for the AppBar
+    height: 64, 
     '& .MuiToolbar-root': {
-        minHeight: 64, // Match the height
-        padding: theme.spacing(0, 3) // Add horizontal padding
+        minHeight: 64,
+        padding: theme.spacing(0, 3) 
     }
 }));
 
@@ -110,8 +110,8 @@ const TopbarOffset = styled('div')(({ theme }) => ({
     alignItems: 'center',
     justifyContent: 'flex-end',
     padding: theme.spacing(0, 1),
-    ...theme.mixins.toolbar, // This adds proper toolbar spacing
-    minHeight: '64px' // Match the AppBar height
+    ...theme.mixins.toolbar, 
+    minHeight: '64px' 
 }));
 
 const StyledBadge = styled(Badge)(() => ({
@@ -122,7 +122,7 @@ const StyledBadge = styled(Badge)(() => ({
 
 const StyledIconStack = styled(Stack)(({ theme }) => ({
     position: 'relative',
-    top: '-22px', // Match search bar position
+    top: '-22px', 
     marginLeft: theme.spacing(2),
 }));
 
@@ -130,12 +130,12 @@ const LogoContainer = styled(Box)(() => ({
     display: 'flex',
     alignItems: 'center',
     position: 'relative',
-    top: '-22px', // Match search bar position
+    top: '-22px', 
 }));
 
 const MenuIconButton = styled(IconButton)(({ theme }) => ({
     position: 'relative',
-    top: '-22px', // Match search bar position
+    top: '-22px', 
     left: '-30px',
     marginRight: theme.spacing(5),
     color: 'white',
@@ -148,7 +148,7 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
     const theme = useTheme();
     const token = localStorage.getItem('authToken');
     const decodedToken = decodeToken(token);
-    const role = decodedToken?.role; // Add null check
+    const role = decodedToken?.role;
     // eslint-disable-next-line no-unused-vars
     const { notifications, unreadCount } = useContext(NotificationContext);
     const [anchorEl, setAnchorEl] = useState(null);
@@ -159,19 +159,11 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
     const [showResults, setShowResults] = useState(false);
     const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
-    // Updated searchItems with proper role check
     const searchItems = useMemo(() => {
         if (!role) return [];
-        return getSearchItems(role); // Convert role to lowercase
+        return getSearchItems(role);
     }, [role]);
 
-    // Debug log to verify role and items
-    useEffect(() => {
-        console.log('Current role:', role);
-        console.log('Search items:', searchItems);
-    }, [role, searchItems]);
-
-    // Updated search results filtering
     const searchResults = useMemo(() => {
         if (!searchTerm) return [];
         
@@ -186,7 +178,7 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
 
     useEffect(() => {
         fetchUnreadMessages();
-        const interval = setInterval(fetchUnreadMessages, 30000); // Check every 30 seconds
+        const interval = setInterval(fetchUnreadMessages, 30000); 
         return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -242,7 +234,6 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
 
     const handleClose = () => setAnchorEl(null);
 
-    // Add handler for clicking search items
     const handleSearchItemClick = (item) => {
         navigate(item.path);
         setShowResults(false);
@@ -258,7 +249,6 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                 }}
             >
                 <Toolbar>
-                    {/* Menu Icon */}
                     <MenuIconButton
                         color="inherit"
                         aria-label={open ? "close drawer" : "open drawer"}
@@ -268,7 +258,6 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                         {open ? <MenuOpenIcon /> : <MenuIcon />}
                     </MenuIconButton>
 
-                    {/* Logo and Platform Name */}
                     <LogoContainer>
                         <img 
                             src={logo} 
@@ -293,7 +282,6 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
 
                     <Box sx={{ flexGrow: 1 }} />
                     
-                    {/* Search Component - Keep your existing Search component here */}
                     <Search>
                         <SearchIconWrapper>
                             <SearchIcon />
@@ -337,7 +325,6 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
                         )}
                     </Search>
 
-                    {/* Icons Stack */}
                     <StyledIconStack direction="row" spacing={-0.5}>
                         <IconButton
                             size="large"
@@ -365,12 +352,11 @@ export default function Topbar({ open, handleDrawerOpen, setMode }) {
 
                         <IconButton color='inherit'>
                             <Link to="/settings" style={{ color: 'white' }}> 
-                                <SettingsOutlined sx={{ mt: -0.5}}/> 
+                                <SettingsOutlined sx={{ mt: 0.8 }}/> 
                             </Link>
                         </IconButton>
                     </StyledIconStack>
 
-                    {/* Keep the existing Menu component */}
                     <Menu
                         id="notification-menu"
                         anchorEl={anchorEl}
