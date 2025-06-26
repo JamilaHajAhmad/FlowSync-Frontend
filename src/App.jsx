@@ -1,4 +1,3 @@
-import 'bootstrap/dist/css/bootstrap.min.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -63,7 +62,6 @@ const App = () => {
                     <Route path="/help" element={<HelpCenter />} />
                     <Route path="/privacy" element={<PrivacyPolicy />} />
                     <Route path="/terms" element={<TermsOfService />} />
-
                     {/* Protected routes */}
                     <Route path="/leader-dashboard" element={<ProtectedRouter><Home /></ProtectedRouter>} />
                     <Route path="/team-tasks" element={<ProtectedRouter><Tasks /></ProtectedRouter>} />
@@ -103,5 +101,4 @@ const App = () => {
         </LocalizationProvider>
     );
 };
-
 export default App;

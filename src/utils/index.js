@@ -12,8 +12,6 @@ export const decodeToken = (token) => {
         if (!token) throw new Error("Token is missing");
 
         const decodedToken = jwtDecode(token);
-        
-        // Extract required fields using the correct claim names
         const id = decodedToken["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
         const email = decodedToken["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
         const role = decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];

@@ -5,14 +5,13 @@ const getDesignTokens = (mode) => ({
         mode,
         ...(mode === "light"
             ? {
-                // Light mode colors
                 primary: {
-                    main: "#16a34a", // FlowSync primary green
+                    main: "#16a34a", 
                 },
                 divider: "#10b981",
                 background: {
                     default: "#ffffff",
-                    paper: "#f0fdf4", // Soft green background
+                    paper: "#f0fdf4", 
                 },
                 text: {
                     primary: grey[ 900 ],
@@ -20,9 +19,8 @@ const getDesignTokens = (mode) => ({
                 },
             }
             : {
-                // Dark mode colors
                 primary: {
-                    main: "#10b981", // Keep primary color green
+                    main: "#10b981",
                     light: "#34d399",
                     dark: "#059669",
                 },
@@ -32,9 +30,9 @@ const getDesignTokens = (mode) => ({
                     paper: "#00332d",
                 },
                 text: {
-                    primary: "#ffffff", // Pure white for primary text
-                    secondary: "black", // Pure white for secondary text
-                    disabled: "#94a3b8", // Lighter shade for disabled text
+                    primary: "#ffffff", 
+                    secondary: "black", 
+                    disabled: "#94a3b8", 
                 },
                 action: {
                     active: "#ffffff",
@@ -43,9 +41,8 @@ const getDesignTokens = (mode) => ({
                     disabled: "#475569",
                     disabledBackground: "rgba(255, 255, 255, 0.12)",
                 },
-                // Add specific field values for column fields
                 tableCell: {
-                    color: "#ffffff" // Ensure table cell text is white
+                    color: "#ffffff"
                 }
             }),
     },
@@ -95,5 +92,4 @@ const getDesignTokens = (mode) => ({
         }
     }
 });
-
 export default getDesignTokens;
