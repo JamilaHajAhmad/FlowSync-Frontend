@@ -62,8 +62,8 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
             background: 'linear-gradient(135deg, #064E3B, #0F766E)',
             color: '#fff',
             border: 'none',
-            marginTop: '64px', // Add top margin to account for Topbar height
-            height: `calc(100% - 64px)`, // Adjust height to account for Topbar
+            marginTop: '64px',
+            height: `calc(100% - 64px)`,
             '& .MuiListItemIcon-root': {
                 color: '#fff',
             },
@@ -127,7 +127,7 @@ export default function Sidebar({ open }) {
             if (token) {
                 try {
                     const pictureURL = await getProfilePicture(token);
-                    console.log('Fetched picture URL:', pictureURL); // Debug log
+                    console.log('Fetched picture URL:', pictureURL);
                     setProfilePicture(pictureURL);
                 } catch (error) {
                     console.error('Error fetching profile picture:', error);
@@ -158,7 +158,7 @@ export default function Sidebar({ open }) {
                     }}
                 >
                     <Avatar
-                        src={profilePicture || defaultImg}
+                        src={profilePicture || 'avatar/default.jpg'}
                         alt={userName}
                         onError={(e) => {
                             console.log('Error loading profile picture, falling back to default');
@@ -198,7 +198,7 @@ export default function Sidebar({ open }) {
 
                 <List sx={{ flexGrow: 1, overflow: 'hidden' }}>
                     {links.map((link) => {
-                        const active = location.pathname === link.path; // Check if active
+                        const active = location.pathname === link.path;
                         return (
                             <ListItem key={link.text} disablePadding sx={{ display: 'block' }}>
                                 <ListItemButton
@@ -213,7 +213,7 @@ export default function Sidebar({ open }) {
                                             borderTopRightRadius: !open ? 0 : '0px',
                                             borderBottomRightRadius: !open ? 0 : '0px',
                                             '&:hover': {
-                                                backgroundColor: 'white', // Keep white on hover
+                                                backgroundColor: 'white', 
                                             },
                                         }),
                                         '&:hover': {
