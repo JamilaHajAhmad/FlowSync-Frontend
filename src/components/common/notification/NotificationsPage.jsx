@@ -18,7 +18,7 @@ import Topbar from '../Topbar';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import getDesignTokens from '../../../theme';
 import { decodeToken } from '../../../utils';
-import { markAllAsRead as apiMarkAllAsRead } from './notificationService';
+import { markAllAsRead as apiMarkAllAsRead } from '../../../services/notificationService';
 
 const NotificationsPage = () => {
     const { notifications, markAllAsRead: contextMarkAllAsRead, markAsRead } = useContext(NotificationContext);
@@ -48,16 +48,15 @@ const NotificationsPage = () => {
     const handleMarkAllAsRead = async () => {
         try {
             const token = localStorage.getItem('authToken');
-            await apiMarkAllAsRead(token); // API call
-            contextMarkAllAsRead(); // Update local state
+            await apiMarkAllAsRead(token);
+            contextMarkAllAsRead();
         } catch (error) {
             console.error('Failed to mark all notifications as read:', error);
-            // Optionally show an error message to the user
         }
     };
 
     const renderSidebar = () => {
-        if (!userRole) return null; // Ensure userRole is set before rendering
+        if (!userRole) return null;
         if (userRole.includes('Leader')) {
             return <Sidebar open={open} />;
         } else if (userRole.includes('Member')) {
@@ -78,8 +77,6 @@ const NotificationsPage = () => {
                     width: '100%'
                 }}>
                     <Box sx={{ height: { xs: 56, sm: 64 } }} />
-                    
-                    {/* Header Container */}
                     <Box sx={{
                         display: 'flex',
                         flexDirection: { xs: 'column', sm: 'row' },
@@ -87,15 +84,12 @@ const NotificationsPage = () => {
                         justifyContent: 'space-between',
                         mb: { xs: 2, sm: 3 }
                     }}>
-                        {/* Page Heading */}
                         <Box sx={{ flex: 1 }}>
                             <PageHeading 
                                 title="Notifications" 
                                 subtitle="View and manage your notifications"
                             />
                         </Box>
-
-                        {/* Mark All as Read Button */}
                         {notifications.some(n => !n.read) && (
                             <Box sx={{ 
                                 mt: { xs: 2, sm: 0 },
@@ -119,8 +113,6 @@ const NotificationsPage = () => {
                             </Box>
                         )}
                     </Box>
-
-                    {/* Rest of the notifications content */}
                     <Container 
                         maxWidth="sm" 
                         sx={{ 
@@ -182,5 +174,4 @@ const NotificationsPage = () => {
     </ThemeProvider>
 );
 };
-
 export default NotificationsPage;

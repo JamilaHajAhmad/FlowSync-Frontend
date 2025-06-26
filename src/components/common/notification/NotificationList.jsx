@@ -9,7 +9,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { NotificationContext } from './NotificationContext';
 import { NotificationItem } from './NotificationItem';
-import { markAllAsRead as apiMarkAllAsRead } from './notificationService';
+import { markAllAsRead as apiMarkAllAsRead } from '../../../services/notificationService';
 
 const NotificationList = ({ onClose }) => {
     const { notifications, markAllAsRead: contextMarkAllAsRead, markAsRead } = useContext(NotificationContext);
@@ -23,11 +23,10 @@ const NotificationList = ({ onClose }) => {
 
     const handleMarkAllAsRead = async () => {
         try {
-            await apiMarkAllAsRead(token); // API call
-            contextMarkAllAsRead(); // Update local state
+            await apiMarkAllAsRead(token);
+            contextMarkAllAsRead();
         } catch (error) {
             console.error('Failed to mark all notifications as read:', error);
-            // Optionally show an error message to the user
         }
     };
 
@@ -106,5 +105,4 @@ const NotificationList = ({ onClose }) => {
         </Box>
     );
 };
-
 export default NotificationList;

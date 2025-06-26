@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { NotificationContext, NotificationTypes } from './NotificationContext';
-import { getNotifications, markAsRead as markAsReadApi } from './notificationService';
+import { getNotifications, markAsRead as markAsReadApi } from '../../../services/notificationService';
 
 export const NotificationProvider = ({ children }) => {
     const [notifications, setNotifications] = useState([]);
@@ -10,7 +10,6 @@ export const NotificationProvider = ({ children }) => {
     );
     const token = localStorage.getItem('authToken');
     
-    // Update unread count whenever notifications change
     useEffect(() => {
         const newUnreadCount = notifications.filter(n => !n.isRead).length;
         setUnreadCount(newUnreadCount);
@@ -46,7 +45,7 @@ export const NotificationProvider = ({ children }) => {
             );
         } catch (error) {
             console.error('Failed to mark notification as read:', error);
-            throw error; // Allow component to handle the error
+            throw error; 
         }
     };
 
@@ -89,7 +88,7 @@ export const NotificationProvider = ({ children }) => {
                     setIsSecurityNotificationsEnabled(newValue);
                     localStorage.setItem('securityNotificationsEnabled', newValue);
                 },
-                hasUnread: unreadCount > 0 // Add this helper property
+                hasUnread: unreadCount > 0
             }}
         >
             {children}
