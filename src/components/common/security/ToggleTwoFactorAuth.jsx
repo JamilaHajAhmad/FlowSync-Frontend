@@ -54,7 +54,6 @@ const ToggleTwoFactorAuth = () => {
             p: { xs: 1.5, sm: 2 },
             minHeight: '100vh'
         }}>
-            {/* Logo and Title */}
             <Box sx={{ 
                 display: 'flex', 
                 alignItems: 'center', 
@@ -82,7 +81,6 @@ const ToggleTwoFactorAuth = () => {
                 </Typography>
             </Box>
 
-            {/* Back Button */}
             <Button
                 startIcon={<ArrowBackIcon />}
                 onClick={handleBack}
@@ -188,5 +186,4 @@ const ToggleTwoFactorAuth = () => {
         </Box>
     );
 };
-
 export default ToggleTwoFactorAuth;

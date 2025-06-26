@@ -36,7 +36,7 @@ const ConnectedDevices = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        document.title = "FlowSync | Connected Devices"; // Set the document title
+        document.title = "FlowSync | Connected Devices";
         fetchConnectedDevices();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -61,8 +61,6 @@ const ConnectedDevices = () => {
             const response = await logoutDevice(sessionId, token);
             console.log('Logout response:', response.data);
             handleLogout();
-            
-            // Remove device from local state
             setDevices(devices.filter(device => device.sessionId !== sessionId));
             toast.success('Device logged out successfully');
         } catch (err) {
@@ -129,7 +127,6 @@ const ConnectedDevices = () => {
             p: { xs: 1, sm: 2 },
             minHeight: '100vh'
         }}>
-            {/* Logo and Title Section */}
             <Box sx={{ 
                 display: 'flex', 
                 alignItems: 'center', 
@@ -157,7 +154,6 @@ const ConnectedDevices = () => {
                 </Typography>
             </Box>
 
-            {/* Back Button */}
             <Button
                 startIcon={<ArrowBackIcon />}
                 onClick={handleBack}
@@ -171,13 +167,11 @@ const ConnectedDevices = () => {
                 Back to Settings
             </Button>
 
-            {/* Main Card */}
             <Card elevation={3} sx={{ 
                 bgcolor: 'white',
                 borderRadius: { xs: 2, sm: 3 }
             }}>
                 <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                    {/* Card Header */}
                     <Box display="flex" 
                         alignItems="center" 
                         mb={3}
@@ -201,14 +195,12 @@ const ConnectedDevices = () => {
                         </Typography>
                     </Box>
 
-                    {/* Error Alert */}
                     {error && (
                         <Alert severity="error" sx={{ mb: 2 }}>
                             {error}
                         </Alert>
                     )}
 
-                    {/* Devices List */}
                     <List>
                         {devices.map((device, index) => {
                             const deviceDetails = parseDeviceInfo(device.deviceInfo);
@@ -305,5 +297,4 @@ const ConnectedDevices = () => {
         </Box>
     );
 };
-
 export default ConnectedDevices;

@@ -65,7 +65,6 @@ const DeleteAccountModal = ({ open, onClose }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // Add admin credentials (these would come from your backend in production)
     const adminCredentials = {
         email: "flowsync.adm@outlook.com",
         password: "FSAdmin2025*",
@@ -98,9 +97,7 @@ const DeleteAccountModal = ({ open, onClose }) => {
             setLoading(true);
             setError('');
             const token = localStorage.getItem('authToken');
-            
             const response = await deleteAccount(password, reason, token);
-            
             if (response.data.status === 200) {
                 toast.success(response.data.detail);
                 handleLogout();
@@ -294,5 +291,4 @@ const DeleteAccountModal = ({ open, onClose }) => {
         </>
     );
 };
-
 export default DeleteAccountModal;
