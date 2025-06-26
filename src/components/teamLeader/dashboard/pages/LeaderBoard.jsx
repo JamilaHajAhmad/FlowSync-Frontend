@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { motion as Motion } from 'framer-motion';
 import {
     Box,
@@ -12,13 +11,13 @@ import {
 } from '@mui/material';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import { decodeToken } from '../../../../utils';
+import { getTeamKpis } from '../../../../services/kpiService';
 
-// Trophy colors
 const trophyColors = {
-    0: '#FFD700', // Gold
-    1: '#C0C0C0', // Silver
-    2: '#CD7F32', // Bronze
-    3: '#4CAF50', // Green (others)
+    0: '#FFD700',
+    1: '#C0C0C0', 
+    2: '#CD7F32', 
+    3: '#4CAF50', 
 };
 
 const podiumHeights = { 0: 320, 1: 260, 2: 220 };
@@ -35,14 +34,8 @@ export default function LeaderBoard() {
             try {
                 const token = localStorage.getItem('authToken');
                 const role = decodeToken(token)?.role;
-                const url = role.includes('Admin')
-                    ? `https://localhost:49798/api/kpi/admin/team-kpis?year=${currentYear}`
-                    : `https://localhost:49798/api/kpi/leader/team-kpis?year=${currentYear}`;
-
-                const response = await axios.get(url, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-
+                const isAdmin = role.includes('Admin');
+                const response = await getTeamKpis(token, currentYear, isAdmin);
                 const sorted = response.data.sort((a, b) => b.kpi - a.kpi);
                 setMembers(sorted);
             } catch (err) {
@@ -72,7 +65,6 @@ export default function LeaderBoard() {
 
     return (
         <Container maxWidth="lg" sx={{ position: 'relative', minHeight: '100vh', pt: 6 }}>
-            {/* Radiating Lines Background */}
             <Box
                 sx={{
                     position: 'absolute', top: 0, left: 0, width: '100%', height: '100vh', zIndex: -1,
@@ -101,7 +93,6 @@ export default function LeaderBoard() {
                     ))}
                 </svg>
 
-                {/* Year Section - Top Right */}
                 <Motion.div
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -129,14 +120,12 @@ export default function LeaderBoard() {
                 </Motion.div>
             </Box>
 
-            {/* Podium Section */}
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', minHeight: '400px', gap: 2, mb: 6 }}>
                 {members[1] && <Motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}><PodiumPlace member={members[1]} place={1} /></Motion.div>}
                 {members[0] && <Motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0 }}><PodiumPlace member={members[0]} place={0} /></Motion.div>}
                 {members[2] && <Motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }}><PodiumPlace member={members[2]} place={2} /></Motion.div>}
             </Box>
 
-            {/* Remaining Members */}
             <Box sx={{ px: 2 }}>
                 {members.slice(3).map((member, i) => (
                     <Motion.div key={member.id} initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: i * 0.1 }}>

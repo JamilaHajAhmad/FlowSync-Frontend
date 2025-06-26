@@ -6,13 +6,13 @@ import { Eye, EyeOff, Lock } from "lucide-react";
 import { Typewriter } from 'react-simple-typewriter';
 import zxcvbn from 'zxcvbn';
 import logo from "../../assets/images/logo.png";
-import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { decodeToken } from '../../utils';
 import { ArrowBack } from '@mui/icons-material';
+import { changePassword } from '../../services/profileService';
 
 const theme = createTheme({
     palette: {
@@ -32,7 +32,6 @@ const theme = createTheme({
     shadows: [
         "none",
         "0px 4px 20px rgba(0, 0, 0, 0.05)",
-        // ...rest of shadows
     ],
 });
 
@@ -66,7 +65,6 @@ const StyledTextField = styled(TextField)(({ theme, isError }) => ({
                 borderWidth: 2,
             }
         },
-        // Add error state styling
         ...(isError && {
             '& .MuiOutlinedInput-notchedOutline': {
                 borderColor: theme.palette.error.main,
@@ -85,6 +83,7 @@ const validationSchema = Yup.object({
         .required('Current password is required'),
     newPassword: Yup.string()
         .required('New password is required')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, 'Password must be at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character')
         .min(8, 'Password must be at least 8 characters')
         .notOneOf([ Yup.ref('currentPassword') ], 'New password must be different from current password'),
     confirmNewPassword: Yup.string()
@@ -123,39 +122,26 @@ const ChangePW = () => {
                     navigate('/login');
                     return;
                 }
-
-                // Decode token to get user information
                 const decodedToken = decodeToken(token);
                 if (!decodedToken) {
                     toast.error('Invalid authentication token');
                     navigate('/login');
                     return;
                 }
-
-                const response = await axios.post(
-                    'https://localhost:49798/change-password',
-                    {
-                        currentPassword: values.currentPassword,
-                        newPassword: values.newPassword,
-                        confirmPassword: values.confirmNewPassword
-                    },
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    }
-                );
-
+                const response = await changePassword(token, {
+                    currentPassword: values.currentPassword,
+                    newPassword: values.newPassword,
+                    confirmPassword: values.confirmNewPassword
+                });
                 if (response.status === 200) {
                     toast.success('Password updated successfully!');
                     formik.resetForm();
-                    // Use role from decoded token for navigation
                     const redirectPath = decodedToken.role.includes('Leader') ? '/leader-dashboard' : '/member-dashboard';
                     navigate(redirectPath);
                 }
             } catch (error) {
                 console.error('Error updating password:', error);
-                const errorMessage = error.response.data || 'Failed to update password';
+                const errorMessage = error.response?.data || 'Failed to update password';
                 toast.error(errorMessage);
             } finally {
                 setSubmitting(false);
@@ -183,7 +169,7 @@ const ChangePW = () => {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                p: { xs: 2, sm: 3 }, // Responsive padding
+                p: { xs: 2, sm: 3 },
                 backgroundColor: 'background.default',
                 position: 'relative'
             }}>
@@ -214,11 +200,11 @@ const ChangePW = () => {
                         elevation={1}
                         sx={{
                             width: { xs: '100%', sm: 450 },
-                            p: { xs: 3, sm: 4 }, // Responsive padding
+                            p: { xs: 3, sm: 4 },
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: { xs: 2, sm: 3 }, // Responsive gap
-                            mx: { xs: 2, sm: 0 } // Add margin on mobile
+                            gap: { xs: 2, sm: 3 },
+                            mx: { xs: 2, sm: 0 }
                         }}
                     >
                         <Box display="flex" alignItems="center" justifyContent="center">
@@ -387,6 +373,4 @@ const ChangePW = () => {
         </ThemeProvider>
     );
 };
-
-
 export default ChangePW;

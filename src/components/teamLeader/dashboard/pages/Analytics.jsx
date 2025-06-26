@@ -11,7 +11,6 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import Bar from '../../analytics/bar/Bar';
 import Line from '../../analytics/line/Line';
 import Stacked from '../../analytics/stacked/Stacked';
@@ -20,6 +19,14 @@ import HeatMap from '../../analytics/heatmap/HeatMap';
 import Funnel from '../../analytics/funnel/Funnel';
 import { Help as HelpIcon } from '@mui/icons-material';
 import HelpDialog from '../../analytics/help/HelpDialog';
+import {
+    getTaskDistributionByMember,
+    getTaskStatusSummary,
+    getTasksOverMonths,
+    getTasksByCaseSource,
+    getCalendarActivity,
+    getRequestsStreamByType
+} from '../../../../services/analyticsService';
 
 const Analytics = () => {
     const [barChartStats, setBarChartStats] = useState({ value: '0', trend: '0%' });
@@ -35,12 +42,7 @@ const Analytics = () => {
         const fetchBarChartData = async () => {
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await axios.get(
-                    'https://localhost:49798/api/reports/task-distribution-by-member',
-                    {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }
-                );
+                const response = await getTaskDistributionByMember(token);
                 if (!response.data?.date || response.data.date.length === 0) {
                     setBarChartStats({
                         value: 'No Data',
@@ -75,12 +77,7 @@ const Analytics = () => {
         const fetchPieChartData = async () => {
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await axios.get(
-                    'https://localhost:49798/api/reports/task-status-summary',
-                    {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }
-                );
+                const response = await getTaskStatusSummary(token);
                 if (!response.data?.date || response.data.date.length === 0) {
                     setPieChartStats({
                         value: 'No Data',
@@ -116,12 +113,7 @@ const Analytics = () => {
         const fetchLineChartData = async () => {
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await axios.get(
-                    'https://localhost:49798/api/reports/tasks-over-months',
-                    {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }
-                );
+                const response = await getTasksOverMonths(token);
                 if (!response.data?.date || response.data.date.length === 0) {
                     setLineChartStats({
                         value: 'No Data',
@@ -156,12 +148,7 @@ const Analytics = () => {
         const fetchHeatmapData = async () => {
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await axios.get(
-                    'https://localhost:49798/api/reports/tasks-by-case-source',
-                    {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }
-                );
+                const response = await getTasksByCaseSource(token);
                 if (!response.data?.date || response.data.date.length === 0) {
                     setHeatmapStats({
                         value: 'No Data',
@@ -190,12 +177,7 @@ const Analytics = () => {
         const fetchStackedData = async () => {
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await axios.get(
-                    'https://localhost:49798/api/reports/calendar-activity',
-                    {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }
-                );
+                const response = await getCalendarActivity(token);
                 if (!response.data?.date || response.data.date.length === 0) {
                     setStackedStats({
                         value: 'No Activities',
@@ -225,12 +207,7 @@ const Analytics = () => {
         const fetchFunnelData = async () => {
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await axios.get(
-                    'https://localhost:49798/api/reports/requests-stream-by-type',
-                    {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }
-                );
+                const response = await getRequestsStreamByType(token);
                 if (!response.data?.date || response.data.date.length === 0) {
                     setFunnelStats({
                         value: 'No Activities',
@@ -337,11 +314,6 @@ const Analytics = () => {
         navigate(path);
     };
 
-    // Main fix: Remove scroll, but ensure no content cut-off
-    // Use boxSizing: 'border-box' everywhere, set width: 100% on Container and Grid
-    // and ensure no extra negative margin or padding causing cut-off.
-    // Also, add maxWidth: '100%' on key blocks.
-
     return (
         <Container
             maxWidth="xl"
@@ -351,11 +323,10 @@ const Analytics = () => {
                 px: { xs: 1, sm: 2, md: 3 },
                 boxSizing: 'border-box',
                 width: '100%',
-                maxWidth: '100% !important', // override any accidental overflows
+                maxWidth: '100% !important',
                 overflowX: 'hidden'
             }}
         >
-            {/* Help Button */}
             <Box sx={{
                 display: 'flex',
                 justifyContent: 'flex-end',
@@ -383,7 +354,6 @@ const Analytics = () => {
                 </Tooltip>
             </Box>
 
-            {/* Charts Grid */}
             <Grid
                 container
                 spacing={{ xs: 2, sm: 3 }}
@@ -392,7 +362,6 @@ const Analytics = () => {
                     width: '100%',
                     maxWidth: '100%',
                     margin: 0,
-                    // No wrap override, default MUI stack is column on mobile
                 }}
             >
                 {charts.map((chart, index) => (
@@ -496,7 +465,6 @@ const Analytics = () => {
                 ))}
             </Grid>
 
-            {/* Update HelpDialog for mobile */}
             <HelpDialog
                 open={helpOpen}
                 onClose={() => setHelpOpen(false)}
@@ -512,5 +480,4 @@ const Analytics = () => {
         </Container>
     );
 }
-
 export default Analytics;
