@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ResponsiveHeatMap } from '@nivo/heatmap';
 import { Box, Typography } from '@mui/material';
 import { DateRange as DateRangeIcon } from '@mui/icons-material';
-import axios from 'axios';
+import { getTasksByCaseSource } from '../../../../services/analyticsService';
 import { transformApiData } from './data';
 import { useChartData } from '../../../../context/ChartDataContext';
 import { DataUsageOutlined as NoDataIcon } from '@mui/icons-material';
@@ -13,17 +13,16 @@ const HeatMap = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { updateChartData } = useChartData();
-    const hasFetched = useRef(false); // Track if we've fetched
+    
+    const hasFetched = useRef(false); 
 
     useEffect(() => {
-        if (hasFetched.current) return; // Skip if already fetched
+        if (hasFetched.current) return;
         
         const fetchData = async () => {
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await axios.get('https://localhost:49798/api/reports/tasks-by-case-source', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const response = await getTasksByCaseSource(token);
                 const transformedData = transformApiData(response.data);
                 setData(transformedData.data);
                 setDateRange(transformedData.dateRange);
@@ -32,7 +31,7 @@ const HeatMap = () => {
                     rawData: response.data,
                     transformedData: transformedData.data
                 });
-                hasFetched.current = true; // Mark as fetched
+                hasFetched.current = true;
             } catch (err) {
                 setError(err.message);
                 console.error('Error fetching data:', err);
@@ -42,12 +41,11 @@ const HeatMap = () => {
         };
 
         fetchData();
-    }, [updateChartData]); // Keep the dependency but prevent re-fetching
+    }, [updateChartData]);
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;
 
-    // Handle empty or invalid data states
     if (!data || data.length === 0 || (data.length === 1 && data[0].id === 'No Data')) {
         return (
             <Box
@@ -164,5 +162,4 @@ const HeatMap = () => {
         </Box>
     );
 };
-
 export default HeatMap;

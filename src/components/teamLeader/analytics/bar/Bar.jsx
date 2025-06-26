@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import { transformApiData } from './data';
 import { ResponsiveBar } from '@nivo/bar';
 import { useChartData } from '../../../../context/ChartDataContext';
-import axios from 'axios';
-import { DataUsageOutlined } from '@mui/icons-material'; // Importing icon for empty state
+import { getTaskDistributionByMember } from '../../../../services/analyticsService';
+import { DataUsageOutlined } from '@mui/icons-material';
 
 const Bar = () => {
     const [ data, setData ] = useState([]);
@@ -13,22 +13,16 @@ const Bar = () => {
     const [ loading, setLoading ] = useState(true);
     const [ error, setError ] = useState(null);
     const { updateChartData } = useChartData();
-    const hasFetched = useRef(false); // Track if we've fetched
 
+    const hasFetched = useRef(false);
 
     useEffect(() => {
-        if (hasFetched.current) return; // Skip if already fetched
+        if (hasFetched.current) return;
 
         const fetchData = async () => {
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await axios.get(
-                    'https://localhost:49798/api/reports/task-distribution-by-member',
-                    {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }
-                );
-
+                const response = await getTaskDistributionByMember(token);
                 const transformedData = transformApiData(response.data);
                 setData(transformedData.data);
                 setDateRange(transformedData.dateRange);
@@ -37,8 +31,7 @@ const Bar = () => {
                     rawData: response.data,
                     transformedData: transformedData.data
                 });
-                hasFetched.current = true; // Mark as fetched
-
+                hasFetched.current = true;
             } catch (error) {
                 console.error('Error fetching bar chart data:', error);
                 setError(error.message || 'Failed to fetch data');
@@ -116,25 +109,23 @@ const Bar = () => {
                 valueScale={{ type: 'linear' }}
                 indexScale={{ type: 'band', round: true }}
                 colors={({ id }) => {
-                    // Updated color mapping to match the provided grades
                     const colorMap = {
-                        'Opened': '#ed6c02',    // Orange from status colors
-                        'Completed': '#059669',  // Green from status colors
-                        'Frozen': '#1976D2',   // Blue from status colors
-                        'Delayed': '#d32f2f'       // Red from status colors
+                        'Opened': '#ed6c02',   
+                        'Completed': '#059669',  
+                        'Frozen': '#1976D2',   
+                        'Delayed': '#d32f2f'       
                     };
                     return colorMap[ id ];
                 }}
                 theme={{
-                    // Add gradient background colors
                     bars: {
                         gradient: {
                             colors: ({ id }) => {
                                 const gradientMap = {
-                                    'Opened': '#fff4e0',    // Orange background
-                                    'Completed': '#e0f7e9',  // Green background
-                                    'Frozen': '#E3F2FD',     // Blue background
-                                    'Delayed': '#fde8e8'     // Red background
+                                    'Opened': '#fff4e0',    
+                                    'Completed': '#e0f7e9',  
+                                    'Frozen': '#E3F2FD',     
+                                    'Delayed': '#fde8e8'     
                                 };
                                 return [ gradientMap[ id ], gradientMap[ id ] ];
                             }
@@ -196,5 +187,4 @@ const Bar = () => {
         </Box>
     );
 };
-
 export default Bar;

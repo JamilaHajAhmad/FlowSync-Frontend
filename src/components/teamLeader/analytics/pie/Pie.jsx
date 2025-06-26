@@ -3,7 +3,7 @@ import { ResponsivePie } from '@nivo/pie';
 import { DataUsageOutlined as NoDataIcon } from '@mui/icons-material';
 import { useState, useEffect, useRef } from 'react';
 import { transformApiData } from './data';
-import axios from 'axios';
+import { getTaskStatusSummary } from '../../../../services/analyticsService';
 import { useChartData } from '../../../../context/ChartDataContext';
 import DateRangeIcon from '@mui/icons-material/DateRange';
 
@@ -14,17 +14,15 @@ const Pie = () => {
     const [error, setError] = useState(null);
     const { updateChartData } = useChartData();
 
-    const hasFetched = useRef(false); // Track if we've fetched
+    const hasFetched = useRef(false);
 
     useEffect(() => {
-        if (hasFetched.current) return; // Skip if already fetched
+        if (hasFetched.current) return;
         
         const fetchData = async () => {
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await axios.get('https://localhost:49798/api/reports/task-status-summary', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const response = await getTaskStatusSummary(token);
                 const transformedData = transformApiData(response.data);
                 setData(transformedData.data);
                 setDateRange(transformedData.dateRange);
@@ -33,7 +31,7 @@ const Pie = () => {
                     rawData: response.data,
                     transformedData: transformedData
                 });
-                hasFetched.current = true; // Mark as fetched
+                hasFetched.current = true;
             } catch (err) {
                 setError(err.message);
                 console.error('Error fetching data:', err);
@@ -43,12 +41,11 @@ const Pie = () => {
         };
 
         fetchData();
-    }, [updateChartData]); // Keep the dependency but prevent re-fetching
+    }, [updateChartData]);
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;
 
-    // Handle empty or invalid data states
     if (!data || 
         data.length === 0 || 
         (data.length === 1 && data[0].id === 'No Data')) {
@@ -80,7 +77,7 @@ const Pie = () => {
                 <Box
                     sx={{
                         position: 'absolute',
-                         top: -20,
+                        top: -20,
                         right: 40,
                         display: 'flex',
                         alignItems: 'center',
@@ -196,5 +193,4 @@ const Pie = () => {
         </Box>
     );
 };
-
 export default Pie;

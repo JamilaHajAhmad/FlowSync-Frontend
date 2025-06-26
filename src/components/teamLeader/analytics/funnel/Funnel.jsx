@@ -3,7 +3,7 @@ import { ResponsiveFunnel } from '@nivo/funnel';
 import { DateRange as DateRangeIcon } from '@mui/icons-material';
 import { useState, useEffect, useRef } from 'react';
 import { transformApiData } from './data';
-import axios from 'axios';
+import { getRequestsStreamByType } from '../../../../services/analyticsService';
 import { useChartData } from '../../../../context/ChartDataContext';
 import { DataUsageOutlined } from '@mui/icons-material'; 
 
@@ -14,17 +14,15 @@ const Funnel = () => {
     const [ error, setError ] = useState(null);
     const { updateChartData } = useChartData();
 
-    const hasFetched = useRef(false); // Track if we've fetched
+    const hasFetched = useRef(false); 
 
     useEffect(() => {
-        if (hasFetched.current) return; // Skip if already fetched
+        if (hasFetched.current) return; 
 
         const fetchData = async () => {
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await axios.get('https://localhost:49798/api/reports/requests-stream-by-type', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const response = await getRequestsStreamByType(token);
                 const transformedData = transformApiData(response.data);
                 setData(transformedData.data);
                 setDateRange(transformedData.dateRange);
@@ -33,7 +31,7 @@ const Funnel = () => {
                     rawData: response.data,
                     transformedData: transformedData
                 });
-                hasFetched.current = true; // Mark as fetched
+                hasFetched.current = true;
             } catch (err) {
                 setError(err.message);
                 console.error('Error fetching data:', err);
@@ -43,7 +41,7 @@ const Funnel = () => {
         };
 
         fetchData();
-    }, [ updateChartData ]); // Keep the dependency but prevent re-fetching
+    }, [ updateChartData ]);
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;
@@ -115,5 +113,4 @@ const Funnel = () => {
         </Box>
     );
 };
-
 export default Funnel;
