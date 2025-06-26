@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import GaugeChart from 'react-gauge-chart';
 import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
@@ -16,6 +15,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import { fetchMemberAnnualKPI } from '../../../../../../services/memberHomeService';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   display: 'flex',
@@ -38,9 +38,9 @@ const colors = {
   opened: '#F59E0B',
   frozen: '#1976D2',
   gauge: {
-    red: '#EF4444',    // Low performance
-    orange: '#F59E0B', // Medium performance
-    green: '#10B981'   // High performance
+    red: '#EF4444',  
+    orange: '#F59E0B', 
+    green: '#10B981'  
   }
 };
 
@@ -54,17 +54,7 @@ const KPI = () => {
     const fetchKPI = async () => {
       try {
         const token = localStorage.getItem('authToken');
-
-        const response = await axios.get(
-          'https://localhost:49798/api/kpi/member/annual-kpi',
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Accept': 'application/json',
-              'Cache-Control': 'no-cache'
-            }
-          }
-        );
+        const response = await fetchMemberAnnualKPI(token);
 
         const processedData = {
           totalTasks: response.data.totalTasks || 0,
@@ -84,7 +74,6 @@ const KPI = () => {
           progress: Math.min(progress, 1)
         };
         setKpiData(finalData);
-
       } catch (err) {
         setError(err.message || 'Failed to load KPI data');
       } finally {
@@ -184,7 +173,6 @@ const KPI = () => {
         </Stack>
       </CardContent>
 
-      {/* KPI Explanation Dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>
           What is KPI?
@@ -222,5 +210,4 @@ const KPI = () => {
     </StyledCard>
   );
 };
-
 export default KPI;

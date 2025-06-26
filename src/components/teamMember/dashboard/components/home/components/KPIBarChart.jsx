@@ -8,10 +8,10 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import axios from 'axios';
 import { BarChart } from '@mui/x-charts/BarChart';
 import { useTheme } from '@mui/material/styles';
 import CircularProgress from '@mui/material/CircularProgress';
+import { fetchMemberYearlyKPI } from '../../../../../../services/memberHomeService';
 
 const InfoCard = ({ icon, title, value, subtitle, trend = null }) => (
   <Box sx={{
@@ -73,38 +73,24 @@ export default function KPIBarChart() {
     const fetchKPIData = async () => {
       try {
         const token = localStorage.getItem('authToken');
-        const response = await axios.get(
-          'https://localhost:49798/api/reports/member/yearly-kpi',
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        );
-
+        const response = await fetchMemberYearlyKPI(token);
         const currentYearData = response.data[0];
         const currentKpi = currentYearData?.kpi;
-        
-        // Get the stored previous KPI from localStorage
         const storedPreviousKpi = localStorage.getItem('previousKpi');
         const storedPreviousKpiValue = storedPreviousKpi ? parseFloat(storedPreviousKpi) : null;
-        
-        // Get the stored current KPI (what we had before this fetch)
         const storedCurrentKpi = localStorage.getItem('currentKpi');
         const storedCurrentKpiValue = storedCurrentKpi ? parseFloat(storedCurrentKpi) : null;
         
         if (storedCurrentKpiValue === null) {
-          // First time loading - no previous data exists
           localStorage.setItem('currentKpi', currentKpi.toString());
           setPreviousKpi(null);
         } else if (currentKpi !== storedCurrentKpiValue) {
-          // KPI has changed - move current to previous, update current
           setPreviousKpi(storedCurrentKpiValue);
           localStorage.setItem('previousKpi', storedCurrentKpiValue.toString());
           localStorage.setItem('currentKpi', currentKpi.toString());
         } else {
-          // KPI hasn't changed - keep existing previous value
           setPreviousKpi(storedPreviousKpiValue);
         }
-        
         setKpiData(currentYearData);
         setLoading(false);
       } catch (error) {
@@ -112,12 +98,10 @@ export default function KPIBarChart() {
         setLoading(false);
       }
     };
-
     fetchKPIData();
   }, []);
 
   useEffect(() => {
-    // Calculate trend whenever either KPI value changes
     if (kpiData?.kpi !== undefined && previousKpi !== undefined && previousKpi !== null) {
       const trendValue = ((kpiData.kpi - previousKpi) / previousKpi) * 100;
       setTrend(Math.round(trendValue));
@@ -152,7 +136,6 @@ export default function KPIBarChart() {
       
       <DialogContent sx={{ pt: 2 }}>
         <Box sx={{ p: 1 }}>
-          {/* Main Stats */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
             <Grid item xs={12} md={6}>
               <InfoCard
@@ -167,15 +150,13 @@ export default function KPIBarChart() {
               <InfoCard
                 icon={<TimelineIcon color="success" />}
                 title="Previous Record"
-                value={previousKpi ? `${Math.round(previousKpi)}%` : 'N/A'}
+                value={previousKpi ? `${Math.round(previousKpi)}%` : '0%'}
                 subtitle="Historical performance"
               />
             </Grid>
           </Grid>
 
           <Divider sx={{ my: 3 }} />
-
-          {/* Performance Analysis */}
           <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
             Performance Insights
           </Typography>
@@ -201,7 +182,7 @@ export default function KPIBarChart() {
                     Performance has {trend >= 0 ? 'improved' : 'decreased'} by <strong>{Math.abs(trend)}%</strong> compared to previous record
                   </Typography>
                 </Stack>
-              )}
+                )}
 
               <Stack direction="row" spacing={2} alignItems="center">
                 <AssessmentIcon color="info" />
@@ -212,7 +193,6 @@ export default function KPIBarChart() {
             </Stack>
           </Box>
 
-          {/* Visualization */}
           <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
             Visual Overview
           </Typography>
@@ -222,14 +202,31 @@ export default function KPIBarChart() {
               colors={colorPalette}
               xAxis={[{
                 scaleType: 'band',
-                data: [kpiData?.year],
+                data: [kpiData?.year || new Date().getFullYear()],
                 categoryGapRatio: 0.6,
+                tickPlacement: 'middle',
+              }]}
+              yAxis={[{
+                tickPlacement: 'middle',
               }]}
               series={[{
                 data: [kpiData?.kpi ? Math.ceil(kpiData.kpi) : 0],
               }]}
-              margin={{ left: 50, right: 20, top: 20, bottom: 20 }}
-              grid={{ horizontal: true }}
+              margin={{ left: 60, right: 20, top: 30, bottom: 50 }}
+              grid={{ horizontal: true, vertical: false }}
+              axisHighlight={{ x: 'none', y: 'none' }}
+              slotProps={{
+                axisContent: {
+                  sx: {
+                    '& .MuiChartsAxis-line': {
+                      stroke: 'transparent'
+                    },
+                    '& .MuiChartsAxis-tick': {
+                      stroke: 'currentColor'
+                    }
+                  }
+                }
+              }}
             />
           </Box>
         </Box>
@@ -307,20 +304,35 @@ export default function KPIBarChart() {
               categoryGapRatio: 0.8,
               barGapRatio: 0.8,
               data: [kpiData?.year || new Date().getFullYear()],
+              tickPlacement: 'middle',
             },
           ]}
+          yAxis={[{
+            tickPlacement: 'middle',
+          }]}
           series={[
             {
               data: [kpiData?.kpi ? Math.ceil(kpiData.kpi) : 0],
             }
           ]}
           height={250}
-          margin={{ left: 50, right: 0, top: 20, bottom: 20 }}
-          grid={{ horizontal: true }}
+          margin={{ left: 50, right: 10, top: 20, bottom: 20 }}
+          grid={{ horizontal: true, vertical: false }}
+          axisHighlight={{ x: 'none', y: 'none' }}
           slotProps={{
             legend: {
               hidden: true,
             },
+            axisContent: {
+              sx: {
+                '& .MuiChartsAxis-line': {
+                  stroke: 'transparent'
+                },
+                '& .MuiChartsAxis-tick': {
+                  stroke: 'currentColor'
+                }
+              }
+            }
           }}
         />
         <KPIDetailsDialog />

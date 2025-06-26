@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import { useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -9,12 +8,12 @@ import Typography from '@mui/material/Typography';
 import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
 import { areaElementClasses } from '@mui/x-charts/LineChart';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import CircularProgress from '@mui/material/CircularProgress';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import {
   DataUsageOutlined as NoDataIcon
 } from '@mui/icons-material';
+import { fetchMemberMonthlyTaskStatusSummary } from '../../../../../../services/memberHomeService';
 
 function getDaysInMonth(month, year) {
   const date = new Date(year, month, 0);
@@ -42,15 +41,8 @@ function AreaGradient({ color, id }) {
   );
 }
 
-AreaGradient.propTypes = {
-  color: PropTypes.string.isRequired,
-  id: PropTypes.string.isRequired,
-};
-
 function StatsCard({ taskType }) {
   const theme = useTheme();
-  
-  // Responsive breakpoints
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
@@ -84,14 +76,12 @@ function StatsCard({ taskType }) {
   const chartColor = trendColors[taskType] || trendColors.neutral;
   const color = labelColors[taskType] || labelColors.neutral;
 
-  // Responsive chart dimensions
   const getChartHeight = () => {
     if (isMobile) return 40;
     if (isTablet) return 45;
     return 50;
   };
 
-  // Responsive typography variants
   const getTitleVariant = () => {
     if (isMobile) return 'body2';
     return 'subtitle2';
@@ -108,12 +98,10 @@ function StatsCard({ taskType }) {
     return 'caption';
   };
 
-  // Responsive chip size
   const getChipSize = () => {
     return isMobile ? 'small' : 'small';
   };
 
-  // Responsive padding and spacing
   const getCardPadding = () => {
     if (isMobile) return 1.5;
     if (isTablet) return 2;
@@ -125,9 +113,7 @@ function StatsCard({ taskType }) {
     return 1;
   };
 
-  // FIXED: Improved trend calculation function
   const calculateTrend = (current, previous) => {
-    // Handle edge cases
     if (previous === null || previous === undefined || isNaN(previous)) {
       return { trend: 'neutral', percentage: 0 };
     }
@@ -135,12 +121,9 @@ function StatsCard({ taskType }) {
     if (current === null || current === undefined || isNaN(current)) {
       return { trend: 'neutral', percentage: 0 };
     }
-
-    // Convert to numbers to ensure proper calculation
     const currentNum = Number(current);
     const previousNum = Number(previous);
 
-    // If previous is 0, handle specially to avoid division by zero
     if (previousNum === 0) {
       if (currentNum > 0) {
         return { trend: 'up', percentage: 100 };
@@ -150,14 +133,10 @@ function StatsCard({ taskType }) {
         return { trend: 'neutral', percentage: 0 };
       }
     }
-
-    // Calculate percentage change
     const percentageChange = ((currentNum - previousNum) / Math.abs(previousNum)) * 100;
     const roundedPercentage = Math.round(Math.abs(percentageChange)); // Always positive for display
-
-    // Determine trend direction with a small threshold to avoid noise
     let trendDirection = 'neutral';
-    const threshold = 1; // Ignore changes less than 1%
+    const threshold = 1;
     
     if (Math.abs(percentageChange) >= threshold) {
       if (percentageChange > 0) {
@@ -170,7 +149,6 @@ function StatsCard({ taskType }) {
     return { trend: trendDirection, percentage: roundedPercentage };
   };
 
-  // Process the new API response format
   const processApiData = (dataArr) => {
     if (!Array.isArray(dataArr) || dataArr.length === 0) {
       return {
@@ -182,18 +160,13 @@ function StatsCard({ taskType }) {
       };
     }
 
-    // Get month and year from the first data point
     const { month, year } = dataArr[0];
     const daysInMonth = getDaysInMonth(month, year);
-    
-    // Initialize daily counts array with zeros
     const dailyCounts = Array(daysInMonth.length).fill(0);
     
-    // Filter and aggregate data for the specific task type
     const normalize = s => (s || '').toString().trim().toLowerCase();
     const normalizedTaskType = normalize(taskType);
     
-    // Group data by day and sum counts for matching status
     const dayMap = {};
     
     dataArr.forEach(item => {
@@ -208,7 +181,6 @@ function StatsCard({ taskType }) {
       }
     });
     
-    // Fill the dailyCounts array with aggregated data
     Object.keys(dayMap).forEach(day => {
       const dayIndex = parseInt(day) - 1;
       if (dayIndex >= 0 && dayIndex < dailyCounts.length) {
@@ -231,14 +203,8 @@ function StatsCard({ taskType }) {
     const fetchTaskStats = async () => {
       try {
         const token = localStorage.getItem('authToken');
-        const response = await axios.get(
-          'https://localhost:49798/api/reports/member/monthly-task-status-summary',
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const response = await fetchMemberMonthlyTaskStatusSummary(token);
         console.log('Task statistics response:', response);
-
         const dataArr = response.data || [];
         
         if (!Array.isArray(dataArr) || dataArr.length === 0) {
@@ -256,27 +222,21 @@ function StatsCard({ taskType }) {
           return;
         }
 
-        // Process the new API response format
         const { dailyCounts, totalCount, month, year, daysInMonth } = processApiData(dataArr);
-
-        // IMPROVED: Better trend calculation logic
         let trend = { trend: 'neutral', percentage: 0 };
         
         if (dailyCounts.length >= 14) {
-          // Compare last 7 days vs previous 7 days
           const last7Days = dailyCounts.slice(-7).reduce((a, b) => a + b, 0);
           const prev7Days = dailyCounts.slice(-14, -7).reduce((a, b) => a + b, 0);
           trend = calculateTrend(last7Days, prev7Days);
           
         } else if (dailyCounts.length >= 8) {
-          // Compare second half vs first half of available data
           const midPoint = Math.floor(dailyCounts.length / 2);
           const secondHalf = dailyCounts.slice(midPoint).reduce((a, b) => a + b, 0);
           const firstHalf = dailyCounts.slice(0, midPoint).reduce((a, b) => a + b, 0);
           trend = calculateTrend(secondHalf, firstHalf);
           
         } else if (dailyCounts.length >= 4) {
-          // Compare last quarter vs first quarter of available data
           const quarterSize = Math.floor(dailyCounts.length / 4);
           if (quarterSize > 0) {
             const lastQuarter = dailyCounts.slice(-quarterSize).reduce((a, b) => a + b, 0);
@@ -285,15 +245,12 @@ function StatsCard({ taskType }) {
           }
           
         } else if (dailyCounts.length >= 2) {
-          // Compare last day vs average of previous days
           const lastDay = dailyCounts[dailyCounts.length - 1];
           const previousDays = dailyCounts.slice(0, -1);
           const avgPreviousDays = previousDays.length > 0 ? 
             previousDays.reduce((a, b) => a + b, 0) / previousDays.length : 0;
           trend = calculateTrend(lastDay, avgPreviousDays);
         }
-
-        // Add debug logging to help troubleshoot
         console.log('Trend calculation debug:', {
           taskType,
           dailyCounts,
@@ -301,7 +258,6 @@ function StatsCard({ taskType }) {
           calculatedTrend: trend
         });
 
-        // Format interval display
         const monthName = month && year ? 
           new Date(year, month - 1).toLocaleString('default', { 
             month: isMobile ? 'short' : 'long' 
@@ -315,7 +271,7 @@ function StatsCard({ taskType }) {
           value: totalCount.toString(),
           interval: intervalText,
           trend: trend.trend,
-          trendPercentage: trend.percentage, // Already absolute value from calculateTrend
+          trendPercentage: trend.percentage,
           data: dailyCounts,
           daysInWeek: daysInMonth,
           months: [],
@@ -324,8 +280,6 @@ function StatsCard({ taskType }) {
         setLoading(false);
       } catch (error) {
         console.error('Error fetching task statistics:', error);
-        
-        // Set error state
         setCardData({
           title: `${taskType} Tasks`,
           value: '0',
@@ -336,7 +290,6 @@ function StatsCard({ taskType }) {
           daysInWeek: [],
           months: [],
         });
-        
         setLoading(false);
       }
     };
@@ -540,9 +493,4 @@ function StatsCard({ taskType }) {
     </Card>
   );
 }
-
-StatsCard.propTypes = {
-  taskType: PropTypes.string.isRequired,
-};
-
 export default StatsCard;

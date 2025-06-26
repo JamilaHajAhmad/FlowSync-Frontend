@@ -3,13 +3,13 @@ import { useTheme } from '@mui/material/styles';
 import {
   Card, CardContent, Typography, Stack, Chip, IconButton,
   Dialog, DialogTitle, DialogContent, DialogActions, Button,
-  CircularProgress, Tooltip, Box, Divider, Grid
+  CircularProgress, Tooltip, Box, Grid
 } from '@mui/material';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import TaskIcon from '@mui/icons-material/Task';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { LineChart } from '@mui/x-charts/LineChart';
-import axios from 'axios';
+import { fetchMemberTasksByYear } from '../../../../../../services/memberHomeService';
 
 function AreaGradient({ color, id }) {
   return (
@@ -22,7 +22,6 @@ function AreaGradient({ color, id }) {
   );
 }
 
-// Add new InfoCard component
 const InfoCard = ({ icon, title, value, subtitle }) => (
   <Box sx={{
     p: 2,
@@ -67,38 +66,24 @@ export default function TasksChart() {
     const fetchTasksByYear = async () => {
       try {
         const token = localStorage.getItem('authToken');
-        const response = await axios.get(
-          'https://localhost:49798/api/reports/member/tasks-by-year',
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        );
-
+        const response = await fetchMemberTasksByYear(token);
         const currentYearData = response.data[0];
         const currentTaskCount = currentYearData?.taskCount;
-        
-        // Get the stored previous task count from localStorage
         const storedPreviousTaskCount = localStorage.getItem('previousTaskCount');
         const storedPreviousTaskCountValue = storedPreviousTaskCount ? parseInt(storedPreviousTaskCount) : null;
-        
-        // Get the stored current task count (what we had before this fetch)
         const storedCurrentTaskCount = localStorage.getItem('currentTaskCount');
         const storedCurrentTaskCountValue = storedCurrentTaskCount ? parseInt(storedCurrentTaskCount) : null;
         
         if (storedCurrentTaskCountValue === null) {
-          // First time loading - no previous data exists
           localStorage.setItem('currentTaskCount', currentTaskCount.toString());
           setPreviousTaskCount(null);
         } else if (currentTaskCount !== storedCurrentTaskCountValue) {
-          // Task count has changed - move current to previous, update current
           setPreviousTaskCount(storedCurrentTaskCountValue);
           localStorage.setItem('previousTaskCount', storedCurrentTaskCountValue.toString());
           localStorage.setItem('currentTaskCount', currentTaskCount.toString());
         } else {
-          // Task count hasn't changed - keep existing previous value
           setPreviousTaskCount(storedPreviousTaskCountValue);
         }
-
         setTaskData(currentYearData);
         setLoading(false);
       } catch (error) {
@@ -111,10 +96,9 @@ export default function TasksChart() {
   }, []);
 
   useEffect(() => {
-    // Calculate trend whenever either task count value changes
     if (taskData?.taskCount !== undefined && previousTaskCount !== undefined && previousTaskCount !== null) {
       const trendValue = previousTaskCount === 0 
-        ? (taskData.taskCount > 0 ? 100 : 0) // Handle division by zero
+        ? (taskData.taskCount > 0 ? 100 : 0)
         : ((taskData.taskCount - previousTaskCount) / previousTaskCount) * 100;
       setTrend(Math.round(trendValue));
     }
@@ -130,7 +114,6 @@ export default function TasksChart() {
     );
   }
 
-  // Add TaskDetailsDialog component
   const TaskDetailsDialog = () => (
     <Dialog
       open={detailsOpen}
@@ -179,9 +162,6 @@ export default function TasksChart() {
             </Grid>
           </Grid>
 
-          <Divider sx={{ my: 3 }} />
-
-          {/* Detailed Analysis */}
           <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
             Performance Insights
           </Typography>
@@ -194,7 +174,7 @@ export default function TasksChart() {
           }}>
             <Stack spacing={2}>
               <Typography variant="body2" color="text.secondary">
-                • You have been assigned <strong>{taskData?.taskCount}</strong> tasks in {taskData?.year}
+                • You have been assigned <strong>{taskData?.taskCount || 'no'}</strong> tasks in {taskData?.year || new Date().getFullYear()}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 • On average, you handle approximately <strong>{Math.round((taskData?.taskCount || 0) / 12)}</strong> tasks per month
@@ -207,7 +187,6 @@ export default function TasksChart() {
             </Stack>
           </Box>
 
-          {/* Visualization */}
           <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
             Visual Overview
           </Typography>
@@ -216,7 +195,7 @@ export default function TasksChart() {
               colors={[theme.palette.primary.main]}
               xAxis={[{
                 scaleType: 'point',
-                data: [taskData?.year.toString()],
+                data: [taskData?.year.toString() || new Date().getFullYear().toString()],
                 tickInterval: () => true,
               }]}
               series={[{
@@ -243,7 +222,6 @@ export default function TasksChart() {
     </Dialog>
   );
 
-  // Update the return statement to include the help icon and dialog
   return (
     <Card variant="outlined" sx={{ width: '100%' }}>
       <CardContent>
