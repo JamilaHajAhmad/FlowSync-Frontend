@@ -50,7 +50,7 @@ const getStatusColor = (status) => {
     }
 };
 
-const getColumns = (tab, handleEditTask) => {
+const getColumns = (tab, handleEditTask, showActions) => {
     const baseColumns = [
         {
             accessorKey: "name",
@@ -128,6 +128,44 @@ const getColumns = (tab, handleEditTask) => {
         ),
     };
 
+    const actionColumn = {
+        id: 'actions',
+        header: 'Actions',
+        size: 90,
+        Cell: ({ row }) => (
+            <Box sx={{ display: 'flex', gap: 1 }}>
+                <Tooltip 
+                    title={
+                        row.original.status === "Completed" 
+                            ? "Completed tasks cannot be edited" 
+                            : "Edit Task"
+                    } 
+                    placement="left"
+                >
+                    <span>
+                        <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleEditTask(row.original)}
+                            disabled={row.original.status === "Completed"}
+                            sx={{
+                                '&:hover': {
+                                    backgroundColor: 'rgba(5, 150, 105, 0.04)'
+                                },
+                                '&.Mui-disabled': {
+                                    opacity: 0.5,
+                                    color: 'grey.400'
+                                }
+                            }}
+                        >
+                            <EditIcon fontSize="small" />
+                        </IconButton>
+                    </span>
+                </Tooltip>
+            </Box>
+        ),
+    };
+
     switch(tab) {
         case 'All':
             return [
@@ -148,43 +186,7 @@ const getColumns = (tab, handleEditTask) => {
                     header: "Case Source",
                     size: 120,
                 },
-                {
-                    id: 'actions',
-                    header: 'Actions',
-                    size: 90,
-                    Cell: ({ row }) => (
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                            <Tooltip 
-                                title={
-                                    row.original.status === "Completed" 
-                                        ? "Completed tasks cannot be edited" 
-                                        : "Edit Task"
-                                } 
-                                placement="left"
-                            >
-                                <span>
-                                    <IconButton
-                                        size="small"
-                                        color="primary"
-                                        onClick={() => handleEditTask(row.original)}
-                                        disabled={row.original.status === "Completed"}
-                                        sx={{
-                                            '&:hover': {
-                                                backgroundColor: 'rgba(5, 150, 105, 0.04)'
-                                            },
-                                            '&.Mui-disabled': {
-                                                opacity: 0.5,
-                                                color: 'grey.400'
-                                            }
-                                        }}
-                                    >
-                                        <EditIcon fontSize="small" />
-                                    </IconButton>
-                                </span>
-                            </Tooltip>
-                        </Box>
-                    ),
-                }
+                ...(showActions ? [actionColumn] : [])
             ];
         case 'Completed':
             return [
@@ -243,7 +245,8 @@ export default function Tasks({
     hideCreateButton, 
     showTabs,
     containerWidth = "100%",
-    hideFilterToolbar = false
+    hideFilterToolbar = false,
+    showActions = true
 }) {
     const isMobile = useMediaQuery('(max-width:600px)');
 
@@ -591,7 +594,7 @@ export default function Tasks({
         setFilteredTasks(displayTasks);
     }, [rawTasks, startDate, endDate, selectedEmployee, selectedTaskType]);
 
-    const columns = useMemo(() => getColumns(activeTab, handleEditTask), [activeTab, handleEditTask]);
+    const columns = useMemo(() => getColumns(activeTab, handleEditTask, showActions), [activeTab, handleEditTask, showActions]);
 
     const table = useMaterialReactTable({
         columns,
@@ -848,7 +851,7 @@ export default function Tasks({
                     muiTableContainerProps={{
                         sx: {
                             overflowX: 'auto',
-                            overflowY: 'visible', // No vertical scroll in table area
+                            overflowY: 'visible',
                             maxWidth: '100vw',
                         }
                     }}
