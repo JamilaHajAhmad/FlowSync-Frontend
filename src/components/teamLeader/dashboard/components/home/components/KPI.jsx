@@ -15,7 +15,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import axios from 'axios';
+import { fetchLeaderAnnualKPI, fetchAdminLeaderAnnualKPI } from '../../../../../../services/homeService';
 import { decodeToken } from '../../../../../../utils';
 
 const colors = {
@@ -53,68 +53,49 @@ export default function KPI() {
 
   useEffect(() => {
     const fetchKPI = async () => {
-        let response;
-        try {
-            const token = localStorage.getItem('authToken');
-            const role = decodeToken(token)?.role;
-            
-            if (role.includes('Leader') && !role.includes('Admin')) {
-                response = await axios.get(
-                    `https://localhost:49798/api/kpi/leader/annual-kpi`,
-                    {
-                        headers: { 
-                            'Authorization': `Bearer ${token}`,
-                            'Accept': 'application/json',
-                            'Cache-Control': 'no-cache'
-                        }
-                    }
-                );
-            }
-            else if (role.includes('Admin')) {
-                response = await axios.get(
-                    `https://localhost:49798/api/kpi/admin/leader-annual-kpi`,
-                    {
-                        headers: { 
-                            'Authorization': `Bearer ${token}`,
-                            'Accept': 'application/json',
-                            'Cache-Control': 'no-cache'
-                        }
-                    }
-                );
-            } else {
-                throw new Error('Unauthorized role');
-            }
+      let response;
+      try {
+        const token = localStorage.getItem('authToken');
+        const role = decodeToken(token)?.role;
 
-            if (!response?.data) {
-                throw new Error('No data received from server');
-            }
-
-            const processedData = {
-                totalTasks: response.data.totalTasks || 0,
-                completedTasks: response.data.completedTasks || 0,
-                delayedTasks: response.data.delayedTasks || 0,
-                ongoingTasks: response.data.ongoingTasks || 0,
-                frozenTasks: response.data.frozenTasks || 0,
-                kpi: response.data.kpi || 0
-            };
-
-            const progress = processedData.totalTasks > 0 
-                ? (processedData.completedTasks / processedData.totalTasks)
-                : 0;
-
-            const finalData = {
-                ...processedData,
-                progress: Math.min(progress, 1)
-            };
-
-            setKpiData(finalData);
-
-        } catch (err) {
-            console.error('KPI fetch error:', err);
-            setError(err.response?.data?.message || err.message || 'Failed to load KPI data');
-        } finally {
-            setLoading(false);
+        if (role.includes('Leader') && !role.includes('Admin')) {
+          response = await fetchLeaderAnnualKPI(token);
+        } else if (role.includes('Admin')) {
+          response = await fetchAdminLeaderAnnualKPI(token);
+        } else {
+          throw new Error('Unauthorized role');
         }
+
+        if (!response?.data) {
+          throw new Error('No data received from server');
+        }
+
+        const processedData = {
+          totalTasks: response.data.totalTasks || 0,
+          completedTasks: response.data.completedTasks || 0,
+          delayedTasks: response.data.delayedTasks || 0,
+          ongoingTasks: response.data.ongoingTasks || 0,
+          frozenTasks: response.data.frozenTasks || 0,
+          kpi: response.data.kpi || 0
+        };
+
+        const progress = processedData.totalTasks > 0
+          ? (processedData.completedTasks / processedData.totalTasks)
+          : 0;
+
+        const finalData = {
+          ...processedData,
+          progress: Math.min(progress, 1)
+        };
+
+        setKpiData(finalData);
+
+      } catch (err) {
+        console.error('KPI fetch error:', err);
+        setError(err.response?.data?.message || err.message || 'Failed to load KPI data');
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchKPI();
