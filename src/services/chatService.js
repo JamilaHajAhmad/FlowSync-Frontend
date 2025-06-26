@@ -1,4 +1,19 @@
 import api from './api';
+import * as signalR from '@microsoft/signalr';
+
+const API_BASE_URL = api.defaults.baseURL;
+
+export function createChatHubConnection(token) {
+    return new signalR.HubConnectionBuilder()
+        .withUrl(`${API_BASE_URL}/chatHub`, {
+            accessTokenFactory: () => token,
+            skipNegotiation: true,
+            transport: signalR.HttpTransportType.WebSockets
+        })
+        .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+        .configureLogging(signalR.LogLevel.Debug)
+        .build();
+}
 
 export const sendMessage = async (receiverId, message, token) => {
     return await api.post(`/chat/send`, {
