@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import './Landing.css';
 import Home from './components/Home/Home';
 import Features from './components/Features/Features';
@@ -7,6 +8,10 @@ import Footer from './components/Footer/Footer';
 import Quote from './components/Quote/Quote';
 
 const Landing = () => {
+    useEffect(() => {   
+        document.title = "FlowSync";
+    }, []);
+
     return (
         <main className='landing'>
             <Home/>
@@ -18,5 +23,4 @@ const Landing = () => {
         </main>
     )
 }
-
 export default Landing;
