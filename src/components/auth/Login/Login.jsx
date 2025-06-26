@@ -9,47 +9,39 @@ import { motion as Motion } from "framer-motion";
 import { loginMotion } from "../../../variants";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import axios from 'axios';
 import { decodeToken } from '../../../utils';
-
-// Add MUI Button and Home icon
+import { login as loginApi } from '../../../services/authService';
 import Button from '@mui/material/Button';
 import HomeIcon from '@mui/icons-material/Home';
+import Tooltip from '@mui/material/Tooltip';
 
 const Login = () => {
     const navigate = useNavigate();
     const [ showPassword, setShowPassword ] = useState(false);
 
-    // Set the document title
     useEffect(() => {
         document.title = "FlowSync | Login";
     }, []);
 
-    // Add toggle function
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
     };
 
-    // Validation Schema using Yup
     const validationSchema = Yup.object({
         email: Yup.string()
             .required('Email is required')
             .email('Invalid email address'),
         password: Yup.string()
             .required('Password is required')
-            .min(8, 'Password must be at least 8 characters')
     });
 
     const handleNavigation = async (decodedToken, userData) => {
         const is2FAEnabled = localStorage.getItem('is2FAEnabled');
         
         if (is2FAEnabled === 'true') {
-            // Redirect to 2FA verification first
             navigate('/settings/security/verify');
             return;
         }
-
-        // Only show welcome message and navigate if 2FA is not enabled
         if (decodedToken.role.includes('Leader') || decodedToken.role.includes('Admin')) {
             toast.success(`Welcome, ${userData.displayName}!`);
             navigate('/leader-dashboard');
@@ -67,26 +59,17 @@ const Login = () => {
         validationSchema,
         onSubmit: async (values, { setSubmitting }) => {
             try {
-                const response = await axios.post('https://localhost:49798/login', values);
-
-                // Store token in localStorage
+                const response = await loginApi(values);
                 const token = response.data.token;
                 localStorage.setItem('authToken', token);
-
-                // Decode token to get user information
                 const decodedToken = decodeToken(token);
                 if (!decodedToken) {
                     toast.error('Invalid token received');
                     return;
                 }
-
-                // Store user info
                 const userData = response.data.user;
                 localStorage.setItem('user', JSON.stringify(userData));
-
-                // Handle navigation and 2FA check in a single function
                 await handleNavigation(decodedToken, userData);
-
             } catch (error) {
                 console.error('Login error:', error);
                 const errorMsg = error.response?.data || 'Login failed. Please try again.';
@@ -97,7 +80,6 @@ const Login = () => {
         }
     });
 
-    // Return to Home handler
     const handleReturnHome = () => {
         navigate('/');
     };
@@ -110,11 +92,9 @@ const Login = () => {
             variants={loginMotion}
         >
             <div className="login-left">
-                {/* Return to Home Button - now on the left and with improved color */}
                 <Button
                     variant="contained"
                     color="success"
-                    startIcon={<HomeIcon />}
                     onClick={handleReturnHome}
                     sx={{
                         borderRadius: '30px',
@@ -123,9 +103,9 @@ const Login = () => {
                         alignSelf: 'flex-start',
                         boxShadow: 2,
                         transition: 'all 0.2s',
-                        minWidth: { xs: 36, sm: 120 },
-                        px: { xs: 1.5, sm: 3 },
-                        py: { xs: 0.5, sm: 1 },
+                        minWidth: { xs: 36, sm: 48 },
+                        px: { xs: 1.5, sm: 1.5 },
+                        py: { xs: 0.5, sm: 0.5 },
                         background: 'linear-gradient(90deg, #059669 60%, #10b981 100%)',
                         color: '#fff',
                         '&:hover': {
@@ -136,9 +116,12 @@ const Login = () => {
                         top: { md: 35 },
                         left: { md: 32 },
                         mb: { xs: 2, md: 0 },
+                        minHeight: 0,
                     }}
                 >
-                    <span>Return Home</span>
+                    <Tooltip title="Return Home" arrow>
+                        <HomeIcon />
+                    </Tooltip>
                 </Button>
                 <img src={logo} alt="FlowSync" className="login-logo" />
                 <h2 className="login-title">Welcome Back to FlowSync</h2>
@@ -191,7 +174,7 @@ const Login = () => {
                         {formik.isSubmitting ? 'Signing in...' : 'Sign in'}
                     </button>
 
-                    <p className="signup-option">
+                    <p className="signup-option" style={{ color: 'black', fontWeight: 'bold' }}>
                         Don't have an account? <Link to="/register" className="link">Sign up</Link>
                     </p>
                 </form>
@@ -199,5 +182,4 @@ const Login = () => {
         </Motion.div>
     );
 };
-
 export default Login;

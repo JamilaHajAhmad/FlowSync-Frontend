@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import axios from 'axios';
 import { toast } from "react-toastify";
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import "react-toastify/dist/ReactToastify.css";
@@ -10,14 +9,14 @@ import logo from '../../../assets/images/logo.png';
 import { motion as Motion } from "framer-motion";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { resetPasswordMotion } from "../../../variants";
-
-// MUI Button and Home icon
+import { resetPassword as resetPasswordApi } from '../../../services/authService';
 import Button from '@mui/material/Button';
 import HomeIcon from '@mui/icons-material/Home';
+import Tooltip from '@mui/material/Tooltip';
 
 const ResetPassword = () => {
     const navigate = useNavigate();
-    // Set the document title
+
     useEffect(() => {
         document.title = "FlowSync | Reset Password";
     }, []);
@@ -27,7 +26,7 @@ const ResetPassword = () => {
     const token = queryParams.get("token");
     const userId = queryParams.get("userId");
 
-    const [showPassword, setShowPassword] = useState({
+    const [ showPassword, setShowPassword ] = useState({
         password: false,
         confirmPassword: false
     });
@@ -35,7 +34,7 @@ const ResetPassword = () => {
     const togglePasswordVisibility = (field) => {
         setShowPassword(prev => ({
             ...prev,
-            [field]: !prev[field]
+            [ field ]: !prev[ field ]
         }));
     };
 
@@ -49,7 +48,7 @@ const ResetPassword = () => {
             ),
         confirmPassword: Yup.string()
             .required('Please confirm your password')
-            .oneOf([Yup.ref('password')], 'Passwords must match')
+            .oneOf([ Yup.ref('password') ], 'Passwords must match')
     });
 
     const formik = useFormik({
@@ -60,15 +59,11 @@ const ResetPassword = () => {
         validationSchema,
         onSubmit: async (values, { setSubmitting }) => {
             try {
-                const response = await axios.post(
-                    'https://localhost:49798/reset-password',
-                    {
-                        token: token,
-                        userId: userId,
-                        newPassword: values.password
-                    }
-                );
-
+                const response = await resetPasswordApi({
+                    token: token,
+                    userId: userId,
+                    newPassword: values.password
+                });
                 if (response.status === 200) {
                     toast.success('Password has been reset successfully');
                     setTimeout(() => {
@@ -86,7 +81,6 @@ const ResetPassword = () => {
         }
     });
 
-    // Return to Home handler
     const handleReturnHome = () => {
         navigate('/');
     };
@@ -99,10 +93,9 @@ const ResetPassword = () => {
             variants={resetPasswordMotion}
         >
             <div className="reset-password-left">
-                {/* Return to Home Button - left, attractive, responsive */}
                 <Button
                     variant="contained"
-                    startIcon={<HomeIcon />}
+                    color="success"
                     onClick={handleReturnHome}
                     sx={{
                         borderRadius: '30px',
@@ -111,9 +104,9 @@ const ResetPassword = () => {
                         alignSelf: 'flex-start',
                         boxShadow: 2,
                         transition: 'all 0.2s',
-                        minWidth: { xs: 36, sm: 120 },
-                        px: { xs: 1.5, sm: 3 },
-                        py: { xs: 0.5, sm: 1 },
+                        minWidth: { xs: 36, sm: 48 },
+                        px: { xs: 1.5, sm: 1.5 },
+                        py: { xs: 0.5, sm: 0.5 },
                         background: 'linear-gradient(90deg, #059669 60%, #10b981 100%)',
                         color: '#fff',
                         '&:hover': {
@@ -124,9 +117,12 @@ const ResetPassword = () => {
                         top: { md: 35 },
                         left: { md: 32 },
                         mb: { xs: 2, md: 0 },
+                        minHeight: 0,
                     }}
                 >
-                    <span>Return Home</span>
+                    <Tooltip title="Return Home" arrow>
+                        <HomeIcon />
+                    </Tooltip>
                 </Button>
                 <img src={logo} alt="FlowSync" className="reset-password-logo" />
                 <h2 className="reset-password-title">Reset Your Password</h2>
@@ -184,7 +180,7 @@ const ResetPassword = () => {
                         {formik.isSubmitting ? 'Resetting...' : 'Reset Password'}
                     </button>
 
-                    <p className="login-option">
+                    <p className="login-option" style={{ fontWeight: 'bold' }}>
                         Remembered your password? <Link to="/login" className="link">Log in</Link>
                     </p>
                 </form>
@@ -192,5 +188,4 @@ const ResetPassword = () => {
         </Motion.div>
     );
 };
-
 export default ResetPassword;

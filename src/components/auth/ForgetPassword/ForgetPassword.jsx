@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import axios from 'axios';
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./ForgetPassword.css";
@@ -9,20 +8,18 @@ import logo from '../../../assets/images/logo.png';
 import { Link, useNavigate } from "react-router-dom";
 import { motion as Motion } from "framer-motion";
 import { forgetPasswordMotion } from "../../../variants";
-
-// MUI Button and Home icon
+import { forgotPassword as forgotPasswordApi } from '../../../services/authService';
 import Button from '@mui/material/Button';
 import HomeIcon from '@mui/icons-material/Home';
+import Tooltip from '@mui/material/Tooltip';
 
 const ForgetPassword = () => {
     const navigate = useNavigate();
 
-    // Set the document title
     useEffect(() => {
         document.title = "FlowSync | Forget Password";
     }, []);
 
-    // Validation Schema
     const validationSchema = Yup.object({
         email: Yup.string()
             .required('Email is required')
@@ -36,11 +33,7 @@ const ForgetPassword = () => {
         validationSchema,
         onSubmit: async (values, { setSubmitting }) => {
             try {
-                const response = await axios.post(
-                    'https://localhost:49798/forgot-password',
-                    { email: values.email }
-                );
-
+                const response = await forgotPasswordApi(values.email);
                 if (response.status === 200) {
                     toast.success('Password reset link has been sent to your email');
                     setTimeout(() => {
@@ -58,7 +51,6 @@ const ForgetPassword = () => {
         }
     });
 
-    // Return to Home handler
     const handleReturnHome = () => {
         navigate('/');
     };
@@ -71,10 +63,9 @@ const ForgetPassword = () => {
             variants={forgetPasswordMotion}
         >
             <div className="forget-password-left">
-                {/* Return to Home Button - left, attractive, responsive */}
                 <Button
                     variant="contained"
-                    startIcon={<HomeIcon />}
+                    color="success"
                     onClick={handleReturnHome}
                     sx={{
                         borderRadius: '30px',
@@ -83,9 +74,9 @@ const ForgetPassword = () => {
                         alignSelf: 'flex-start',
                         boxShadow: 2,
                         transition: 'all 0.2s',
-                        minWidth: { xs: 36, sm: 120 },
-                        px: { xs: 1.5, sm: 3 },
-                        py: { xs: 0.5, sm: 1 },
+                        minWidth: { xs: 36, sm: 48 },
+                        px: { xs: 1.5, sm: 1.5 },
+                        py: { xs: 0.5, sm: 0.5 },
                         background: 'linear-gradient(90deg, #059669 60%, #10b981 100%)',
                         color: '#fff',
                         '&:hover': {
@@ -96,9 +87,12 @@ const ForgetPassword = () => {
                         top: { md: 35 },
                         left: { md: 32 },
                         mb: { xs: 2, md: 0 },
+                        minHeight: 0,
                     }}
                 >
-                    <span>Return Home</span>
+                    <Tooltip title="Return Home" arrow>
+                        <HomeIcon />
+                    </Tooltip>
                 </Button>
                 <img src={logo} alt="FlowSync" className="forget-password-logo" />
                 <h2 className="forget-password-title">Forgot Your Password</h2>
@@ -107,29 +101,28 @@ const ForgetPassword = () => {
             <div className="forget-password-right">
                 <form onSubmit={formik.handleSubmit} className="forget-password-form">
                     <h2 className="form-title">Forgot Password ?</h2>
-                    
-                    <input 
-                        type="email" 
-                        name="email" 
-                        placeholder="E-mail" 
+
+                    <input
+                        type="email"
+                        name="email"
+                        placeholder="E-mail"
                         {...formik.getFieldProps('email')}
-                        className={`forget-password-input ${
-                            formik.touched.email && formik.errors.email ? 'error' : ''
-                        }`}
+                        className={`forget-password-input ${formik.touched.email && formik.errors.email ? 'error' : ''
+                            }`}
                     />
                     {formik.touched.email && formik.errors.email && (
                         <div className="error-message">{formik.errors.email}</div>
                     )}
 
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         className="forget-password-button"
                         disabled={formik.isSubmitting}
                     >
                         {formik.isSubmitting ? 'Sending...' : 'Send'}
                     </button>
 
-                    <p className="login-option" style={{ color: 'black' }}>
+                    <p className="login-option" style={{ color: 'black', fontWeight: 'bold' }}>
                         Remembered your password? <Link to="/login" className="link">Log in</Link>
                     </p>
                 </form>
@@ -137,5 +130,4 @@ const ForgetPassword = () => {
         </Motion.div>
     );
 };
-
 export default ForgetPassword;

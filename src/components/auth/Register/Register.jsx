@@ -9,20 +9,18 @@ import { motion as Motion } from "framer-motion";
 import { registerMotion } from "../../../variants";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import axios from 'axios';
-
-// MUI Button and Home icon
+import { register as registerApi } from '../../../services/authService';
 import Button from '@mui/material/Button';
 import HomeIcon from '@mui/icons-material/Home';
+import Tooltip from '@mui/material/Tooltip';
 
 const Register = () => {
   const navigate = useNavigate();
 
-  // Set the document title
   useEffect(() => {
     document.title = "FlowSync | Register";
   }, []);
-  // State to manage password visibility
+
   const [ showPasswords, setShowPasswords ] = useState({
     password: false,
     confirmPassword: false
@@ -35,12 +33,10 @@ const Register = () => {
     }));
   };
 
-  // Helper function to convert role string to number
   const convertRoleToNumber = (roleString) => {
     return roleString === 'teamLeader' ? 0 : 1;
   };
 
-  // Validation Schema using Yup
   const validationSchema = Yup.object({
     firstName: Yup.string()
       .required('First Name is required')
@@ -78,30 +74,26 @@ const Register = () => {
     validationSchema,
     onSubmit: async (values) => {
       try {
-        // Convert role to number before sending to API
         const apiValues = {
           ...values,
           role: convertRoleToNumber(values.role)
         };
-
-        const response = await axios.post('https://localhost:49798/register', apiValues);
+        const response = await registerApi(apiValues);
         console.log(response.data);
-
-        // Show different messages and navigate based on role
         if (values.role === 'teamLeader') {
           toast.success('Registration successful! Please check your email to verify your account.');
           navigate('/login');
         } else {
           toast.success('Registration successful! Your request is waiting for team leader approval.');
-          navigate('/'); // Navigate to landing page for team members
+          navigate('/');
         }
       } catch (err) {
         toast.error(err.response?.data?.detail || 'An error occurred');
+        console.error('Registration error:', err);
       }
     }
   });
 
-  // Return to Home handler
   const handleReturnHome = () => {
     navigate('/');
   };
@@ -114,10 +106,9 @@ const Register = () => {
       variants={registerMotion}
     >
       <div className="register-left">
-        {/* Return to Home Button - left, attractive, responsive */}
         <Button
           variant="contained"
-          startIcon={<HomeIcon />}
+          color="success"
           onClick={handleReturnHome}
           sx={{
             borderRadius: '30px',
@@ -126,9 +117,9 @@ const Register = () => {
             alignSelf: 'flex-start',
             boxShadow: 2,
             transition: 'all 0.2s',
-            minWidth: { xs: 36, sm: 120 },
-            px: { xs: 1.5, sm: 3 },
-            py: { xs: 0.5, sm: 1 },
+            minWidth: { xs: 36, sm: 48 },
+            px: { xs: 1.5, sm: 1.5 },
+            py: { xs: 0.5, sm: 0.5 },
             background: 'linear-gradient(90deg, #059669 60%, #10b981 100%)',
             color: '#fff',
             '&:hover': {
@@ -139,9 +130,12 @@ const Register = () => {
             top: { md: 35 },
             left: { md: 32 },
             mb: { xs: 2, md: 0 },
+            minHeight: 0,
           }}
         >
-          <span>Return Home</span>
+          <Tooltip title="Return Home" arrow>
+            <HomeIcon />
+          </Tooltip>
         </Button>
         <img src={logo} alt="FlowSync" className="register-logo" />
         <h2 className="register-title">Join FlowSync</h2>
@@ -254,7 +248,7 @@ const Register = () => {
             {formik.isSubmitting ? 'Signing up...' : 'Sign Up'}
           </button>
 
-          <p className="login-option" style={{ color: 'black' }}>
+          <p className="login-option" style={{ color: 'black', fontWeight: 'bold' }}>
             Already have an account? <Link className="link" to="/login">Log in</Link>
           </p>
         </form>
@@ -262,5 +256,4 @@ const Register = () => {
     </Motion.div>
   );
 };
-
 export default Register;
