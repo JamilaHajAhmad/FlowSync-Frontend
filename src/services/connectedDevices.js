@@ -1,9 +1,7 @@
 import api from './api';
-import axios from 'axios';
-const API_URL = 'https://localhost:49798';
 
 export const getConnectedDevices = async (token) => {
-    return await axios.get(`${API_URL}/connected-devices`, {
+    return await api.get(`/connected-devices`, {
         headers: {
             Authorization: `Bearer ${token}`
         }

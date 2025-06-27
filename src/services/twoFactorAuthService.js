@@ -1,9 +1,7 @@
-import axios from 'axios';
-
-const API_URL = 'https://localhost:49798'; 
+import api from './api';
 
 export const enableTwoFactor = async (token) => {
-  return await axios.post(`${API_URL}/enable-2fa`, {}, {
+  return await api.post(`/enable-2fa`, {}, {
     headers: {
       Authorization: `Bearer ${token}`
     }
@@ -11,7 +9,7 @@ export const enableTwoFactor = async (token) => {
 }
 
 export const disableTwoFactor = async (token) => {
-  return await axios.post(`${API_URL}/disable-2fa`, {}, {
+  return await api.post(`/disable-2fa`, {}, {
     headers: {
       Authorization: `Bearer ${token}`
     }
@@ -19,7 +17,7 @@ export const disableTwoFactor = async (token) => {
 }
 
 export const verifyTwoFactor = async (code, token) => {
-  return await axios.post(`${API_URL}/verfiy-2fa`, { code }, {
+  return await api.post(`/verfiy-2fa`, { code }, {
     headers: {
       Authorization: `Bearer ${token}`
     }
