@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import {
     Box, Typography, Container, CircularProgress, Alert,
     Paper, Grid, Stack, Divider
@@ -10,8 +9,9 @@ import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
 import StarIcon from '@mui/icons-material/Star';
-import MilitaryTechIcon from '@mui/icons-material/MilitaryTech'; // For XP
+import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
 import { green, orange, grey, blue } from '@mui/material/colors';
+import { getMyKpiRank } from '../../../../services/kpiService';
 
 const badgeLevels = {
     GOLD: {
@@ -104,10 +104,7 @@ export default function Badges() {
         const fetchBadgeData = async () => {
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await axios.get(
-                    `https://localhost:49798/api/kpi/member/my-kpi-rank?year=${currentYear}`,
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
+                const response = await getMyKpiRank(token, currentYear);
                 setBadgeData(response.data);
             } catch (err) {
                 setError(err.message);

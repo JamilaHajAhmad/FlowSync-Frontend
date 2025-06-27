@@ -8,3 +8,9 @@ export const getTeamKpis = (token, year, isAdmin) => {
         headers: { Authorization: `Bearer ${token}` }
     });
 };
+
+export const getMyKpiRank = (token, year) => {
+    return api.get(`/kpi/member/my-kpi-rank?year=${year}`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+};
