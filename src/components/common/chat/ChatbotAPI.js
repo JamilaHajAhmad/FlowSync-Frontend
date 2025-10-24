@@ -1,4 +1,4 @@
-const API_KEY = import.meta.env.REACT_APP_VITE_API_KEY;
+const API_KEY = import.meta.env.VITE_API_KEY;
 
 export const sendMessageToAI = async (userMessage) => {
     try {
@@ -9,7 +9,7 @@ export const sendMessageToAI = async (userMessage) => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                "model": "deepseek/deepseek-r1:free",
+                "model": "deepseek/deepseek-r1-distill-llama-70b:free",
                 "messages": [
                     {
                         "role": "user",
