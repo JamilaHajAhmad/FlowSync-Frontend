@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'https://localhost:53395',
+    baseURL: 'https://flowsync-back-end.onrender.com',
     headers: {
         'Content-Type': 'application/json'
     }
